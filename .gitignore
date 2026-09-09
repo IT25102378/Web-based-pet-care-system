@@ -1,0 +1,19 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Backend - Maven
+Backend/target/
+
+# Frontend - Node
+Frontend/node_modules/
+Frontend/dist/
+
+# Environment files
+Frontend/.env
+Frontend/.env.local
+Frontend/.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
