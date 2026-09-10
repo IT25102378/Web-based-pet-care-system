@@ -45,9 +45,10 @@ export const adoptionApi = {
 
   async submitApplication(applicationData, uploadedDocs = []) {
     if (!USE_MOCK_DATA) {
+      // Send flat applicationData fields directly (no double-nesting)
       return await apiFetch('/adoptions/applications', {
         method: 'POST',
-        body: JSON.stringify({ applicationData, documents: uploadedDocs }),
+        body: JSON.stringify({ ...applicationData, documents: uploadedDocs }),
       });
     }
     await simulateDelay(500);
@@ -175,7 +176,26 @@ export const adoptionApi = {
   },
 
   async getAdoptionRecords() {
-    if (!USE_MOCK_DATA) return await apiFetch('/adoptions/records');
+    if (!USE_MOCK_DATA) {
+      // Backend has no separate /adoptions/records endpoint.
+      // Retrieve approved applications and normalise the shape for AdoptionHistoryPage.
+      const apps = await apiFetch('/adoptions/applications');
+      const approved = (apps || []).filter((a) => a.status === 'Approved');
+      return approved.map((a) => ({
+        adoptionRecordId: a.applicationId,
+        caseId: a.caseId,
+        petName: a.petName,
+        species: '',
+        adopterName: a.applicantName,
+        adopterPhone: a.applicantPhone,
+        finalizedDate: a.reviewedAt
+          ? a.reviewedAt.split('T')[0]
+          : (a.createdAt ? a.createdAt.split('T')[0] : ''),
+        adoptionFee: 0,
+        checkupStatus: 'Completed',
+        rescueOfficerId: a.reviewedBy || '',
+      }));
+    }
     await simulateDelay();
     return mockStore.getTable('adoptionRecords');
   }

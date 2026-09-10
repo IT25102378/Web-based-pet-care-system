@@ -140,5 +140,17 @@ export const petApi = {
     }
     await simulateDelay(300);
     return mockStore.deleteItem('petDocuments', 'documentId', documentId);
+  },
+
+  async getMedicalHistory(petId) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/pets/${petId}/medical-history`);
+    }
+    await simulateDelay();
+    const consultations = mockStore.filterTable('consultations', (c) => c.petId === petId);
+    const prescriptions = mockStore.filterTable('prescriptions', (p) => p.petId === petId);
+    const vaccinations = mockStore.filterTable('vaccinations', (v) => v.petId === petId);
+    return { petId, consultations, prescriptions, vaccinations };
   }
 };
+

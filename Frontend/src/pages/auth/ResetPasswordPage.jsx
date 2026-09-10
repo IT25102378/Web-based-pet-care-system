@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { useToast } from '../../context/ToastContext';
-import { Lock, CheckCircle2 } from 'lucide-react';
+import { Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const ResetPasswordPage = () => {
   const { showToast } = useToast();
-  const navigate = useNavigate();
+  const navigate    = useNavigate();
+  const location    = useLocation();
+
+  // Read the reset token from the URL: /reset-password?token=...
+  const resetToken  = new URLSearchParams(location.search).get('token');
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,7 +29,14 @@ export const ResetPasswordPage = () => {
 
     setLoading(true);
     try {
-      await authApi.resetPassword('demo-token', password);
+      // NOTE: Backend token-generation works, but email delivery is not yet
+      // implemented. In the real flow, the user would arrive here via a link
+      // in a password-reset email containing the token as a query parameter.
+      if (!resetToken) {
+        showToast('Invalid Link', 'No reset token found in the URL. Please request a new password reset link.', 'error');
+        return;
+      }
+      await authApi.resetPassword(resetToken, password);
       showToast('Password Changed', 'Your password was updated. You can now log in.', 'success');
       navigate('/login');
     } finally {
@@ -49,6 +60,17 @@ export const ResetPasswordPage = () => {
           <h2>Set New Password</h2>
           <p className="text-sm text-muted mt-1">Create a secure password for your Pet Nexus account</p>
         </div>
+
+        {/* Warning if no reset token in URL */}
+        {!resetToken && (
+          <div style={{ backgroundColor: 'var(--status-warning-bg)', border: '1px solid var(--status-warning)', borderRadius: 'var(--radius-md)', padding: '0.85rem 1rem', marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+            <AlertTriangle size={16} color="var(--status-warning)" style={{ marginTop: '2px', flexShrink: 0 }} />
+            <p style={{ fontSize: '0.8rem', color: 'var(--status-warning-text)', lineHeight: 1.4 }}>
+              No reset token found. Password-reset email delivery is not yet enabled.
+              Please contact your administrator to reset your password manually.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

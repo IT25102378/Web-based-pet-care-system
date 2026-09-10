@@ -3,10 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { UserRole, UserStatus } from '../../types';
-import { Heart, Lock, Mail, AlertTriangle, AlertCircle, Clock, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
+import { authApi } from '../../api/authApi';
+import { Heart, Lock, Mail, Clock, ShieldAlert } from 'lucide-react';
 
 export const LoginPage = () => {
-  const { login, switchUserRole } = useAuth();
+  const { login } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,28 +42,38 @@ export const LoginPage = () => {
       showToast('Welcome Back', `Logged in as ${user.fullName}`, 'success');
       navigate(getDashboardRoute(user.role));
     } catch (err) {
-      if (err.code === 'PENDING_APPROVAL') {
+      // In real-backend mode, detect account status from the error message.
+      // In mock mode, err.code is already set by authApi.
+      const code = err.code || authApi.detectStatusCode(err.message);
+
+      if (code === 'PENDING_APPROVAL') {
         setStatusError({
           type: 'pending_approval',
           title: 'Account Awaiting Admin Approval',
-          message: 'Your registration has been submitted and is currently being verified by the clinic administration team. You will receive an email confirmation once reviewed.',
+          message:
+            'Your registration has been submitted and is currently being verified by the clinic administration team. You will receive an email confirmation once reviewed.',
         });
-      } else if (err.code === 'REJECTED') {
+      } else if (code === 'REJECTED') {
         setStatusError({
           type: 'rejected',
           title: 'Application Rejected',
           message: 'Your application to join Pet Nexus was not approved.',
-          reason: err.rejectionReason,
+          reason: err.rejectionReason || undefined,
         });
-      } else if (err.code === 'PENDING_EMAIL') {
+      } else if (code === 'PENDING_EMAIL') {
         setStatusError({
           type: 'pending_email',
           title: 'Email Verification Required',
           message: 'Please verify your email address to proceed with your application.',
-          link: '/verify-email?token=demo-token-123',
+        });
+      } else if (code === 'SUSPENDED') {
+        setStatusError({
+          type: 'rejected',
+          title: 'Account Suspended',
+          message: err.message || 'Your account has been suspended. Please contact the clinic administrator.',
         });
       } else {
-        showToast('Login Failed', err.message, 'error');
+        showToast('Login Failed', err.message || 'An unexpected error occurred.', 'error');
       }
     } finally {
       setLoading(false);
@@ -158,15 +169,6 @@ export const LoginPage = () => {
                 >
                   <strong>Reason given:</strong> {statusError.reason}
                 </div>
-              )}
-              {statusError.link && (
-                <Link
-                  to={statusError.link}
-                  className="btn btn-warning btn-sm mt-3"
-                  style={{ fontSize: '0.75rem' }}
-                >
-                  Click Here to Simulate Email Verification
-                </Link>
               )}
             </div>
           </div>

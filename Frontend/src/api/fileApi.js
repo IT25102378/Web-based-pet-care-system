@@ -1,42 +1,22 @@
-import { USE_MOCK_DATA, simulateDelay, API_BASE_URL } from './client';
+import { USE_MOCK_DATA, simulateDelay } from './client';
 
 export const fileApi = {
   /**
-   * Upload file to backend (/api/files/upload) or simulate file upload in mock mode
+   * Upload file client-side using FileReader DataURL for persistent visual preview
+   * and storage in backend document/image string URL fields.
    * @param {File} file
-   * @returns {Promise<{ url: string, fileName: string, fileSize: string }>}
+   * @returns {Promise<{ url: string, fileName: string, fileSize: string, type: string }>}
    */
   async uploadFile(file) {
-    if (!USE_MOCK_DATA) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const token = localStorage.getItem('petnexus_auth_token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const response = await fetch(`${API_BASE_URL}/files/upload`, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`File upload failed: ${response.statusText}`);
-      }
-
-      return await response.json();
+    if (USE_MOCK_DATA) {
+      await simulateDelay(300);
     }
-
-    // Mock Upload Implementation (Converts image to DataURL for persistent visual preview)
-    await simulateDelay(400);
 
     return new Promise((resolve, reject) => {
       const fileSize = file.size > 1024 * 1024
         ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
         : `${Math.round(file.size / 1024)} KB`;
 
-      // Read as DataURL so it renders in <img> tags cleanly
       const reader = new FileReader();
       reader.onload = () => {
         resolve({
@@ -53,3 +33,4 @@ export const fileApi = {
     });
   }
 };
+

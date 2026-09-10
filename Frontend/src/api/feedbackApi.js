@@ -40,7 +40,7 @@ export const feedbackApi = {
 
     mockStore.insertItem('feedback', newFeedback);
 
-    // Notify Clinic Manager
+    // Notify Clinic Manager (mock only)
     mockStore.insertItem('notifications', {
       notificationId: `NTF-${Date.now()}`,
       userId: 'USR-005',

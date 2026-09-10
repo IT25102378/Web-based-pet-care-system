@@ -4,6 +4,7 @@ import { careServiceApi } from '../../api/careServiceApi';
 import { petApi } from '../../api/petApi';
 import { rescueApi } from '../../api/rescueApi';
 import { RescueCaseStatus } from '../../types';
+import { USE_MOCK_DATA } from '../../api/client';
 import { mockStore } from '../../data/mockStore';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -102,17 +103,19 @@ export const ServiceLogsPage = () => {
             loggedBy: currentUser?.fullName || 'Dilshan Bandara (Pet Care Provider)',
           });
 
-          // Dispatch in-app notification to Rescue Officer
-          mockStore.insertItem('notifications', {
-            notificationId: `NTF-${Date.now()}`,
-            userId: 'USR-006',
-            type: 'Rescue',
-            title: 'Rescue Animal Returned from Care Provider',
-            message: `${rescueObj ? rescueObj.temporaryName : 'Rescue animal'} has completed care/grooming with ${currentUser?.fullName || 'Pet Care Provider'} and is returned to rescue oversight.`,
-            isRead: false,
-            link: `/rescue/cases/${selectedPetId}`,
-            createdAt: new Date().toISOString(),
-          });
+          // Dispatch in-app notification to Rescue Officer (mock mode only; backend creates notifications server-side)
+          if (USE_MOCK_DATA) {
+            mockStore.insertItem('notifications', {
+              notificationId: `NTF-${Date.now()}`,
+              userId: 'USR-006',
+              type: 'Rescue',
+              title: 'Rescue Animal Returned from Care Provider',
+              message: `${rescueObj ? rescueObj.temporaryName : 'Rescue animal'} has completed care/grooming with ${currentUser?.fullName || 'Pet Care Provider'} and is returned to rescue oversight.`,
+              isRead: false,
+              link: `/rescue/cases/${selectedPetId}`,
+              createdAt: new Date().toISOString(),
+            });
+          }
 
           showToast('Case Returned to Rescue', `${rescueObj ? rescueObj.temporaryName : 'Rescue animal'} status changed to In Foster Care and returned to Rescue Officer.`, 'success');
         } else {

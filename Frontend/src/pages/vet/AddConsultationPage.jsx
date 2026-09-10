@@ -18,6 +18,7 @@ export const AddConsultationPage = () => {
   const [pets, setPets] = useState([]);
   const [rescueCases, setRescueCases] = useState([]);
   const [selectedPetId, setSelectedPetId] = useState('');
+  const [appointmentId, setAppointmentId] = useState('');
   const [formData, setFormData] = useState({
     temperatureC: 38.5,
     heartRateBpm: 90,
@@ -36,6 +37,12 @@ export const AddConsultationPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      const queryParams = new URLSearchParams(location.search);
+      const inboundApptId = queryParams.get('apptId');
+      if (inboundApptId) {
+        setAppointmentId(inboundApptId);
+      }
+
       const [petList, rescueList] = await Promise.all([
         petApi.getPets(),
         rescueApi.getRescueCases()
@@ -117,6 +124,7 @@ export const AddConsultationPage = () => {
         const petObj = pets.find((p) => p.petId === selectedPetId);
         created = await consultationApi.createConsultation({
           ...formData,
+          appointmentId: appointmentId || undefined,
           petId: selectedPetId,
           petName: petObj ? petObj.name : 'Patient',
           vetId: currentUser?.userId || 'USR-002',

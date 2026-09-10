@@ -15,6 +15,7 @@ import {
   Stethoscope,
   AlertTriangle,
   UserCheck,
+  Package,
 } from 'lucide-react';
 
 export const StaffDashboard = () => {

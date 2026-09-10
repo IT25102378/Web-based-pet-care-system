@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { careServiceApi } from '../../api/careServiceApi';
 import { rescueApi } from '../../api/rescueApi';
 import { RescueCaseStatus, ServiceStatus } from '../../types';
+import { USE_MOCK_DATA } from '../../api/client';
 import { mockStore } from '../../data/mockStore';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
@@ -46,17 +47,19 @@ export const ServiceStatusPage = () => {
             loggedBy: currentUser?.fullName || 'Dilshan Bandara (Pet Care Provider)',
           });
 
-          // Dispatch notification to Rescue Officer
-          mockStore.insertItem('notifications', {
-            notificationId: `NTF-${Date.now()}`,
-            userId: 'USR-006',
-            type: 'Rescue',
-            title: 'Rescue Animal Returned from Care Provider',
-            message: `${log.petName} care session completed. Returned to rescue oversight in status In Foster Care.`,
-            isRead: false,
-            link: `/rescue/cases/${log.caseId}`,
-            createdAt: new Date().toISOString(),
-          });
+          // Dispatch notification (mock mode only; backend creates notifications server-side)
+          if (USE_MOCK_DATA) {
+            mockStore.insertItem('notifications', {
+              notificationId: `NTF-${Date.now()}`,
+              userId: 'USR-006',
+              type: 'Rescue',
+              title: 'Rescue Animal Returned from Care Provider',
+              message: `${log.petName} care session completed. Returned to rescue oversight in status In Foster Care.`,
+              isRead: false,
+              link: `/rescue/cases/${log.caseId}`,
+              createdAt: new Date().toISOString(),
+            });
+          }
         }
       }
       showToast('Returned to Rescue', `${log.petName} care marked complete and returned to Rescue Officer.`, 'success');

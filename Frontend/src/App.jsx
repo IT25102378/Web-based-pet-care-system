@@ -17,6 +17,7 @@ import { EmailPendingPage } from './pages/auth/EmailPendingPage';
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { PendingApprovalPage } from './pages/auth/PendingApprovalPage';
 import { AdminApprovalQueue } from './pages/auth/AdminApprovalQueue';
 
 // Pet Owner Role Pages
@@ -88,6 +89,7 @@ export function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/email-pending" element={<EmailPendingPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/pending-approval" element={<PendingApprovalPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>

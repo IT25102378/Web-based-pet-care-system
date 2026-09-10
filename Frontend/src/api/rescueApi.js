@@ -221,7 +221,7 @@ export const rescueApi = {
   },
 
   async getRescueCareLogs(caseId) {
-    if (!USE_MOCK_DATA) return await apiFetch(`/rescue/cases/${caseId}/care-logs`);
+    if (!USE_MOCK_DATA) return await apiFetch(`/care-services/logs?caseId=${caseId}`);
     await simulateDelay();
     return mockStore.filterTable('careServiceLogs', (l) => l.caseId === caseId);
   }

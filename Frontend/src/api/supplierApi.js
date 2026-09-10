@@ -90,5 +90,50 @@ export const supplierApi = {
       success: true,
       message: 'Purchase order placed successfully!',
     };
+  },
+
+  async getPurchaseOrders(supplierId = null) {
+    if (!USE_MOCK_DATA) {
+      const url = supplierId ? `/purchase-orders?supplierId=${supplierId}` : '/purchase-orders';
+      return await apiFetch(url);
+    }
+    await simulateDelay();
+    let pos = mockStore.getTable('purchaseOrders') || [];
+    if (supplierId) pos = pos.filter((p) => p.supplierId === supplierId);
+    return pos;
+  },
+
+  async getPurchaseOrderById(orderId) {
+    if (!USE_MOCK_DATA) return await apiFetch(`/purchase-orders/${orderId}`);
+    await simulateDelay();
+    return mockStore.getItem('purchaseOrders', 'orderId', orderId);
+  },
+
+  async updatePurchaseOrder(orderId, updates) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/purchase-orders/${orderId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+    }
+    await simulateDelay();
+    return mockStore.updateItem('purchaseOrders', 'orderId', orderId, updates);
+  },
+
+  async dispatchPurchaseOrder(orderId) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/purchase-orders/${orderId}/dispatch`, { method: 'POST' });
+    }
+    await simulateDelay();
+    return mockStore.updateItem('purchaseOrders', 'orderId', orderId, { status: 'Dispatched' });
+  },
+
+  async cancelPurchaseOrder(orderId) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/purchase-orders/${orderId}`, { method: 'DELETE' });
+    }
+    await simulateDelay();
+    return mockStore.deleteItem('purchaseOrders', 'orderId', orderId);
   }
 };
+

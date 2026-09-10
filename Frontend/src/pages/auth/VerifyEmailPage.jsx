@@ -11,11 +11,17 @@ export const VerifyEmailPage = () => {
 
   useEffect(() => {
     const token = new URLSearchParams(location.search).get('token') || 'demo-token';
+    let redirectTimer = null;
+
     const verify = async () => {
       try {
         const res = await authApi.verifyEmail(token);
         setVerified(true);
         setMessage(res.message || 'Email verified successfully! Your application is now pending admin review.');
+        // Auto navigate to pending-approval waiting room after 2.5 seconds
+        redirectTimer = setTimeout(() => {
+          navigate('/pending-approval');
+        }, 2500);
       } catch (err) {
         setMessage('Verification completed or token expired.');
         setVerified(true);
@@ -24,7 +30,11 @@ export const VerifyEmailPage = () => {
       }
     };
     verify();
-  }, [location.search]);
+
+    return () => {
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
+  }, [location.search, navigate]);
 
   return (
     <div
@@ -74,16 +84,21 @@ export const VerifyEmailPage = () => {
             >
               <div className="flex items-center gap-2 text-primary font-bold text-sm mb-1">
                 <ShieldCheck size={18} />
-                <span>Next Step: Clinic Admin Review</span>
+                <span>Next Step: Administrator Review</span>
               </div>
               <p className="text-xs text-main" style={{ lineHeight: '1.5' }}>
-                Your email is confirmed. Your identity and credentials are now queued for review by the Clinic Manager / Administration team. You will be able to log in as soon as approval is granted.
+                Your email is confirmed. You are being redirected to the Live Approval Waiting Room. Once approved by the Clinic Administrator, your browser will automatically log you in.
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-3">
-              <Link to="/login" className="btn btn-primary">
-                Return to Login Page <ArrowRight size={16} />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/pending-approval" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                Proceed to Live Approval Status <ArrowRight size={16} />
+              </Link>
+            </div>
+            <div className="mt-3">
+              <Link to="/login" className="text-xs text-muted">
+                or return to login page
               </Link>
             </div>
           </div>
