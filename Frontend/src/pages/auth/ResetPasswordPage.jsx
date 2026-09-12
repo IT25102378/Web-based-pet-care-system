@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
+import { validatePassword, validatePasswordConfirmation } from '../../utils/validation';
 import { useToast } from '../../context/ToastContext';
 import { Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
 
@@ -18,20 +19,20 @@ export const ResetPasswordPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password.length < 6) {
-      showToast('Validation Error', 'Password must be at least 6 characters.', 'error');
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      showToast('Validation Error', passwordError, 'error');
       return;
     }
-    if (password !== confirmPassword) {
-      showToast('Validation Error', 'Passwords do not match.', 'error');
+    const confirmationError = validatePasswordConfirmation(password, confirmPassword);
+    if (confirmationError) {
+      showToast('Validation Error', confirmationError, 'error');
       return;
     }
 
     setLoading(true);
     try {
-      // NOTE: Backend token-generation works, but email delivery is not yet
-      // implemented. In the real flow, the user would arrive here via a link
-      // in a password-reset email containing the token as a query parameter.
+      // The token arrives as a query parameter from the forgot-password screen.
       if (!resetToken) {
         showToast('Invalid Link', 'No reset token found in the URL. Please request a new password reset link.', 'error');
         return;
