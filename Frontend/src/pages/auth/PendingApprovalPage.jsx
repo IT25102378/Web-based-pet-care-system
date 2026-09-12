@@ -263,7 +263,7 @@ export const PendingApprovalPage = () => {
 
             <h2>Waiting for Administrator Approval</h2>
             <p className="text-muted text-sm mt-2">
-              Your email address has been verified. Your application is now queued for administrator review.
+              Your registration has been received. Your application is now queued for administrator review.
             </p>
 
             {/* Applicant Summary Card */}

@@ -50,7 +50,7 @@ export const tokenStore = {
  * @param {string}  endpoint  Path relative to API_BASE_URL, e.g. '/auth/login'
  * @param {object}  options   Standard fetch options (method, body, headers, …)
  * @param {boolean} skipAuth  When true, omits the Authorization header
- *                            (used for login / register / verify-email / etc.)
+ *                            (used for login / register / forgot-password / etc.)
  * @returns {Promise<any>}    Parsed JSON body, or null for 204 No Content
  * @throws  {ApiError}        Structured error with message, status, and code
  */

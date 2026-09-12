@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { FileUploadField } from '../../components/common/FileUploadField';
+import { validatePassword, validatePasswordConfirmation } from '../../utils/validation';
 import { UserRole } from '../../types';
 import { Heart, ShieldCheck, Check, ArrowRight, Loader2 } from 'lucide-react';
 
@@ -39,8 +40,10 @@ export const RegisterPage = () => {
     const errs = {};
     if (!formData.fullName.trim()) errs.fullName = 'Full legal name is required';
     if (!formData.email.trim()) errs.email = 'Valid email is required';
-    if (!formData.password || formData.password.length < 6) errs.password = 'Password must be at least 6 characters';
-    if (formData.password !== formData.confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errs.password = passwordError;
+    const confirmationError = validatePasswordConfirmation(formData.password, formData.confirmPassword);
+    if (confirmationError) errs.confirmPassword = confirmationError;
 
     if (role === UserRole.VETERINARIAN && !formData.licenseNumber.trim()) {
       errs.licenseNumber = 'Veterinary Medical License number is required';
@@ -75,8 +78,8 @@ export const RegisterPage = () => {
       };
 
       await register(payload);
-      showToast('Registration Submitted', 'Please verify your email address to proceed.', 'success');
-      navigate(`/email-pending?email=${encodeURIComponent(formData.email)}`);
+      showToast('Registration Submitted', 'Your application is now awaiting administrator review.', 'success');
+      navigate('/pending-approval');
     } catch (err) {
       showToast('Registration Failed', err.message || 'Could not register', 'error');
     } finally {

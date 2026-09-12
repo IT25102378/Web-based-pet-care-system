@@ -95,13 +95,13 @@ public class User {
 
     /**
      * Account lifecycle status.
-     * Follows: PendingEmailVerification → PendingApproval → Active/Rejected
+     * Follows: PendingApproval → Active/Rejected
      * Suspended is a separate administrative action.
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
     @Builder.Default
-    private UserStatus status = UserStatus.PendingEmailVerification;
+    private UserStatus status = UserStatus.PendingApproval;
 
     // -----------------------------------------------------------------------
     // Role-Specific Professional Fields
@@ -145,10 +145,6 @@ public class User {
     // -----------------------------------------------------------------------
     // Token Fields (ephemeral — cleared after use)
     // -----------------------------------------------------------------------
-
-    /** UUID token for email verification link. Cleared after verification. */
-    @Column(length = 100)
-    private String emailVerificationToken;
 
     /** UUID token for password reset link. Cleared after reset. */
     @Column(length = 100)
