@@ -40,7 +40,7 @@ export const RegisterRescuePage = () => {
     try {
       const created = await rescueApi.createRescueCase({
         ...formData,
-        coverPhotoUrl: coverPhoto?.url || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&auto=format&fit=crop&q=80',
+        coverPhotoUrl: coverPhoto?.url || '/images/rescue-default-cover.jpg',
       });
 
       showToast('Rescue Case Logged', `Case #${created.caseNumber} created for ${created.temporaryName}`, 'success');

@@ -105,7 +105,7 @@ export const LandingPage = () => {
       title: 'Essential Summer Safety & Hydration Tips for Dogs & Cats',
       category: 'Pet Wellness',
       date: 'August 18, 2026',
-      image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=500&auto=format&fit=crop&q=80',
+      image: '/images/article-summer-safety.jpg',
       summary: 'Recognize signs of heat exhaustion and learn key hydration strategies during warm months.',
     },
     {
@@ -113,7 +113,7 @@ export const LandingPage = () => {
       title: 'Why Annual Dental Prophylaxis Extends Your Pet’s Lifespan',
       category: 'Veterinary Advice',
       date: 'August 10, 2026',
-      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&auto=format&fit=crop&q=80',
+      image: '/images/article-dental-care.jpg',
       summary: 'Prevent periodontal bacteria from impacting your companion’s kidney and heart health.',
     },
     {
@@ -121,7 +121,7 @@ export const LandingPage = () => {
       title: 'Understanding Puppy & Kitten Immunization Timelines',
       category: 'Preventative Care',
       date: 'August 02, 2026',
-      image: 'https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?w=500&auto=format&fit=crop&q=80',
+      image: '/images/article-immunization.jpg',
       summary: 'A step-by-step breakdown of essential core vaccines from 8 weeks to 1 year of age.',
     },
   ];
@@ -132,21 +132,21 @@ export const LandingPage = () => {
       author: 'Sarah Jenkins',
       role: 'Pet Parent of Barnaby (Golden Retriever)',
       rating: 5,
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+      avatar: '/avatars/avatar-pet-owner.jpg',
     },
     {
       quote: 'We adopted Luna through Pet Nexus. The multi-step adoption wizard was clear, and knowing she was fully vaccinated and microchipped gave us total peace of mind.',
       author: 'Elena Rostova',
       role: 'Adopter & Foster Volunteer',
       rating: 5,
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+      avatar: '/avatars/avatar-clinic-manager.jpg',
     },
     {
       quote: 'Marcus in grooming is incredible! Our cat Cleo is usually terrified of grooming, but she came out calm, fluffy, and happy. Best pet care facility in town.',
       author: 'Mark Miller',
       role: 'Pet Parent of Cleo',
       rating: 5,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      avatar: '/avatars/avatar-care-provider.jpg',
     },
   ];
 
@@ -277,7 +277,7 @@ export const LandingPage = () => {
                 }}
               >
                 <img
-                  src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&auto=format&fit=crop&q=80"
+                  src="/images/landing-hero.jpg"
                   alt="Veterinarian examining a healthy dog"
                   style={{ width: '100%', height: '480px', objectFit: 'cover', display: 'block' }}
                 />
@@ -436,7 +436,7 @@ export const LandingPage = () => {
             </div>
             <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
               <img
-                src="https://images.unsplash.com/photo-1576201836106-db1758fd1c97?w=700&auto=format&fit=crop&q=80"
+                src="/images/landing-clinic-facility.jpg"
                 alt="Veterinary surgery diagnostic suite"
                 style={{ width: '100%', height: '360px', objectFit: 'cover' }}
               />
@@ -448,7 +448,7 @@ export const LandingPage = () => {
             <div style={{ order: window.innerWidth > 768 ? 1 : 2 }}>
               <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
                 <img
-                  src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=700&auto=format&fit=crop&q=80"
+                  src="/images/landing-rescue-adoption.jpg"
                   alt="Rescued dog ready for adoption"
                   style={{ width: '100%', height: '360px', objectFit: 'cover' }}
                 />
