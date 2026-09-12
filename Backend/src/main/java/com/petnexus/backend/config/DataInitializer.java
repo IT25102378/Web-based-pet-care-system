@@ -143,6 +143,63 @@ public class DataInitializer implements CommandLineRunner {
                     return userRepository.save(newOwner);
                 });
 
+        // Ensure a Veterinarian account exists.
+        // Seeded before the appointment and consultation blocks below, which look this
+        // account up by email to fill in their veterinarian reference.
+        userRepository.findByEmail("vet@petnexus.com")
+                .orElseGet(() -> {
+                    User newVet = User.builder()
+                            .userId(availableUserId("USR-006"))
+                            .email("vet@petnexus.com")
+                            .passwordHash(passwordEncoder.encode("password123"))
+                            .fullName("Dr. Sachini Wijesinghe, BVSc")
+                            .phone("+94 71 234 5678")
+                            .address("12 Wijerama Mawatha, Colombo 07")
+                            .role(UserRole.Veterinarian)
+                            .status(UserStatus.Active)
+                            .avatarUrl("/avatars/avatar-veterinarian.jpg")
+                            .licenseNumber("SLVC-VET-2019-0842")
+                            .specialization("Small Animal Surgery & Internal Medicine")
+                            .build();
+                    return userRepository.save(newVet);
+                });
+
+        // Ensure a Clinic Staff account exists
+        userRepository.findByEmail("staff@petnexus.com")
+                .orElseGet(() -> {
+                    User newStaff = User.builder()
+                            .userId(availableUserId("USR-007"))
+                            .email("staff@petnexus.com")
+                            .passwordHash(passwordEncoder.encode("password123"))
+                            .fullName("Nethmi Fernando")
+                            .phone("+94 76 345 6789")
+                            .address("22 Nawala Road, Rajagiriya")
+                            .role(UserRole.ClinicStaff)
+                            .status(UserStatus.Active)
+                            .avatarUrl("/avatars/avatar-clinic-staff.jpg")
+                            .staffId("STF-104")
+                            .build();
+                    return userRepository.save(newStaff);
+                });
+
+        // Ensure a Rescue Officer account exists
+        userRepository.findByEmail("rescue@petnexus.com")
+                .orElseGet(() -> {
+                    User newRescueOfficer = User.builder()
+                            .userId(availableUserId("USR-008"))
+                            .email("rescue@petnexus.com")
+                            .passwordHash(passwordEncoder.encode("password123"))
+                            .fullName("Shehan Rajapaksha")
+                            .phone("+94 71 678 9012")
+                            .address("33 Baseline Road, Nugegoda")
+                            .role(UserRole.RescueOfficer)
+                            .status(UserStatus.Active)
+                            .avatarUrl("/avatars/avatar-rescue-officer.jpg")
+                            .badgeNumber("RSC-882")
+                            .build();
+                    return userRepository.save(newRescueOfficer);
+                });
+
         // Seed Pets
         if (petRepository.count() == 0) {
             log.info("Seeding initial pets into PetNexus database...");
@@ -1152,5 +1209,23 @@ public class DataInitializer implements CommandLineRunner {
                     .build());
             log.info("Seeded 3 notifications.");
         }
+    }
+
+    /**
+     * Returns the preferred user ID when it is free, otherwise the next unused
+     * ID in the USR-nnn series. Keeps seeding safe on a database that already
+     * holds registered accounts.
+     */
+    private String availableUserId(String preferredUserId) {
+        if (!userRepository.existsByUserId(preferredUserId)) {
+            return preferredUserId;
+        }
+        for (int number = 100; number < 1000; number++) {
+            String candidate = String.format("USR-%03d", number);
+            if (!userRepository.existsByUserId(candidate)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("No free user ID available for seeding.");
     }
 }
