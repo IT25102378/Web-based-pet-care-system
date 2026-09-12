@@ -34,9 +34,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class Phase10FinalSecurityIntegrationTest {
 
     @Autowired
@@ -224,7 +226,6 @@ public class Phase10FinalSecurityIntegrationTest {
                         .fullName("Pending Email User")
                         .role(UserRole.PetOwner)
                         .status(UserStatus.PendingEmailVerification)
-                        .emailVerificationToken(UUID.randomUUID().toString())
                         .build()));
 
         // Seed test pets
@@ -1021,11 +1022,12 @@ public class Phase10FinalSecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("52. Verify email endpoint is public -> 200 OK / 400 Bad Request on token")
-    void testVerifyEmailIsPublic() throws Exception {
-        // Calling verify-email without token returns 400 from controller validation, NOT 401 from security
+    @DisplayName("52. Removed verify-email endpoint is no longer public -> 401 Unauthorized")
+    void testVerifyEmailIsNoLongerPublic() throws Exception {
+        // The email verification step was removed, so the endpoint and its
+        // permitAll() entry are gone and an anonymous call is now rejected.
         mockMvc.perform(get("/api/auth/verify-email?token=invalid-token").servletPath("/api"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
