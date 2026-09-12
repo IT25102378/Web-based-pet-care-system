@@ -9,14 +9,20 @@ export const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetToken, setResetToken] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await authApi.forgotPassword(email);
+      const result = await authApi.forgotPassword(email);
+      setResetToken(result?.resetToken || null);
       setSubmitted(true);
-      showToast('Reset Link Dispatched', 'Password reset instructions have been simulated.', 'info');
+      if (result?.resetToken) {
+        showToast('Reset Link Ready', 'Continue to choose a new password.', 'success');
+      } else {
+        showToast('No Account Found', 'No account exists with this email address.', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -42,14 +48,18 @@ export const ForgotPasswordPage = () => {
         {submitted ? (
           <div style={{ textAlign: 'center' }}>
             <CheckCircle2 size={48} color="var(--status-success)" style={{ margin: '0 auto 1rem' }} />
-            <h4>Check Your Email</h4>
+            <h4>{resetToken ? 'Reset Link Ready' : 'No Account Found'}</h4>
             <p className="text-sm text-muted mt-2">
-              If an account with <strong>{email}</strong> exists, we’ve sent instructions to reset your password.
+              {resetToken
+                ? <>A password reset link has been created for <strong>{email}</strong>. Continue to choose a new password.</>
+                : <>No account exists with <strong>{email}</strong>. Check the address and try again.</>}
             </p>
             <div className="mt-6">
-              <Link to="/reset-password?token=demo-reset-token" className="btn btn-outline btn-sm mb-3">
-                Simulate Clicking Reset Link <ArrowRight size={14} />
-              </Link>
+              {resetToken && (
+                <Link to={`/reset-password?token=${encodeURIComponent(resetToken)}`} className="btn btn-outline btn-sm mb-3">
+                  Continue to Reset Password <ArrowRight size={14} />
+                </Link>
+              )}
               <div>
                 <Link to="/login" className="btn btn-ghost btn-sm">
                   Back to Login

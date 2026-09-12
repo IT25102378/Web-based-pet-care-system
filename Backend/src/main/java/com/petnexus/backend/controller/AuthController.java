@@ -27,7 +27,7 @@ public class AuthController {
 
     /**
      * POST /api/auth/register
-     * Register a new user. Status starts at PendingEmailVerification.
+     * Register a new user. Status starts at PendingApproval.
      * Admin role cannot be self-registered.
      */
     @PostMapping("/register")
@@ -50,25 +50,15 @@ public class AuthController {
     }
 
     /**
-     * GET /api/auth/verify-email?token=...
-     * Verify email address — transitions status from PendingEmailVerification to PendingApproval.
-     */
-    @GetMapping("/verify-email")
-    public ResponseEntity<UserService.VerifyEmailResponse> verifyEmail(
-            @RequestParam("token") String token) {
-        UserService.VerifyEmailResponse response = userService.verifyEmail(token);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
      * POST /api/auth/forgot-password
-     * Initiate password reset. Always returns a generic message (prevents email enumeration).
+     * Initiate password reset. Returns the reset token so the browser can continue
+     * straight to the reset screen, because the system sends no email.
      */
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(
+    public ResponseEntity<UserService.ForgotPasswordResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
-        String message = userService.forgotPassword(request.getEmail());
-        return ResponseEntity.ok(Map.of("message", message));
+        UserService.ForgotPasswordResponse response = userService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(response);
     }
 
     /**
