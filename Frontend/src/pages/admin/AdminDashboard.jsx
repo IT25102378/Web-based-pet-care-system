@@ -180,7 +180,7 @@ export const AdminDashboard = () => {
                 >
                   <div className="flex items-center gap-3">
                     <img
-                      src={applicant.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${applicant.userId}`}
+                      src={applicant.avatarUrl || '/avatars/default-avatar.svg'}
                       alt={applicant.fullName}
                       style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
                     />
