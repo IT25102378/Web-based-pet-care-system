@@ -8,6 +8,7 @@ import { careServiceApi } from '../../api/careServiceApi';
 import { Card } from '../../components/common/Card';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { FileUploadField } from '../../components/common/FileUploadField';
+import { validatePassword, validatePasswordConfirmation } from '../../utils/validation';
 import {
   User,
   Mail,
@@ -80,7 +81,7 @@ export const OwnerProfilePage = () => {
         phone: currentUser.phone || '',
         address: currentUser.address || '',
         emergencyContact: currentUser.emergencyContact || 'Thilini Perera (Spouse) - +94 77 234 9988',
-        avatarUrl: currentUser.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.userId}`,
+        avatarUrl: currentUser.avatarUrl || '/avatars/default-avatar.svg',
       });
 
       if (currentUser.avatarUrl) {
@@ -128,7 +129,7 @@ export const OwnerProfilePage = () => {
     } else {
       setProfileForm((prev) => ({
         ...prev,
-        avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser?.userId || 'petowner'}`,
+        avatarUrl: '/avatars/default-avatar.svg',
       }));
     }
   };
@@ -174,12 +175,14 @@ export const OwnerProfilePage = () => {
       showToast('Validation Error', 'Please enter your current password.', 'error');
       return;
     }
-    if (!newPassword || newPassword.length < 6) {
-      showToast('Validation Error', 'New password must be at least 6 characters long.', 'error');
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      showToast('Validation Error', passwordError, 'error');
       return;
     }
-    if (newPassword !== confirmPassword) {
-      showToast('Validation Error', 'New password and confirmation do not match.', 'error');
+    const confirmationError = validatePasswordConfirmation(newPassword, confirmPassword);
+    if (confirmationError) {
+      showToast('Validation Error', confirmationError, 'error');
       return;
     }
 
@@ -234,7 +237,7 @@ export const OwnerProfilePage = () => {
           <div className="flex items-center gap-5">
             <div style={{ position: 'relative' }}>
               <img
-                src={profileForm.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser?.userId}`}
+                src={profileForm.avatarUrl || '/avatars/default-avatar.svg'}
                 alt={profileForm.fullName || 'Pet Owner'}
                 style={{
                   width: '90px',

@@ -153,7 +153,7 @@ export const Navbar = () => {
                 }}
               >
                 <img
-                  src={currentUser.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.userId}`}
+                  src={currentUser.avatarUrl || '/avatars/default-avatar.svg'}
                   alt={currentUser.fullName}
                   style={{
                     width: '32px',
