@@ -119,7 +119,7 @@ export const MyPetsPage = () => {
       allergies: 'None',
       medicalNotes: '',
       emergencyContact: `${currentUser.fullName} - ${currentUser.phone || '+94 77 123 4567'}`,
-      imageUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&auto=format&fit=crop&q=80',
+      imageUrl: '/images/pet-default.jpg',
     });
     setIsModalOpen(true);
   };
@@ -192,7 +192,7 @@ export const MyPetsPage = () => {
         ownerId: currentUser.userId,
         documentType: docFormData.documentType,
         fileName,
-        fileUrl: docFormData.uploadedFile.url || 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80',
+        fileUrl: docFormData.uploadedFile.url || '/images/document-certificate.jpg',
         fileSize: docFormData.uploadedFile.fileSize || '1.0 MB',
         notes: docFormData.notes.trim() || undefined,
       });

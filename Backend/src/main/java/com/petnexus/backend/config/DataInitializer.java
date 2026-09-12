@@ -118,7 +118,7 @@ public class DataInitializer implements CommandLineRunner {
                                     .address("Pet Nexus Clinic, Colombo 05")
                                     .role(UserRole.Admin)
                                     .status(UserStatus.Active)
-                                    .avatarUrl("https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80")
+                                    .avatarUrl("/avatars/avatar-admin.jpg")
                                     .build();
                             userRepository.save(newAdmin);
                             log.info("Seeded default System Administrator account ({} - admin@petnexus.com)", adminUserId);
@@ -138,7 +138,7 @@ public class DataInitializer implements CommandLineRunner {
                             .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
                             .role(UserRole.PetOwner)
                             .status(UserStatus.Active)
-                            .avatarUrl("https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80")
+                            .avatarUrl("/avatars/avatar-pet-owner.jpg")
                             .build();
                     return userRepository.save(newOwner);
                 });
@@ -161,7 +161,7 @@ public class DataInitializer implements CommandLineRunner {
                     .microchipId("985141002948123")
                     .allergies("Chicken protein, Penicillin")
                     .medicalNotes("Mild seasonal allergies in spring. Very friendly with children.")
-                    .imageUrl("https://images.unsplash.com/photo-1552053831-71594a27632d?w=500&auto=format&fit=crop&q=80")
+                    .imageUrl("/images/pet-barnaby.jpg")
                     .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
                     .createdAt(LocalDateTime.of(2026, 1, 12, 10, 0, 0))
                     .build();
@@ -180,7 +180,7 @@ public class DataInitializer implements CommandLineRunner {
                     .microchipId("985141009182344")
                     .allergies("None recorded")
                     .medicalNotes("Indoor cat. Spayed. Dental tartar check recommended at next visit.")
-                    .imageUrl("https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500&auto=format&fit=crop&q=80")
+                    .imageUrl("/images/pet-cleo.jpg")
                     .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
                     .createdAt(LocalDateTime.of(2026, 1, 15, 14, 30, 0))
                     .build();
@@ -199,7 +199,7 @@ public class DataInitializer implements CommandLineRunner {
                     .microchipId("985141005512999")
                     .allergies("None")
                     .medicalNotes("Needs Timothy hay rich diet. Teeth checked normal last quarter.")
-                    .imageUrl("https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=500&auto=format&fit=crop&q=80")
+                    .imageUrl("/images/pet-milo.jpg")
                     .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
                     .createdAt(LocalDateTime.of(2026, 2, 1, 9, 0, 0))
                     .build();
@@ -280,7 +280,7 @@ public class DataInitializer implements CommandLineRunner {
                     .ownerId(ownerId)
                     .documentType("Vaccination Certificate")
                     .fileName("Barnaby_Rabies_Certificate_2025.pdf")
-                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileUrl("/images/document-certificate.jpg")
                     .fileSize("1.2 MB")
                     .uploadedAt(LocalDateTime.of(2025, 5, 10, 14, 30, 0))
                     .notes("Official 3-year rabies vaccination certification signed by Dr. Sachini Wijesinghe.")
@@ -293,7 +293,7 @@ public class DataInitializer implements CommandLineRunner {
                     .ownerId(ownerId)
                     .documentType("Prescription")
                     .fileName("Rx_Apoquel_Dermatology_Barnaby.pdf")
-                    .fileUrl("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80")
+                    .fileUrl("/images/document-identity-card.jpg")
                     .fileSize("680 KB")
                     .uploadedAt(LocalDateTime.of(2026, 7, 20, 11, 15, 0))
                     .notes("Apoquel 16mg allergy treatment dosage schedule and prescription details.")
@@ -306,7 +306,7 @@ public class DataInitializer implements CommandLineRunner {
                     .ownerId(ownerId)
                     .documentType("Medical Report")
                     .fileName("Comprehensive_Blood_Panel_Barnaby_2026.pdf")
-                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileUrl("/images/document-certificate.jpg")
                     .fileSize("2.4 MB")
                     .uploadedAt(LocalDateTime.of(2026, 1, 18, 10, 0, 0))
                     .notes("Annual biochemistry and complete blood count lab diagnostics report.")
@@ -319,7 +319,7 @@ public class DataInitializer implements CommandLineRunner {
                     .ownerId(ownerId)
                     .documentType("Other")
                     .fileName("Kennel_Club_Registration_Barnaby.pdf")
-                    .fileUrl("https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=600&auto=format&fit=crop&q=80")
+                    .fileUrl("/images/document-letter.jpg")
                     .fileSize("1.5 MB")
                     .uploadedAt(LocalDateTime.of(2024, 6, 12, 9, 0, 0))
                     .notes("Pedigree and breed registration certificate.")
@@ -332,7 +332,7 @@ public class DataInitializer implements CommandLineRunner {
                     .ownerId(ownerId)
                     .documentType("Vaccination Certificate")
                     .fileName("Cleo_FVRCP_Booster_Record.pdf")
-                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileUrl("/images/document-certificate.jpg")
                     .fileSize("850 KB")
                     .uploadedAt(LocalDateTime.of(2025, 8, 14, 9, 20, 0))
                     .notes("Feline core tri-cat immunization card.")
@@ -345,7 +345,7 @@ public class DataInitializer implements CommandLineRunner {
                     .ownerId(ownerId)
                     .documentType("Medical Report")
                     .fileName("Cleo_Spay_Surgery_Discharge_Summary.pdf")
-                    .fileUrl("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80")
+                    .fileUrl("/images/document-identity-card.jpg")
                     .fileSize("1.1 MB")
                     .uploadedAt(LocalDateTime.of(2024, 12, 5, 16, 0, 0))
                     .notes("Ovariohysterectomy post-operative recovery protocol and surgical notes.")
@@ -358,7 +358,7 @@ public class DataInitializer implements CommandLineRunner {
                     .ownerId(ownerId)
                     .documentType("Medical Report")
                     .fileName("Milo_Dental_Incisor_Report.pdf")
-                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileUrl("/images/document-certificate.jpg")
                     .fileSize("540 KB")
                     .uploadedAt(LocalDateTime.of(2026, 2, 1, 15, 45, 0))
                     .notes("Exotic dental evaluation and malocclusion check.")
@@ -617,7 +617,7 @@ public class DataInitializer implements CommandLineRunner {
                     .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
                     .description("Energetic, affectionate, and great with humans. Luna was found dehydrated and underweight, but has made a 100% recovery.")
                     .medicalSummary("Spayed, fully vaccinated, treated for tick fever, negative for heartworm.")
-                    .coverPhotoUrl("https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=600&auto=format&fit=crop&q=80")
+                    .coverPhotoUrl("/images/rescue-luna.jpg")
                     .fosterParentId("FST-001")
                     .fosterParentName("Piumi Senanayake")
                     .build());
@@ -640,7 +640,7 @@ public class DataInitializer implements CommandLineRunner {
                     .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
                     .description("Inseparable brother and sister duo who love curling up together and chasing laser pointers.")
                     .medicalSummary("Neutered/spayed, microchipped, dewormed, negative for FIV/FeLV.")
-                    .coverPhotoUrl("https://images.unsplash.com/photo-1574158622682-e40e69881006?w=600&auto=format&fit=crop&q=80")
+                    .coverPhotoUrl("/images/rescue-oliver-pip.jpg")
                     .fosterParentId("FST-002")
                     .fosterParentName("Chamara & Nadeeka Jayawardena")
                     .build());
@@ -663,7 +663,7 @@ public class DataInitializer implements CommandLineRunner {
                     .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
                     .description("Majestic blue-eyed husky currently rehabilitating a minor pelvic fracture and corneal abrasion.")
                     .medicalSummary("Undergoing physical therapy with Dr. Wijesinghe. Pain managed with Meloxicam.")
-                    .coverPhotoUrl("https://images.unsplash.com/photo-1605568427561-40dd23c2acea?w=600&auto=format&fit=crop&q=80")
+                    .coverPhotoUrl("/images/rescue-zeus.jpg")
                     .build());
 
             // RSC-2026-004 — Daisy (ReadyForAdoption, published)
@@ -684,7 +684,7 @@ public class DataInitializer implements CommandLineRunner {
                     .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
                     .description("Sweet, gentle natured beagle who loves scent games and cuddles on the couch.")
                     .medicalSummary("Dental prophylaxis done, vaccinations up to date, spayed.")
-                    .coverPhotoUrl("https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=600&auto=format&fit=crop&q=80")
+                    .coverPhotoUrl("/images/rescue-daisy.jpg")
                     .build());
 
             log.info("Seeded 4 rescue cases.");
@@ -745,7 +745,7 @@ public class DataInitializer implements CommandLineRunner {
                     .photoId("RPH-01")
                     .rescueCase(luna)
                     .caseId("RSC-2026-001")
-                    .photoUrl("https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=800&auto=format&fit=crop&q=80")
+                    .photoUrl("/images/rescue-luna-photo.jpg")
                     .caption("Luna smiling during afternoon foster play session")
                     .uploadedAt(LocalDateTime.of(2026, 7, 28, 10, 30, 0))
                     .tag("Adoption Profile")
@@ -755,7 +755,7 @@ public class DataInitializer implements CommandLineRunner {
                     .photoId("RPH-02")
                     .rescueCase(luna)
                     .caseId("RSC-2026-001")
-                    .photoUrl("https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&auto=format&fit=crop&q=80")
+                    .photoUrl("/images/rescue-luna-intake.jpg")
                     .caption("Luna on first day of intake rescue")
                     .uploadedAt(LocalDateTime.of(2026, 7, 2, 10, 35, 0))
                     .tag("Intake Evidence")
@@ -765,7 +765,7 @@ public class DataInitializer implements CommandLineRunner {
                     .photoId("RPH-03")
                     .rescueCase(oliverPip)
                     .caseId("RSC-2026-002")
-                    .photoUrl("https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&auto=format&fit=crop&q=80")
+                    .photoUrl("/images/rescue-oliver-pip-photo.jpg")
                     .caption("Oliver and Pip napping together")
                     .uploadedAt(LocalDateTime.of(2026, 7, 20, 16, 0, 0))
                     .tag("Foster Life")
@@ -819,7 +819,7 @@ public class DataInitializer implements CommandLineRunner {
                             .address("12 Station Road, Bambalapitiya, Colombo 04")
                             .role(UserRole.PetCareProvider)
                             .status(UserStatus.Active)
-                            .avatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80")
+                            .avatarUrl("/avatars/avatar-rejected-applicant.jpg")
                             .build();
                     return userRepository.save(newProvider);
                 });
@@ -1079,7 +1079,7 @@ public class DataInitializer implements CommandLineRunner {
                             .address("5/1 Gregory's Road, Colombo 07")
                             .role(UserRole.ClinicManager)
                             .status(UserStatus.Active)
-                            .avatarUrl("https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80")
+                            .avatarUrl("/avatars/avatar-clinic-manager.jpg")
                             .build();
                     return userRepository.save(newManager);
                 });
