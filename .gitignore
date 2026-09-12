@@ -7,16 +7,24 @@
 
 # Backend - Maven
 Backend/target/
+Backend/**/application-local.properties
 
-# Frontend - Node
+# Frontend - Node / Vite
 Frontend/node_modules/
 Frontend/dist/
+Frontend/build/
 
 # Environment files
+.env
+.env.local
+.env.*.local
 Frontend/.env
 Frontend/.env.local
 Frontend/.env.*.local
 Backend/.env
+
+# Logs
+*.log
 
 # OS files
 .DS_Store
