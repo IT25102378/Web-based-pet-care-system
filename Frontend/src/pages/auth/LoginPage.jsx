@@ -60,12 +60,6 @@ export const LoginPage = () => {
           message: 'Your application to join Pet Nexus was not approved.',
           reason: err.rejectionReason || undefined,
         });
-      } else if (code === 'PENDING_EMAIL') {
-        setStatusError({
-          type: 'pending_email',
-          title: 'Email Verification Required',
-          message: 'Please verify your email address to proceed with your application.',
-        });
       } else if (code === 'SUSPENDED') {
         setStatusError({
           type: 'rejected',
