@@ -1,5 +1,6 @@
 package com.petnexus.backend.controller;
 
+import jakarta.validation.Valid;
 import com.petnexus.backend.dto.PackageBookingCreateRequest;
 import com.petnexus.backend.dto.ServicePackageBookingResponseDto;
 import com.petnexus.backend.service.ServicePackageBookingService;
@@ -36,7 +37,7 @@ public class PackageBookingController {
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('PetOwner')")
     @PostMapping
     public ResponseEntity<ServicePackageBookingResponseDto> createBooking(
-            @RequestBody PackageBookingCreateRequest request) {
+            @Valid @RequestBody PackageBookingCreateRequest request) {
         ServicePackageBookingResponseDto created = bookingService.createBooking(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

@@ -1,5 +1,6 @@
 package com.petnexus.backend.controller;
 
+import jakarta.validation.Valid;
 import com.petnexus.backend.dto.AdoptionListingDto;
 import com.petnexus.backend.dto.CreateListingRequest;
 import com.petnexus.backend.dto.UpdateListingRequest;
@@ -32,7 +33,7 @@ public class AdoptionListingController {
 
     @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin')")
     @PostMapping
-    public ResponseEntity<AdoptionListingDto> createListing(@RequestBody CreateListingRequest request) {
+    public ResponseEntity<AdoptionListingDto> createListing(@Valid @RequestBody CreateListingRequest request) {
         AdoptionListingDto created = listingService.createListing(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -41,7 +42,7 @@ public class AdoptionListingController {
     @PutMapping("/{caseId}")
     public ResponseEntity<AdoptionListingDto> updateListing(
             @PathVariable String caseId,
-            @RequestBody UpdateListingRequest request
+            @Valid @RequestBody UpdateListingRequest request
     ) {
         return ResponseEntity.ok(listingService.updateListing(caseId, request));
     }

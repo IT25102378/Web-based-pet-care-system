@@ -72,7 +72,7 @@ public class UserController {
     @PostMapping("/users/{userId}/reject")
     public ResponseEntity<UserResponse> rejectUser(
             @PathVariable String userId,
-            @RequestBody(required = false) RejectRequest request,
+            @Valid @RequestBody(required = false) RejectRequest request,
             @AuthenticationPrincipal User admin) {
         String reason = request != null ? request.getRejectionReason() : null;
         String adminId = (admin != null) ? admin.getUserId() : "System";
@@ -84,7 +84,7 @@ public class UserController {
     @PostMapping("/users/{userId}/suspend")
     public ResponseEntity<UserResponse> suspendUser(
             @PathVariable String userId,
-            @RequestBody(required = false) SuspendRequest request,
+            @Valid @RequestBody(required = false) SuspendRequest request,
             @AuthenticationPrincipal User admin) {
         String reason = request != null ? request.getSuspensionReason() : null;
         String adminId = (admin != null) ? admin.getUserId() : "System";
@@ -108,7 +108,7 @@ public class UserController {
     @PutMapping("/users/{userId}")
     public ResponseEntity<UserResponse> updateUserProfile(
             @PathVariable String userId,
-            @RequestBody UpdateProfileRequest request) {
+            @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userService.updateUserProfile(userId, request));
     }
 
