@@ -22,7 +22,7 @@ public class AppConfig implements WebMvcConfigurer {
 
     /**
      * CORS configuration — allows the Vite frontend (localhost:5173) to
-     * call the Spring Boot backend (localhost:8080/api/*).
+     * call the Spring Boot backend (localhost:8081/api/*).
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
