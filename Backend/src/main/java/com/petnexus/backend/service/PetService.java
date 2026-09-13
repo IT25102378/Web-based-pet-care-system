@@ -116,12 +116,19 @@ public class PetService {
         }
 
         if (request.getOwnerId() != null && !request.getOwnerId().trim().isEmpty()) {
-            // Only non-owners (e.g. Admin) can change ownership
-            SecurityUtils.enforceOwnershipOrRole(null, UserRole.Admin, UserRole.ClinicManager, UserRole.ClinicStaff);
+            String requestedOwnerId = request.getOwnerId().trim();
+            boolean ownerIsChanging = pet.getOwner() == null
+                    || !requestedOwnerId.equals(pet.getOwner().getUserId());
 
-            if (pet.getOwner() == null || !request.getOwnerId().equals(pet.getOwner().getUserId())) {
-                User newOwner = userRepository.findByUserId(request.getOwnerId().trim())
-                        .orElseThrow(() -> new ResourceNotFoundException("Owner not found with ID: " + request.getOwnerId()));
+            // Sending the pet's existing owner back unchanged is a normal edit,
+            // so it is allowed for anyone who passed the ownership check above.
+            // Handing the pet to a DIFFERENT owner is a staff action, which is
+            // why PetOwner is deliberately absent from the role list below.
+            if (ownerIsChanging) {
+                SecurityUtils.enforceOwnershipOrRole(null, UserRole.Admin, UserRole.ClinicManager, UserRole.ClinicStaff);
+
+                User newOwner = userRepository.findByUserId(requestedOwnerId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Owner not found with ID: " + requestedOwnerId));
                 pet.setOwner(newOwner);
             }
         }
