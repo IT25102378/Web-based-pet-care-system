@@ -2,9 +2,12 @@ package com.petnexus.backend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -53,6 +56,37 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
         return buildError(HttpStatus.FORBIDDEN, "Access denied: " + ex.getMessage());
+    }
+
+    /**
+     * A required query parameter was left off the request, for example
+     * GET /api/pets?ownerId=... called with no ownerId at all.
+     * This is the caller's mistake, so it is a 400 and not a 500.
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingParameter(MissingServletRequestParameterException ex) {
+        return buildError(HttpStatus.BAD_REQUEST,
+                "Required request parameter is missing: " + ex.getParameterName());
+    }
+
+    /**
+     * The URL exists but not for this HTTP method, for example a DELETE sent
+     * to an endpoint that only accepts GET and POST.
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        return buildError(HttpStatus.METHOD_NOT_ALLOWED,
+                "HTTP method " + ex.getMethod() + " is not supported by this endpoint.");
+    }
+
+    /**
+     * No controller and no static resource matches the URL. Without this
+     * handler the catch-all below turns a simple typo in a path into a 500.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex) {
+        return buildError(HttpStatus.NOT_FOUND,
+                "No endpoint found for the requested path: " + ex.getResourcePath());
     }
 
     @ExceptionHandler(Exception.class)
