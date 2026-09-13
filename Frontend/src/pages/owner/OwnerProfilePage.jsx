@@ -30,6 +30,7 @@ import {
   Clock,
   AlertCircle,
 } from 'lucide-react';
+import { DEFAULT_AVATAR_URL } from '../../utils/constants';
 
 export const OwnerProfilePage = () => {
   const { currentUser, refreshUser } = useAuth();
@@ -81,7 +82,7 @@ export const OwnerProfilePage = () => {
         phone: currentUser.phone || '',
         address: currentUser.address || '',
         emergencyContact: currentUser.emergencyContact || 'Thilini Perera (Spouse) - +94 77 234 9988',
-        avatarUrl: currentUser.avatarUrl || '/avatars/default-avatar.svg',
+        avatarUrl: currentUser.avatarUrl || DEFAULT_AVATAR_URL,
       });
 
       if (currentUser.avatarUrl) {
@@ -129,7 +130,7 @@ export const OwnerProfilePage = () => {
     } else {
       setProfileForm((prev) => ({
         ...prev,
-        avatarUrl: '/avatars/default-avatar.svg',
+        avatarUrl: DEFAULT_AVATAR_URL,
       }));
     }
   };
@@ -237,7 +238,7 @@ export const OwnerProfilePage = () => {
           <div className="flex items-center gap-5">
             <div style={{ position: 'relative' }}>
               <img
-                src={profileForm.avatarUrl || '/avatars/default-avatar.svg'}
+                src={profileForm.avatarUrl || DEFAULT_AVATAR_URL}
                 alt={profileForm.fullName || 'Pet Owner'}
                 style={{
                   width: '90px',

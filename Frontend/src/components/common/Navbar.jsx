@@ -15,6 +15,7 @@ import {
   Calendar,
   Sparkles,
 } from 'lucide-react';
+import { DEFAULT_AVATAR_URL } from '../../utils/constants';
 
 export const Navbar = () => {
   const { currentUser, role, userStatus, isAuthenticated, logout } = useAuth();
@@ -153,7 +154,7 @@ export const Navbar = () => {
                 }}
               >
                 <img
-                  src={currentUser.avatarUrl || '/avatars/default-avatar.svg'}
+                  src={currentUser.avatarUrl || DEFAULT_AVATAR_URL}
                   alt={currentUser.fullName}
                   style={{
                     width: '32px',
