@@ -1,5 +1,6 @@
 package com.petnexus.backend.service;
 
+import com.petnexus.backend.constants.AppConstants;
 import com.petnexus.backend.dto.*;
 import com.petnexus.backend.entity.User;
 import com.petnexus.backend.enums.UserRole;
@@ -79,7 +80,7 @@ public class UserService {
                 .role(request.getRole())
                 .status(UserStatus.PendingApproval)
                 .avatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl()
-                        : "/avatars/default-avatar.svg")
+                        : AppConstants.DEFAULT_AVATAR_URL)
                 .licenseNumber(request.getLicenseNumber())
                 .specialization(request.getSpecialization())
                 .staffId(request.getStaffId())

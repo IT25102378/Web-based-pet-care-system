@@ -16,6 +16,7 @@
 import { USE_MOCK_DATA, simulateDelay, publicFetch, apiFetch, tokenStore } from './client';
 import { mockStore } from '../data/mockStore';
 import { UserStatus } from '../types';
+import { DEFAULT_AVATAR_URL } from '../utils/constants';
 
 // ---------------------------------------------------------------------------
 // Helpers to detect account-status errors from backend message strings
@@ -116,7 +117,7 @@ export const authApi = {
       address:          registrationData.address || '',
       role:             registrationData.role,
       status:           UserStatus.PENDING_APPROVAL,
-      avatarUrl:        '/avatars/default-avatar.svg',
+      avatarUrl:        DEFAULT_AVATAR_URL,
       licenseNumber:    registrationData.licenseNumber || null,
       staffId:          registrationData.staffId || null,
       managerCode:      registrationData.managerCode || null,

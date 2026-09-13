@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
+import { DEFAULT_AVATAR_URL } from '../../utils/constants';
 
 export const UserAccountsPage = () => {
   const { currentUser } = useAuth();
@@ -115,7 +116,7 @@ export const UserAccountsPage = () => {
       render: (row) => (
         <div className="flex items-center gap-3">
           <img
-            src={row.avatarUrl || '/avatars/default-avatar.svg'}
+            src={row.avatarUrl || DEFAULT_AVATAR_URL}
             alt={row.fullName}
             style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
           />
@@ -308,7 +309,7 @@ export const UserAccountsPage = () => {
             {/* Header Avatar Card */}
             <div className="flex items-center gap-4 p-3 rounded" style={{ backgroundColor: 'var(--bg-subtle)' }}>
               <img
-                src={selectedUserForView.avatarUrl || '/avatars/default-avatar.svg'}
+                src={selectedUserForView.avatarUrl || DEFAULT_AVATAR_URL}
                 alt={selectedUserForView.fullName}
                 style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }}
               />
