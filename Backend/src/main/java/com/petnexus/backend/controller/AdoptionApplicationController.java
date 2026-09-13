@@ -1,5 +1,6 @@
 package com.petnexus.backend.controller;
 
+import jakarta.validation.Valid;
 import com.petnexus.backend.dto.AdoptionApplicationDto;
 import com.petnexus.backend.dto.CreateApplicationRequest;
 import com.petnexus.backend.dto.ReviewApplicationRequest;
@@ -35,7 +36,7 @@ public class AdoptionApplicationController {
 
     @PreAuthorize("hasRole('PetOwner')")
     @PostMapping
-    public ResponseEntity<AdoptionApplicationDto> submitApplication(@RequestBody CreateApplicationRequest request) {
+    public ResponseEntity<AdoptionApplicationDto> submitApplication(@Valid @RequestBody CreateApplicationRequest request) {
         AdoptionApplicationDto response = applicationService.submitApplication(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -44,7 +45,7 @@ public class AdoptionApplicationController {
     @PostMapping("/{applicationId}/review")
     public ResponseEntity<AdoptionApplicationDto> reviewApplication(
             @PathVariable String applicationId,
-            @RequestBody ReviewApplicationRequest request
+            @Valid @RequestBody ReviewApplicationRequest request
     ) {
         return ResponseEntity.ok(applicationService.reviewApplication(applicationId, request));
     }
@@ -53,7 +54,7 @@ public class AdoptionApplicationController {
     @PutMapping("/{applicationId}/review")
     public ResponseEntity<AdoptionApplicationDto> reviewApplicationPut(
             @PathVariable String applicationId,
-            @RequestBody ReviewApplicationRequest request
+            @Valid @RequestBody ReviewApplicationRequest request
     ) {
         return ResponseEntity.ok(applicationService.reviewApplication(applicationId, request));
     }

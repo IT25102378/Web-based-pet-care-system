@@ -47,7 +47,7 @@ public class SupplierController {
     @PutMapping("/{supplierId}")
     public ResponseEntity<SupplierResponse> updateSupplier(
             @PathVariable String supplierId,
-            @RequestBody SupplierRequest request) {
+            @Valid @RequestBody SupplierRequest request) {
         return ResponseEntity.ok(supplierService.updateSupplier(supplierId, request));
     }
 
