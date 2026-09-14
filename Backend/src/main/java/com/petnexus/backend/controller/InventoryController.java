@@ -22,11 +22,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/inventory")
-@PreAuthorize("hasAnyRole('ClinicManager', 'Admin')")
 public class InventoryController {
 
     private final InventoryService inventoryService;
 
+    @PreAuthorize("hasAnyRole('ClinicManager', 'Admin', 'ClinicStaff', 'Veterinarian')")
     @GetMapping
     public ResponseEntity<List<InventoryItemResponse>> getInventory(
             @RequestParam(required = false) String category,
@@ -34,16 +34,19 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.listInventory(category, status));
     }
 
+    @PreAuthorize("hasAnyRole('ClinicManager', 'Admin', 'ClinicStaff', 'Veterinarian')")
     @GetMapping("/low-stock-alerts")
     public ResponseEntity<List<InventoryItemResponse>> getLowStockAlerts() {
         return ResponseEntity.ok(inventoryService.getLowStockAlerts());
     }
 
+    @PreAuthorize("hasAnyRole('ClinicManager', 'Admin', 'ClinicStaff', 'Veterinarian')")
     @GetMapping("/{itemId}")
     public ResponseEntity<InventoryItemResponse> getItemById(@PathVariable String itemId) {
         return ResponseEntity.ok(inventoryService.getItem(itemId));
     }
 
+    @PreAuthorize("hasAnyRole('ClinicManager', 'Admin')")
     @PostMapping
     public ResponseEntity<InventoryItemResponse> addInventoryItem(
             @Valid @RequestBody InventoryItemRequest request) {
@@ -51,6 +54,7 @@ public class InventoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PreAuthorize("hasAnyRole('ClinicManager', 'Admin')")
     @PutMapping("/{itemId}")
     public ResponseEntity<InventoryItemResponse> updateInventoryItem(
             @PathVariable String itemId,

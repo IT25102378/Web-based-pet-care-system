@@ -1,11 +1,13 @@
 package com.petnexus.backend.service;
 
 import com.petnexus.backend.dto.*;
+import com.petnexus.backend.entity.AdoptionListing;
 import com.petnexus.backend.entity.RescueCase;
 import com.petnexus.backend.entity.RescuePhoto;
 import com.petnexus.backend.entity.RescueProgressLog;
 import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.ResourceNotFoundException;
+import com.petnexus.backend.repository.AdoptionListingRepository;
 import com.petnexus.backend.repository.RescueCaseRepository;
 import com.petnexus.backend.repository.RescuePhotoRepository;
 import com.petnexus.backend.repository.RescueProgressLogRepository;
@@ -32,6 +34,7 @@ public class RescueCaseService {
     private final RescueCaseRepository rescueCaseRepository;
     private final RescueProgressLogRepository logRepository;
     private final RescuePhotoRepository photoRepository;
+    private final AdoptionListingRepository adoptionListingRepository;
 
     // -----------------------------------------------------------------------
     // State Machine
@@ -41,10 +44,10 @@ public class RescueCaseService {
     private static final Map<String, Set<String>> ALLOWED_TRANSITIONS = new HashMap<>();
 
     static {
-        ALLOWED_TRANSITIONS.put("Intake",            new HashSet<>(Arrays.asList("InTreatment", "Closed")));
+        ALLOWED_TRANSITIONS.put("Intake",            new HashSet<>(Arrays.asList("InTreatment", "ReadyForFoster", "Closed")));
         ALLOWED_TRANSITIONS.put("InTreatment",       new HashSet<>(Arrays.asList("ReadyForFoster", "Closed")));
-        ALLOWED_TRANSITIONS.put("ReadyForFoster",    new HashSet<>(Arrays.asList("InFoster", "Closed")));
-        ALLOWED_TRANSITIONS.put("InFoster",          new HashSet<>(Arrays.asList("ReadyForAdoption", "Closed")));
+        ALLOWED_TRANSITIONS.put("ReadyForFoster",    new HashSet<>(Arrays.asList("InFoster", "ReadyForAdoption", "InTreatment", "Closed")));
+        ALLOWED_TRANSITIONS.put("InFoster",          new HashSet<>(Arrays.asList("ReadyForAdoption", "ReadyForFoster", "Closed")));
         ALLOWED_TRANSITIONS.put("ReadyForAdoption",  new HashSet<>(Arrays.asList("Adopted", "InFoster", "Closed")));
         ALLOWED_TRANSITIONS.put("Adopted",           new HashSet<>(Collections.singletonList("Closed")));
         ALLOWED_TRANSITIONS.put("Closed",            Collections.emptySet());
@@ -237,8 +240,32 @@ public class RescueCaseService {
         if (request.getMedicalSummary()      != null) rescueCase.setMedicalSummary(request.getMedicalSummary());
         if (request.getCoverPhotoUrl()       != null) rescueCase.setCoverPhotoUrl(request.getCoverPhotoUrl());
         if (request.getFosterParentId()      != null) rescueCase.setFosterParentId(request.getFosterParentId());
-        if (request.getFosterParentName()    != null) rescueCase.setFosterParentName(request.getFosterParentName());
-        if (publishedFlag                    != null) rescueCase.setIsPublishedForAdoption(publishedFlag);
+        if (publishedFlag != null) {
+            rescueCase.setIsPublishedForAdoption(publishedFlag);
+            if (Boolean.TRUE.equals(publishedFlag)) {
+                Optional<AdoptionListing> optListing = adoptionListingRepository.findByRescueCase_CaseId(rescueCase.getCaseId());
+                if (optListing.isPresent()) {
+                    AdoptionListing listing = optListing.get();
+                    listing.setPublishedForAdoption(true);
+                    adoptionListingRepository.save(listing);
+                } else {
+                    int year = Year.now().getValue();
+                    long count = adoptionListingRepository.count() + 1;
+                    String listingId = String.format("ADL-%d-%03d", year, count);
+                    AdoptionListing listing = new AdoptionListing();
+                    listing.setListingId(listingId);
+                    listing.setRescueCase(rescueCase);
+                    listing.setPublishedForAdoption(true);
+                    adoptionListingRepository.save(listing);
+                }
+            } else {
+                adoptionListingRepository.findByRescueCase_CaseId(rescueCase.getCaseId())
+                        .ifPresent(listing -> {
+                            listing.setPublishedForAdoption(false);
+                            adoptionListingRepository.save(listing);
+                        });
+            }
+        }
 
         rescueCaseRepository.save(rescueCase);
         log.info("Updated rescue case {}", caseId);

@@ -79,21 +79,27 @@ export const MyPetsPage = () => {
   const loadData = async () => {
     if (!currentUser) return;
     try {
-      const [userPets, userVacs, userDocs] = await Promise.all([
-        petApi.getPets(currentUser.userId),
-        petApi.getVaccinations(),
-        petApi.getPetDocuments(null, currentUser.userId),
-      ]);
-      setPets(userPets);
-      setVaccinations(userVacs);
-      setDocuments(userDocs);
+      const userPets = await petApi.getPets(currentUser.userId);
+      setPets(userPets || []);
 
-      if (userPets.length > 0) {
+      if (userPets && userPets.length > 0) {
         setSelectedPet((prev) => {
           if (!prev) return userPets[0];
           const exists = userPets.find((p) => p.petId === prev.petId);
           return exists || userPets[0];
         });
+      }
+
+      // Fetch vaccinations and documents safely so one error cannot block pet display
+      const [userVacsResult, userDocsResult] = await Promise.allSettled([
+        petApi.getVaccinations(),
+        petApi.getPetDocuments(null, currentUser.userId),
+      ]);
+      if (userVacsResult.status === 'fulfilled') {
+        setVaccinations(userVacsResult.value || []);
+      }
+      if (userDocsResult.status === 'fulfilled') {
+        setDocuments(userDocsResult.value || []);
       }
     } catch (e) {
       console.error('Error loading pet data:', e);

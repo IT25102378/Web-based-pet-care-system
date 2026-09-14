@@ -65,6 +65,16 @@ export const supplierApi = {
     return updated;
   },
 
+  async deleteSupplier(supplierId) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/suppliers/${supplierId}`, {
+        method: 'DELETE',
+      });
+    }
+    await simulateDelay(200);
+    return mockStore.deleteItem('suppliers', 'supplierId', supplierId);
+  },
+
   async createPurchaseOrder(poData) {
     if (!USE_MOCK_DATA) {
       return await apiFetch('/suppliers/purchase-orders', {

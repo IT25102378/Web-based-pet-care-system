@@ -15,6 +15,11 @@ public class ServicePackageBookingResponseDto {
     @NotBlank
     private String ownerId;
 
+    private String ownerName;
+    private String petId;
+    private String petName;
+    private String packageId;
+
     @NotBlank
     private String packageName;
 
@@ -41,6 +46,14 @@ public class ServicePackageBookingResponseDto {
     public void setBookingId(String bookingId) { this.bookingId = bookingId; }
     public String getOwnerId() { return ownerId; }
     public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
+    public String getOwnerName() { return ownerName; }
+    public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
+    public String getPetId() { return petId; }
+    public void setPetId(String petId) { this.petId = petId; }
+    public String getPetName() { return petName; }
+    public void setPetName(String petName) { this.petName = petName; }
+    public String getPackageId() { return packageId; }
+    public void setPackageId(String packageId) { this.packageId = packageId; }
     public String getPackageName() { return packageName; }
     public void setPackageName(String packageName) { this.packageName = packageName; }
     public Integer getTotalSessions() { return totalSessions; }

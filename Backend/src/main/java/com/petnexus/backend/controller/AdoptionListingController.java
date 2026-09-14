@@ -14,8 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/adoptions/listings")
-@PreAuthorize("isAuthenticated()")
+@RequestMapping({"/adoptions/listings", "/adoption/listings"})
 public class AdoptionListingController {
 
     private final AdoptionListingService listingService;

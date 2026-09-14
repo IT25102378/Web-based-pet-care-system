@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { packageApi } from '../../api/packageApi';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
-import { Layers, Plus, Edit2, CheckCircle, Check, Tag } from 'lucide-react';
+import { Layers, Plus, Edit2, CheckCircle, Check, Tag, Power } from 'lucide-react';
 
 export const PackageManagementPage = () => {
   const { showToast } = useToast();
@@ -53,9 +53,20 @@ export const PackageManagementPage = () => {
     setEditingPackage(pkg);
     setFormData({
       ...pkg,
-      features: Array.isArray(pkg.features) ? pkg.features.join('\n') : pkg.features,
+      features: Array.isArray(pkg.features) ? pkg.features.join('\n') : (pkg.features || ''),
     });
     setIsModalOpen(true);
+  };
+
+  const handleToggleStatus = async (pkg) => {
+    try {
+      const willActivate = pkg.active === false ? true : false;
+      await packageApi.togglePackageStatus(pkg.packageId, willActivate);
+      showToast('Status Updated', `${pkg.name} is now ${willActivate ? 'Active' : 'Deactivated'}.`, 'info');
+      loadPackages();
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -65,15 +76,22 @@ export const PackageManagementPage = () => {
       return;
     }
 
+    const featureList = typeof formData.features === 'string'
+      ? formData.features.split('\n').map((s) => s.trim()).filter(Boolean)
+      : (Array.isArray(formData.features) ? formData.features : []);
+
     try {
       if (editingPackage) {
         await packageApi.updatePackage(editingPackage.packageId, {
           ...formData,
-          features: formData.features.split('\n').filter(Boolean),
+          features: featureList,
         });
         showToast('Package Updated', `${formData.name} updated successfully.`, 'success');
       } else {
-        await packageApi.createPackage(formData);
+        await packageApi.createPackage({
+          ...formData,
+          features: featureList,
+        });
         showToast('Package Created', `${formData.name} added to clinic offerings.`, 'success');
       }
       setIsModalOpen(false);
@@ -101,21 +119,48 @@ export const PackageManagementPage = () => {
 
       <div className="grid-2">
         {packages.map((pkg) => (
-          <div key={pkg.packageId} className="card p-6" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div
+            key={pkg.packageId}
+            className="card p-6"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              opacity: pkg.active === false ? 0.65 : 1,
+              borderLeft: pkg.active === false ? '4px solid var(--border-medium)' : '4px solid var(--primary)',
+            }}
+          >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="badge badge-primary">{pkg.badge || 'Wellness Plan'}</span>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => handleOpenEdit(pkg)}
-                >
-                  <Edit2 size={14} /> Edit Plan
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="badge badge-primary">{pkg.badge || 'Wellness Plan'}</span>
+                  <span className={`badge ${pkg.active === false ? 'badge-secondary' : 'badge-success'} text-xs`}>
+                    {pkg.active === false ? 'Inactive' : 'Active'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => handleToggleStatus(pkg)}
+                    title={pkg.active === false ? 'Activate package' : 'Deactivate package'}
+                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                  >
+                    <Power size={12} /> {pkg.active === false ? 'Enable' : 'Disable'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => handleOpenEdit(pkg)}
+                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                  >
+                    <Edit2 size={12} /> Edit Plan
+                  </button>
+                </div>
               </div>
 
               <h3 style={{ fontSize: '1.3rem' }}>{pkg.name}</h3>
-              <p className="text-xs text-muted mb-4">{pkg.tagline}</p>
+              <p className="text-xs text-muted mb-4">{pkg.tagline || pkg.description}</p>
 
               <div className="flex items-baseline gap-2 mb-4">
                 <span style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--primary-dark)' }}>
@@ -139,7 +184,7 @@ export const PackageManagementPage = () => {
             </div>
 
             <div className="text-xs text-muted pt-3 border-top" style={{ borderTop: '1px solid var(--border-light)' }}>
-              Recommended: <strong>{pkg.recommendedFor}</strong>
+              Recommended: <strong>{pkg.recommendedFor || 'All pets'}</strong>
             </div>
           </div>
         ))}

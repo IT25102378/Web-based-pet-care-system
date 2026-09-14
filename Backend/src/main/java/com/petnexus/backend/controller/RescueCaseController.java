@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/rescue/cases")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()")
 public class RescueCaseController {
 
     private final RescueCaseService rescueCaseService;
@@ -59,7 +58,7 @@ public class RescueCaseController {
     // PUT /api/rescue/cases/{caseId}
     // Partial update — state machine enforced server-side
     // -----------------------------------------------------------------------
-    @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin')")
+    @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin', 'Veterinarian', 'PetCareProvider')")
     @PutMapping("/{caseId}")
     public ResponseEntity<RescueCaseResponse> updateRescueCase(
             @PathVariable String caseId,
@@ -72,7 +71,7 @@ public class RescueCaseController {
     // POST /api/rescue/cases/{caseId}/logs
     // Add a progress log entry
     // -----------------------------------------------------------------------
-    @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin')")
+    @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin', 'Veterinarian', 'PetCareProvider')")
     @PostMapping("/{caseId}/logs")
     public ResponseEntity<RescueProgressLogResponse> addProgressLog(
             @PathVariable String caseId,
@@ -86,7 +85,7 @@ public class RescueCaseController {
     // POST /api/rescue/cases/{caseId}/photos
     // Add a photo to a rescue case
     // -----------------------------------------------------------------------
-    @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin')")
+    @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin', 'Veterinarian', 'PetCareProvider')")
     @PostMapping("/{caseId}/photos")
     public ResponseEntity<RescuePhotoResponse> addPhoto(
             @PathVariable String caseId,

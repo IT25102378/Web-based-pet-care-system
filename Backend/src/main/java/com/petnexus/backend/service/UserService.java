@@ -92,17 +92,13 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
-        // Send verification email
-        try {
-            emailService.sendVerificationEmail(user.getEmail(), emailToken);
-        } catch (Exception e) {
-            log.error("Failed to send verification email to {}: {}", user.getEmail(), e.getMessage());
-            // Continue without failing registration; user can request resend later
-        }
+
+        // Dispatch verification email
+        emailService.sendVerificationEmail(user.getEmail(), emailToken);
         log.info("New user registered: {} ({}), status=PendingEmailVerification", userId, request.getEmail());
 
         return new RegisterResponse(
-                "Registration successful! Please check your email to verify your account.",
+                "Registration submitted successfully! Please verify your email address to proceed.",
                 userId,
                 user.getEmail(),
                 approvalToken
@@ -243,7 +239,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<UserResponse> getPendingApprovals() {
-        return userRepository.findByStatus(UserStatus.PendingApproval).stream()
+        return userRepository.findByStatusIn(java.util.List.of(UserStatus.PendingApproval, UserStatus.PendingEmailVerification)).stream()
                 .map(UserResponse::from)
                 .collect(Collectors.toList());
     }
@@ -258,7 +254,7 @@ public class UserService {
     }
 
     /**
-     * Approve a user — transitions status from PendingApproval to Active.
+     * Approve a user — transitions status from PendingApproval / PendingEmailVerification to Active.
      *
      * CRITICAL: This operation ONLY changes UserStatus. It does NOT change UserRole.
      * Approving a ClinicManager does NOT grant System Administrator privileges.
@@ -269,13 +265,14 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        if (!UserStatus.PendingApproval.equals(user.getStatus())) {
+        if (!UserStatus.PendingApproval.equals(user.getStatus()) && !UserStatus.PendingEmailVerification.equals(user.getStatus())) {
             throw new BadRequestException(
-                "User is not in PendingApproval status. Current status: " + user.getStatus()
+                "User is not in a pending status. Current status: " + user.getStatus()
             );
         }
 
         user.setStatus(UserStatus.Active);
+        user.setEmailVerificationToken(null);
         user.setRejectionReason(null);
         user.setSuspensionReason(null);
         userRepository.save(user);

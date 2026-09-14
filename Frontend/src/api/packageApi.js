@@ -1,6 +1,12 @@
 import { USE_MOCK_DATA, simulateDelay, apiFetch } from './client';
 import { mockStore } from '../data/mockStore';
 
+const parseFeatures = (desc, feats) => {
+  if (Array.isArray(feats) && feats.length > 0) return feats;
+  if (!desc) return [];
+  return desc.split(/[\r\n,]+/).map((s) => s.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean);
+};
+
 export const packageApi = {
   async getPackages() {
     if (!USE_MOCK_DATA) {
@@ -8,7 +14,7 @@ export const packageApi = {
       return (items || []).map((p) => ({
         ...p,
         packageId: p.packageId || p.serviceId,
-        features: p.features || (p.description ? [p.description] : []),
+        features: parseFeatures(p.description, p.features),
       }));
     }
     await simulateDelay();
@@ -22,7 +28,7 @@ export const packageApi = {
       return {
         ...p,
         packageId: p.packageId || p.serviceId,
-        features: p.features || (p.description ? [p.description] : []),
+        features: parseFeatures(p.description, p.features),
       };
     }
     await simulateDelay();
@@ -31,9 +37,18 @@ export const packageApi = {
 
   async createPackage(pkgData) {
     if (!USE_MOCK_DATA) {
+      let desc = 'Clinic wellness package';
+      if (Array.isArray(pkgData.features)) {
+        desc = pkgData.features.join(', ');
+      } else if (typeof pkgData.features === 'string' && pkgData.features.trim()) {
+        desc = pkgData.features.split('\n').map((s) => s.trim()).filter(Boolean).join(', ');
+      } else if (pkgData.description) {
+        desc = pkgData.description;
+      }
+
       const payload = {
         name: pkgData.name,
-        description: Array.isArray(pkgData.features) ? pkgData.features.join(', ') : (pkgData.features || pkgData.description || 'Clinic wellness package'),
+        description: desc,
         price: Number(pkgData.price) || 0,
         durationMinutes: Number(pkgData.durationMinutes) || 60,
       };
@@ -44,7 +59,7 @@ export const packageApi = {
       return {
         ...created,
         packageId: created.serviceId || created.packageId,
-        features: created.description ? [created.description] : [],
+        features: parseFeatures(created.description, created.features),
       };
     }
     await simulateDelay(300);
@@ -65,10 +80,21 @@ export const packageApi = {
 
   async updatePackage(packageId, updates) {
     if (!USE_MOCK_DATA) {
+      let desc = undefined;
+      if (updates.features !== undefined) {
+        if (Array.isArray(updates.features)) {
+          desc = updates.features.join(', ');
+        } else if (typeof updates.features === 'string') {
+          desc = updates.features.split('\n').map((s) => s.trim()).filter(Boolean).join(', ');
+        }
+      } else if (updates.description) {
+        desc = updates.description;
+      }
+
       const payload = {
         serviceId: packageId,
         name: updates.name,
-        description: Array.isArray(updates.features) ? updates.features.join(', ') : (updates.features || updates.description || ''),
+        description: desc,
         price: updates.price !== undefined ? Number(updates.price) : undefined,
         durationMinutes: updates.durationMinutes !== undefined ? Number(updates.durationMinutes) : 60,
       };
@@ -79,10 +105,19 @@ export const packageApi = {
       return {
         ...updated,
         packageId: updated.serviceId || updated.packageId,
-        features: updated.description ? [updated.description] : [],
+        features: parseFeatures(updated.description, updated.features),
       };
     }
     await simulateDelay(300);
     return mockStore.updateItem('clinicPackages', 'packageId', packageId, updates);
+  },
+
+  async togglePackageStatus(packageId, activate) {
+    if (!USE_MOCK_DATA) {
+      const endpoint = activate ? `/packages/${packageId}/activate` : `/packages/${packageId}/deactivate`;
+      return await apiFetch(endpoint, { method: 'PUT' });
+    }
+    await simulateDelay(200);
+    return mockStore.updateItem('clinicPackages', 'packageId', packageId, { active: activate });
   }
 };

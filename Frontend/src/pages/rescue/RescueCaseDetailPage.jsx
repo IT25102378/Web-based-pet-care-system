@@ -24,6 +24,7 @@ import {
   Stethoscope,
   Scissors,
 } from 'lucide-react';
+import { PublishListingModal } from '../../components/common/PublishListingModal';
 
 export const RescueCaseDetailPage = () => {
   const { id } = useParams();
@@ -36,6 +37,7 @@ export const RescueCaseDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   // Modals
+  const [isListingModalOpen, setIsListingModalOpen] = useState(false);
   const [isAddLogOpen, setIsAddLogOpen] = useState(false);
   const [logFormData, setLogFormData] = useState({
     title: '',
@@ -55,16 +57,17 @@ export const RescueCaseDetailPage = () => {
   const loadCase = async () => {
     try {
       const caseIdToLoad = id || 'RSC-2026-001';
-      const [data, fosterList, consultList, careList] = await Promise.all([
+      const [caseRes, fosterRes, consultRes, careRes] = await Promise.allSettled([
         rescueApi.getRescueCaseById(caseIdToLoad),
         rescueApi.getFosterRecords(),
         rescueApi.getRescueCaseConsultations(caseIdToLoad),
         rescueApi.getRescueCareLogs(caseIdToLoad)
       ]);
-      setRescueCase(data);
+      if (caseRes.status === 'fulfilled' && caseRes.value) setRescueCase(caseRes.value);
+      const fosterList = fosterRes.status === 'fulfilled' && fosterRes.value ? fosterRes.value : [];
       setFosters(fosterList);
-      setConsultations(consultList);
-      setCareLogs(careList);
+      setConsultations(consultRes.status === 'fulfilled' && consultRes.value ? consultRes.value : []);
+      setCareLogs(careRes.status === 'fulfilled' && careRes.value ? careRes.value : []);
       if (fosterList.length > 0) setSelectedFosterId(fosterList[0].fosterId);
     } catch (e) {
       console.error(e);
@@ -303,24 +306,33 @@ export const RescueCaseDetailPage = () => {
               </button>
             )}
 
-            {/* Publish / Hide action — only available when ReadyForAdoption */}
-            {rescueCase.status === RescueCaseStatus.READY_FOR_ADOPTION ? (
+            {/* Publish / Hide / List for Adoption action */}
+            {rescueCase.isPublishedForAdoption ? (
               <button
                 type="button"
-                className={`btn btn-sm ${rescueCase.isPublishedForAdoption ? 'btn-secondary' : 'btn-outline'}`}
+                className="btn btn-sm btn-secondary"
                 onClick={handleTogglePublish}
               >
-                {rescueCase.isPublishedForAdoption ? 'Hide From Public' : 'Publish for Adoption'}
+                Hide From Public
+              </button>
+            ) : (rescueCase.status === RescueCaseStatus.READY_FOR_ADOPTION || rescueCase.status === RescueCaseStatus.IN_FOSTER) ? (
+              <button
+                type="button"
+                className="btn btn-sm btn-accent"
+                onClick={() => setIsListingModalOpen(true)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
+              >
+                <Heart size={14} fill="#FFFFFF" /> List for Adoption
               </button>
             ) : (
               <button
                 type="button"
                 className="btn btn-sm btn-ghost"
                 disabled
-                title="Update case status to 'Ready for Adoption' to enable public listing"
+                title="Must complete foster or care provider stage to list for adoption"
                 style={{ cursor: 'not-allowed', opacity: 0.5 }}
               >
-                {rescueCase.isPublishedForAdoption ? 'Hide From Public' : 'Publish for Adoption'}
+                Publish for Adoption
               </button>
             )}
 
@@ -692,6 +704,14 @@ export const RescueCaseDetailPage = () => {
           </div>
         </Modal>
       )}
+
+      {/* Publish for Adoption Modal */}
+      <PublishListingModal
+        isOpen={isListingModalOpen}
+        onClose={() => setIsListingModalOpen(false)}
+        rescueCase={rescueCase}
+        onSuccess={loadCase}
+      />
     </div>
   );
 };

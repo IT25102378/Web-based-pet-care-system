@@ -58,9 +58,6 @@ public class CareServiceLogService {
                 }
                 providerName = provider.getProviderName();
             }
-            if (logRepository.existsByProviderIdAndServiceDate(providerId, serviceDate)) {
-                throw new BadRequestException("Provider already has a service scheduled on this date: " + serviceDate);
-            }
         }
 
         String petId = null;

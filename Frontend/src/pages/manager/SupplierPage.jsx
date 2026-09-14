@@ -3,7 +3,7 @@ import { supplierApi } from '../../api/supplierApi';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
-import { Truck, Plus, Send, Phone, Mail, MapPin, Star, Check, Edit2 } from 'lucide-react';
+import { Truck, Plus, Send, Phone, Mail, MapPin, Star, Check, Edit2, Trash2 } from 'lucide-react';
 
 export const SupplierPage = () => {
   const { showToast } = useToast();
@@ -13,6 +13,7 @@ export const SupplierPage = () => {
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState(null);
   const [poSupplier, setPoSupplier] = useState(null);
   const [poItems, setPoItems] = useState('Rabies Vaccine (10 packs), Apoquel 16mg (5 bottles)');
   const [poAmount, setPoAmount] = useState(385000.00);
@@ -152,6 +153,18 @@ export const SupplierPage = () => {
     }
   };
 
+  const handleDeleteSupplier = async () => {
+    if (!supplierToDelete) return;
+    try {
+      await supplierApi.deleteSupplier(supplierToDelete.supplierId);
+      showToast('Supplier Removed', `${supplierToDelete.companyName} removed from active vendors.`, 'info');
+      setSupplierToDelete(null);
+      loadSuppliers();
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  };
+
   const columns = [
     {
       header: 'Supplier ID',
@@ -221,6 +234,15 @@ export const SupplierPage = () => {
             title="Create Purchase Order"
           >
             <Send size={13} /> Order PO
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm text-danger"
+            onClick={() => setSupplierToDelete(row)}
+            title="Deactivate / Delete Vendor"
+            style={{ color: '#EF4444' }}
+          >
+            <Trash2 size={13} />
           </button>
         </div>
       ),
@@ -542,6 +564,36 @@ export const SupplierPage = () => {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Deactivate Supplier Modal */}
+      {supplierToDelete && (
+        <Modal
+          isOpen={!!supplierToDelete}
+          onClose={() => setSupplierToDelete(null)}
+          title="Deactivate Vendor Partner"
+          subtitle={`Are you sure you want to deactivate "${supplierToDelete.companyName}" (${supplierToDelete.supplierId})?`}
+          size="sm"
+          footer={
+            <div className="flex items-center justify-end gap-2" style={{ width: '100%' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setSupplierToDelete(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
+                onClick={handleDeleteSupplier}
+              >
+                <Trash2 size={16} /> Confirm Deactivate
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm text-muted">
+            Deactivating this vendor will archive their catalog association. Historical purchase orders and invoice references remain intact for audit logs.
+          </p>
         </Modal>
       )}
     </div>

@@ -29,16 +29,18 @@ export const ProviderDashboard = () => {
   useEffect(() => {
     const loadProviderData = async () => {
       try {
-        const [serviceLogs, packageList, reviews, rescueList] = await Promise.all([
+        const [logsRes, pkgsRes, feedbackRes, rescueRes] = await Promise.allSettled([
           careServiceApi.getServiceLogs(),
           careServiceApi.getPackageBookings(),
           feedbackApi.getFeedbacks({ category: 'Grooming & Spa' }),
           rescueApi.getRescueCases(),
         ]);
-        setLogs(serviceLogs);
-        setPackages(packageList);
-        setFeedbacks(reviews);
-        setRescueCases(rescueList.filter(r => r.status === RescueCaseStatus.READY_FOR_FOSTER));
+        if (logsRes.status === 'fulfilled' && logsRes.value) setLogs(logsRes.value);
+        if (pkgsRes.status === 'fulfilled' && pkgsRes.value) setPackages(pkgsRes.value);
+        if (feedbackRes.status === 'fulfilled' && feedbackRes.value) setFeedbacks(feedbackRes.value);
+        if (rescueRes.status === 'fulfilled' && rescueRes.value) {
+          setRescueCases((rescueRes.value || []).filter(r => r.status === RescueCaseStatus.READY_FOR_FOSTER));
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -48,8 +50,8 @@ export const ProviderDashboard = () => {
     loadProviderData();
   }, []);
 
-  const inProgressCount = logs.filter((l) => l.status === 'InProgress' || l.status === 'CheckedIn').length;
-  const readyPickupCount = logs.filter((l) => l.status === 'ReadyForPickup').length;
+  const inProgressCount = (logs || []).filter((l) => l.status === 'InProgress' || l.status === 'CheckedIn').length;
+  const readyPickupCount = (logs || []).filter((l) => l.status === 'ReadyForPickup').length;
 
   return (
     <div>
@@ -223,14 +225,29 @@ export const ProviderDashboard = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sm text-main">{log.petName}</span>
+                    {log.caseId && (
+                      <span className="badge badge-warning text-xs" style={{ fontSize: '0.65rem' }}>
+                        🐾 Rescue
+                      </span>
+                    )}
                     <StatusBadge status={log.status} />
                   </div>
-                  <p className="text-xs text-muted mt-1">{log.serviceType} • Owner: {log.ownerName}</p>
+                  <p className="text-xs text-muted mt-1">
+                    {log.serviceType} • {log.caseId ? `Case #${log.caseId}` : `Owner: ${log.ownerName}`}
+                  </p>
                 </div>
 
-                <Link to="/provider/status" className="btn btn-secondary btn-sm">
-                  Update
-                </Link>
+                <div className="flex items-center gap-2">
+                  {log.caseId && log.status === 'Completed' ? (
+                    <Link to="/provider/logs" className="btn btn-warning btn-sm">
+                      Transfer to Rescue
+                    </Link>
+                  ) : (
+                    <Link to="/provider/status" className="btn btn-secondary btn-sm">
+                      Update
+                    </Link>
+                  )}
+                </div>
               </div>
             ))}
           </div>

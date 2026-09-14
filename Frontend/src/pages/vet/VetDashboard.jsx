@@ -27,14 +27,18 @@ export const VetDashboard = () => {
   useEffect(() => {
     const loadVetData = async () => {
       try {
-        const [appts, consults, rescueList] = await Promise.all([
+        const [apptsRes, consultsRes, rescueRes] = await Promise.allSettled([
           appointmentApi.getAppointments(),
           consultationApi.getConsultations(),
           rescueApi.getRescueCases(),
         ]);
-        setAppointments(appts);
-        setConsultations(consults);
-        setRescueCases(rescueList.filter(r => r.status === RescueCaseStatus.IN_TREATMENT));
+        if (apptsRes.status === 'fulfilled' && apptsRes.value) setAppointments(apptsRes.value);
+        if (consultsRes.status === 'fulfilled' && consultsRes.value) setConsultations(consultsRes.value);
+        if (rescueRes.status === 'fulfilled' && rescueRes.value) {
+          setRescueCases((rescueRes.value || []).filter(
+            r => r.status === RescueCaseStatus.IN_TREATMENT || r.status === RescueCaseStatus.INTAKE
+          ));
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -44,7 +48,7 @@ export const VetDashboard = () => {
     loadVetData();
   }, []);
 
-  const waitingPatients = appointments.filter(
+  const waitingPatients = (appointments || []).filter(
     (a) => a.status === 'CheckedIn' || a.status === 'InRoom'
   );
 

@@ -76,6 +76,27 @@ export const inventoryApi = {
     });
   },
 
+  async updateInventoryItem(itemId, itemData) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/inventory/${itemId}`, {
+        method: 'PUT',
+        body: JSON.stringify(itemData),
+      });
+    }
+    await simulateDelay(250);
+    return mockStore.updateItem('inventoryItems', 'itemId', itemId, itemData);
+  },
+
+  async deleteInventoryItem(itemId) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/inventory/${itemId}`, {
+        method: 'DELETE',
+      });
+    }
+    await simulateDelay(200);
+    return mockStore.deleteItem('inventoryItems', 'itemId', itemId);
+  },
+
   async getLowStockAlerts() {
     if (!USE_MOCK_DATA) return await apiFetch('/inventory/low-stock-alerts');
     await simulateDelay();

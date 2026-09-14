@@ -32,16 +32,16 @@ export const ManagerDashboard = () => {
   useEffect(() => {
     const loadManagerData = async () => {
       try {
-        const [invList, suppList, feedbackList, appts] = await Promise.all([
+        const [invRes, suppRes, feedbackRes, apptsRes] = await Promise.allSettled([
           inventoryApi.getInventory(),
           supplierApi.getSuppliers(),
           feedbackApi.getFeedbacks(),
           appointmentApi.getAppointments(),
         ]);
-        setInventoryItems(invList);
-        setSuppliers(suppList);
-        setFeedbacks(feedbackList);
-        setAppointments(appts);
+        if (invRes.status === 'fulfilled' && invRes.value) setInventoryItems(invRes.value);
+        if (suppRes.status === 'fulfilled' && suppRes.value) setSuppliers(suppRes.value);
+        if (feedbackRes.status === 'fulfilled' && feedbackRes.value) setFeedbacks(feedbackRes.value);
+        if (apptsRes.status === 'fulfilled' && apptsRes.value) setAppointments(apptsRes.value);
       } catch (e) {
         console.error(e);
       } finally {
@@ -51,11 +51,11 @@ export const ManagerDashboard = () => {
     loadManagerData();
   }, []);
 
-  const totalInventoryCount = inventoryItems.length;
-  const lowStockCount = inventoryItems.filter(
+  const totalInventoryCount = (inventoryItems || []).length;
+  const lowStockCount = (inventoryItems || []).filter(
     (i) => i.currentStock > 0 && i.currentStock <= i.minStockThreshold
   ).length;
-  const outOfStockCount = inventoryItems.filter((i) => i.currentStock === 0).length;
+  const outOfStockCount = (inventoryItems || []).filter((i) => i.currentStock === 0).length;
 
   return (
     <div style={{ color: '#1F2937' }}>

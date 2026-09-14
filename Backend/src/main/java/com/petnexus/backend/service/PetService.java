@@ -112,12 +112,12 @@ public class PetService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pet not found with ID: " + petId));
 
         if (pet.getOwner() != null) {
-            SecurityUtils.enforceOwnershipOrRole(pet.getOwner().getUserId(), UserRole.Admin, UserRole.ClinicManager, UserRole.ClinicStaff);
+            SecurityUtils.enforceOwnershipOrRole(pet.getOwner().getUserId(), UserRole.Admin, UserRole.ClinicManager, UserRole.ClinicStaff, UserRole.Veterinarian);
         }
 
         if (request.getOwnerId() != null && !request.getOwnerId().trim().isEmpty()) {
             // Only non-owners (e.g. Admin) can change ownership
-            SecurityUtils.enforceOwnershipOrRole(null, UserRole.Admin, UserRole.ClinicManager, UserRole.ClinicStaff);
+            SecurityUtils.enforceOwnershipOrRole(null, UserRole.Admin, UserRole.ClinicManager, UserRole.ClinicStaff, UserRole.Veterinarian);
 
             if (pet.getOwner() == null || !request.getOwnerId().equals(pet.getOwner().getUserId())) {
                 User newOwner = userRepository.findByUserId(request.getOwnerId().trim())
@@ -162,6 +162,24 @@ public class PetService {
 
     @Transactional(readOnly = true)
     public List<VaccinationResponse> getVaccinations(String petId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser != null && currentUser.getRole() == UserRole.PetOwner) {
+            if (petId != null && !petId.trim().isEmpty()) {
+                Pet pet = petRepository.findByPetId(petId.trim())
+                        .orElseThrow(() -> new ResourceNotFoundException("Pet not found with ID: " + petId));
+                if (pet.getOwner() != null) {
+                    SecurityUtils.enforceOwnershipOrRole(pet.getOwner().getUserId());
+                }
+                return vaccinationRepository.findByPet_PetId(petId.trim()).stream()
+                        .map(VaccinationResponse::from)
+                        .collect(Collectors.toList());
+            } else {
+                return vaccinationRepository.findByPet_Owner_UserId(currentUser.getUserId()).stream()
+                        .map(VaccinationResponse::from)
+                        .collect(Collectors.toList());
+            }
+        }
+
         if (petId != null && !petId.trim().isEmpty()) {
             Pet pet = petRepository.findByPetId(petId.trim())
                     .orElseThrow(() -> new ResourceNotFoundException("Pet not found with ID: " + petId));

@@ -5,6 +5,7 @@ import { adoptionApi } from '../../api/adoptionApi';
 import { StatCard } from '../../components/common/StatCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Card } from '../../components/common/Card';
+import { PublishListingModal } from '../../components/common/PublishListingModal';
 import {
   Activity,
   PlusCircle,
@@ -14,6 +15,8 @@ import {
   Heart,
   ArrowRight,
   ShieldAlert,
+  Globe,
+  Sparkles,
 } from 'lucide-react';
 
 export const RescueDashboard = () => {
@@ -21,18 +24,20 @@ export const RescueDashboard = () => {
   const [applications, setApplications] = useState([]);
   const [fosters, setFosters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCaseForListing, setSelectedCaseForListing] = useState(null);
+  const [isListingModalOpen, setIsListingModalOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [caseList, appList, fosterList] = await Promise.all([
+        const [caseRes, appRes, fosterRes] = await Promise.allSettled([
           rescueApi.getRescueCases(),
           adoptionApi.getAdoptionApplications(),
           rescueApi.getFosterRecords(),
         ]);
-        setCases(caseList);
-        setApplications(appList);
-        setFosters(fosterList);
+        if (caseRes.status === 'fulfilled' && caseRes.value) setCases(caseRes.value);
+        if (appRes.status === 'fulfilled' && appRes.value) setApplications(appRes.value);
+        if (fosterRes.status === 'fulfilled' && fosterRes.value) setFosters(fosterRes.value);
       } catch (e) {
         console.error(e);
       } finally {
@@ -42,12 +47,15 @@ export const RescueDashboard = () => {
     loadData();
   }, []);
 
-  const inTreatmentCount = cases.filter((c) => c.status === 'InTreatment').length;
-  const inFosterCount = cases.filter((c) => c.status === 'InFoster').length;
-  const readyAdoptionCount = cases.filter((c) => c.status === 'ReadyForAdoption').length;
-  const pendingReviewApps = applications.filter(
+  const inTreatmentCount = (cases || []).filter((c) => c.status === 'InTreatment').length;
+  const inFosterCount = (cases || []).filter((c) => c.status === 'InFoster').length;
+  const readyAdoptionCount = (cases || []).filter((c) => c.status === 'ReadyForAdoption').length;
+  const pendingReviewApps = (applications || []).filter(
     (a) => a.status === 'Submitted' || a.status === 'UnderReview'
   ).length;
+  const awaitingAdoptionListing = (cases || []).filter(
+    (c) => (c.status === 'ReadyForAdoption' || c.status === 'InFoster') && !c.isPublishedForAdoption
+  );
 
   return (
     <div>
@@ -120,6 +128,76 @@ export const RescueDashboard = () => {
         />
       </div>
 
+      {/* Ready for Adoption Listing Queue — received from Pet Care Provider / In Foster */}
+      {awaitingAdoptionListing.length > 0 && (
+        <div
+          style={{
+            backgroundColor: 'rgba(231, 111, 81, 0.08)',
+            border: '1.5px solid rgba(231, 111, 81, 0.35)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '1.5rem',
+            marginBottom: '2rem',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Sparkles size={20} color="var(--accent)" />
+              <h3 className="font-bold" style={{ color: 'var(--accent)' }}>
+                Companions Ready for Public Adoption Listing ({awaitingAdoptionListing.length})
+              </h3>
+            </div>
+            <Link to="/rescue/listings" className="text-xs text-primary font-semibold flex items-center gap-1">
+              Manage All Listings <ArrowRight size={14} />
+            </Link>
+          </div>
+          <p className="text-xs text-muted mb-4">
+            These companions have received full veterinary clearance and pet care provider rehabilitation. Publish their adoption listings to activate public visibility in the Adoptable Pets Gallery.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+            {awaitingAdoptionListing.map((rc) => (
+              <div
+                key={rc.caseId}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid rgba(231, 111, 81, 0.25)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={rc.coverPhotoUrl}
+                    alt={rc.temporaryName}
+                    style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', objectFit: 'cover' }}
+                  />
+                  <div>
+                    <h4 className="text-sm font-bold text-main">{rc.temporaryName}</h4>
+                    <p className="text-xs text-muted">{rc.species} • {rc.breed}</p>
+                    <StatusBadge status={rc.status} />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-accent btn-sm flex items-center gap-1"
+                  onClick={() => {
+                    setSelectedCaseForListing(rc);
+                    setIsListingModalOpen(true);
+                  }}
+                >
+                  <Heart size={13} fill="#FFFFFF" /> List for Adoption
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recent Cases & Application Reviews */}
       <div className="grid-2">
         {/* Active Rescue Cases */}
@@ -163,6 +241,22 @@ export const RescueDashboard = () => {
 
                 <div className="flex items-center gap-2">
                   <StatusBadge status={c.status} />
+                  {(c.status === 'ReadyForAdoption' || c.status === 'InFoster') && !c.isPublishedForAdoption ? (
+                    <button
+                      type="button"
+                      className="btn btn-accent btn-sm flex items-center gap-1"
+                      onClick={() => {
+                        setSelectedCaseForListing(c);
+                        setIsListingModalOpen(true);
+                      }}
+                    >
+                      <Heart size={12} fill="#FFFFFF" /> List for Adoption
+                    </button>
+                  ) : c.isPublishedForAdoption ? (
+                    <span className="badge badge-success text-xs flex items-center gap-1">
+                      <Globe size={11} /> Live Listing
+                    </span>
+                  ) : null}
                   <Link to={`/rescue/cases/${c.caseId}`} className="btn btn-secondary btn-sm">
                     Timeline
                   </Link>
@@ -214,6 +308,18 @@ export const RescueDashboard = () => {
           </div>
         </Card>
       </div>
+
+      <PublishListingModal
+        isOpen={isListingModalOpen}
+        onClose={() => {
+          setIsListingModalOpen(false);
+          setSelectedCaseForListing(null);
+        }}
+        rescueCase={selectedCaseForListing}
+        onSuccess={() => {
+          loadData();
+        }}
+      />
     </div>
   );
 };

@@ -28,6 +28,9 @@ public class EmailServiceImpl implements EmailService {
     @Value("${petnexus.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
+    @Value("${spring.mail.host:}")
+    private String mailHost;
+
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -42,24 +45,42 @@ public class EmailServiceImpl implements EmailService {
     public void sendVerificationEmail(String toEmail, String token) {
         String verificationLink = frontendUrl + "/verify-email?token=" + token;
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail : "noreply@petnexus.local";
-        message.setFrom(sender);
-        message.setTo(toEmail);
-        message.setSubject("PetNexus — Verify Your Email Address");
-        message.setText(
-                "Hello,\n\n" +
-                "Thank you for registering with PetNexus Veterinary & Rescue Clinic.\n\n" +
-                "Please verify your email address by clicking the link below:\n\n" +
-                verificationLink + "\n\n" +
-                "After verification, your account will be submitted for administrator approval.\n" +
-                "You will be able to log in once the clinic team has reviewed and approved your account.\n\n" +
-                "If you did not register for PetNexus, please ignore this email.\n\n" +
-                "Regards,\n" +
-                "PetNexus Team"
-        );
+        // If SMTP credentials or host are unconfigured or pointing to localhost/unauthenticated server,
+        // simulate email dispatch cleanly for local development without connection delays or errors.
+        boolean isSmtpConfigured = fromEmail != null && !fromEmail.isBlank() &&
+                mailHost != null && !mailHost.isBlank() && !"localhost".equalsIgnoreCase(mailHost);
 
-        mailSender.send(message);
-        log.info("Verification email successfully dispatched to: {}", toEmail);
+        if (!isSmtpConfigured) {
+            log.info("================================================================================");
+            log.info("[PETNEXUS DEV EMAIL SERVICE] SMTP unconfigured or in local dev mode.");
+            log.info("Recipient : {}", toEmail);
+            log.info("Subject   : PetNexus — Verify Your Email Address");
+            log.info("Link      : {}", verificationLink);
+            log.info("================================================================================");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject("PetNexus — Verify Your Email Address");
+            message.setText(
+                    "Hello,\n\n" +
+                    "Thank you for registering with PetNexus Veterinary & Rescue Clinic.\n\n" +
+                    "Please verify your email address by clicking the link below:\n\n" +
+                    verificationLink + "\n\n" +
+                    "After verification, your account will be submitted for administrator approval.\n" +
+                    "You will be able to log in once the clinic team has reviewed and approved your account.\n\n" +
+                    "If you did not register for PetNexus, please ignore this email.\n\n" +
+                    "Regards,\n" +
+                    "PetNexus Team"
+            );
+
+            mailSender.send(message);
+            log.info("Verification email successfully dispatched to: {}", toEmail);
+        } catch (Exception ex) {
+            log.warn("[PETNEXUS EMAIL WARNING] Failed to send email via SMTP ({}); link: {}", ex.getMessage(), verificationLink);
+        }
     }
 }

@@ -26,7 +26,7 @@ public class FeedbackController {
 
     private final FeedbackService feedbackService;
 
-    @PreAuthorize("hasAnyRole('Admin', 'ClinicManager', 'PetOwner')")
+    @PreAuthorize("hasAnyRole('Admin', 'ClinicManager', 'PetOwner', 'PetCareProvider', 'Veterinarian', 'ClinicStaff')")
     @GetMapping
     public ResponseEntity<List<FeedbackResponse>> getFeedbacks(
             @RequestParam(required = false) String userId,
@@ -36,7 +36,7 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackService.getFeedbacks(userId, cat));
     }
 
-    @PreAuthorize("hasAnyRole('Admin', 'ClinicManager', 'PetOwner')")
+    @PreAuthorize("hasAnyRole('Admin', 'ClinicManager', 'PetOwner', 'PetCareProvider', 'Veterinarian', 'ClinicStaff')")
     @GetMapping("/{feedbackId}")
     public ResponseEntity<FeedbackResponse> getFeedbackById(@PathVariable String feedbackId) {
         return ResponseEntity.ok(feedbackService.getFeedbackById(feedbackId));
@@ -49,7 +49,7 @@ public class FeedbackController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasRole('ClinicManager')")
+    @PreAuthorize("hasAnyRole('ClinicManager', 'Admin')")
     @PostMapping("/{feedbackId}/respond")
     public ResponseEntity<FeedbackResponse> respondToFeedback(
             @PathVariable String feedbackId,

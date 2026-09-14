@@ -130,7 +130,7 @@ public class AdoptionApplicationService {
 
         AdoptionApplicationStatus status;
         try {
-            status = AdoptionApplicationStatus.valueOf(request.getStatus().trim());
+            status = AdoptionApplicationStatus.fromString(request.getStatus().trim());
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid application status: " + request.getStatus());
         }
@@ -163,7 +163,7 @@ public class AdoptionApplicationService {
                 app.getPetName(),
                 app.getApplicantName(),
                 app.getApplicantPhone(),
-                app.getStatus() != null ? app.getStatus().name() : null,
+                app.getStatus() != null ? app.getStatus().getValue() : null,
                 app.getReviewNotes(),
                 app.getReviewedBy() != null ? app.getReviewedBy().getUserId() : null,
                 app.getCreatedAt(),

@@ -31,6 +31,18 @@ public class ServicePackageBooking {
     @Column(nullable = false, length = 20)
     private String ownerId; // references User.userId
 
+    @Column(length = 100)
+    private String ownerName;
+
+    @Column(length = 20)
+    private String petId;
+
+    @Column(length = 100)
+    private String petName;
+
+    @Column(length = 50)
+    private String packageId;
+
     @Column(nullable = false, length = 100)
     private String packageName;
 

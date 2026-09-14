@@ -75,8 +75,8 @@ export const RegisterPage = () => {
       };
 
       await register(payload);
-      showToast('Registration Submitted', 'Please verify your email address to proceed.', 'success');
-      navigate(`/email-pending?email=${encodeURIComponent(formData.email)}`);
+      showToast('Registration Submitted', 'Your account has been submitted for administrator review.', 'success');
+      navigate(`/pending-approval?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
       showToast('Registration Failed', err.message || 'Could not register', 'error');
     } finally {

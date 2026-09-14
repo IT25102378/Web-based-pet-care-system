@@ -43,7 +43,7 @@ export const OwnerDashboard = () => {
     const loadData = async () => {
       if (!currentUser) return;
       try {
-        const [userPets, userAppts, userApps, userPkgs, userVacs, userConsults, userRx] = await Promise.all([
+        const [petsRes, apptsRes, appsRes, pkgsRes, vacsRes, consultsRes, rxRes] = await Promise.allSettled([
           petApi.getPets(currentUser.userId),
           appointmentApi.getAppointments({ ownerId: currentUser.userId }),
           adoptionApi.getAdoptionApplications({ applicantId: currentUser.userId }),
@@ -52,6 +52,15 @@ export const OwnerDashboard = () => {
           consultationApi.getConsultations(),
           prescriptionApi.getPrescriptions(),
         ]);
+
+        const userPets = petsRes.status === 'fulfilled' && Array.isArray(petsRes.value) ? petsRes.value : [];
+        const userAppts = apptsRes.status === 'fulfilled' && Array.isArray(apptsRes.value) ? apptsRes.value : [];
+        const userApps = appsRes.status === 'fulfilled' && Array.isArray(appsRes.value) ? appsRes.value : [];
+        const userPkgs = pkgsRes.status === 'fulfilled' && Array.isArray(pkgsRes.value) ? pkgsRes.value : [];
+        const userVacs = vacsRes.status === 'fulfilled' && Array.isArray(vacsRes.value) ? vacsRes.value : [];
+        const userConsults = consultsRes.status === 'fulfilled' && Array.isArray(consultsRes.value) ? consultsRes.value : [];
+        const userRx = rxRes.status === 'fulfilled' && Array.isArray(rxRes.value) ? rxRes.value : [];
+
         const ownedPetIds = new Set(userPets.map((p) => p.petId));
         setPets(userPets);
         setAppointments(userAppts);

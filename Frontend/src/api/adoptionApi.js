@@ -198,5 +198,30 @@ export const adoptionApi = {
     }
     await simulateDelay();
     return mockStore.getTable('adoptionRecords');
+  },
+
+  async getPublishedListings() {
+    if (!USE_MOCK_DATA) return await apiFetch('/adoptions/listings');
+    return mockStore.getTable('rescueCases').filter((c) => c.isPublishedForAdoption);
+  },
+
+  async createListing(caseId) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch('/adoptions/listings', {
+        method: 'POST',
+        body: JSON.stringify({ caseId }),
+      });
+    }
+    return { listingId: `ADL-${Date.now()}`, caseId, isPublishedForAdoption: true };
+  },
+
+  async updateListing(caseId, isPublishedForAdoption) {
+    if (!USE_MOCK_DATA) {
+      return await apiFetch(`/adoptions/listings/${caseId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ isPublishedForAdoption }),
+      });
+    }
+    return { caseId, isPublishedForAdoption };
   }
 };

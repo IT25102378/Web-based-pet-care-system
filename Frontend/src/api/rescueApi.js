@@ -5,10 +5,10 @@ import { RescueCaseStatus } from '../types';
 // State machine: each status maps to the set of statuses it may legally transition TO.
 // A status not listed here can go to itself (no-op) but not to an unlisted target.
 const ALLOWED_TRANSITIONS = {
-  [RescueCaseStatus.INTAKE]:             [RescueCaseStatus.IN_TREATMENT, RescueCaseStatus.CLOSED],
+  [RescueCaseStatus.INTAKE]:             [RescueCaseStatus.IN_TREATMENT, RescueCaseStatus.READY_FOR_FOSTER, RescueCaseStatus.CLOSED],
   [RescueCaseStatus.IN_TREATMENT]:       [RescueCaseStatus.READY_FOR_FOSTER, RescueCaseStatus.CLOSED],
-  [RescueCaseStatus.READY_FOR_FOSTER]:   [RescueCaseStatus.IN_FOSTER, RescueCaseStatus.CLOSED],
-  [RescueCaseStatus.IN_FOSTER]:          [RescueCaseStatus.READY_FOR_ADOPTION, RescueCaseStatus.CLOSED],
+  [RescueCaseStatus.READY_FOR_FOSTER]:   [RescueCaseStatus.IN_FOSTER, RescueCaseStatus.READY_FOR_ADOPTION, RescueCaseStatus.IN_TREATMENT, RescueCaseStatus.CLOSED],
+  [RescueCaseStatus.IN_FOSTER]:          [RescueCaseStatus.READY_FOR_ADOPTION, RescueCaseStatus.READY_FOR_FOSTER, RescueCaseStatus.CLOSED],
   [RescueCaseStatus.READY_FOR_ADOPTION]: [RescueCaseStatus.ADOPTED, RescueCaseStatus.IN_FOSTER, RescueCaseStatus.CLOSED],
   [RescueCaseStatus.ADOPTED]:            [RescueCaseStatus.CLOSED],
   [RescueCaseStatus.CLOSED]:             [],

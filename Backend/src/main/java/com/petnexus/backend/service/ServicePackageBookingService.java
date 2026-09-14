@@ -35,6 +35,10 @@ public class ServicePackageBookingService {
         ServicePackageBooking booking = ServicePackageBooking.builder()
                 .bookingId("PKB-" + System.currentTimeMillis())
                 .ownerId(request.getOwnerId())
+                .ownerName(request.getOwnerName())
+                .petId(request.getPetId())
+                .petName(request.getPetName())
+                .packageId(request.getPackageId())
                 .packageName(request.getPackageName())
                 .totalSessions(request.getTotalSessions())
                 .completedSessions(0)
@@ -80,6 +84,10 @@ public class ServicePackageBookingService {
         ServicePackageBookingResponseDto dto = new ServicePackageBookingResponseDto();
         dto.setBookingId(booking.getBookingId());
         dto.setOwnerId(booking.getOwnerId());
+        dto.setOwnerName(booking.getOwnerName());
+        dto.setPetId(booking.getPetId());
+        dto.setPetName(booking.getPetName());
+        dto.setPackageId(booking.getPackageId());
         dto.setPackageName(booking.getPackageName());
         dto.setTotalSessions(booking.getTotalSessions());
         dto.setCompletedSessions(booking.getCompletedSessions());

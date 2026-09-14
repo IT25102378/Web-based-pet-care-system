@@ -23,6 +23,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByStatus(UserStatus status);
 
+    List<User> findByStatusIn(List<UserStatus> statuses);
+
     List<User> findByRole(com.petnexus.backend.enums.UserRole role);
 
     boolean existsByEmail(String email);

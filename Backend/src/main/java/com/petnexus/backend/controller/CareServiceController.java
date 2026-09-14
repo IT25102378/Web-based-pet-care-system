@@ -20,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping({"/care-services", "/packages"})
-@org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
 public class CareServiceController {
 
     private final CareServiceService careServiceService;

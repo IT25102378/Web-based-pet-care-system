@@ -60,6 +60,13 @@ public class SecurityConfig {
                     "/auth/approval-login", "/api/auth/approval-login",
                     "/error", "/api/error"
                 ).permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                    "/rescue/cases", "/rescue/cases/**", "/api/rescue/cases", "/api/rescue/cases/**",
+                    "/care-services", "/care-services/**", "/api/care-services", "/api/care-services/**",
+                    "/packages", "/packages/**", "/api/packages", "/api/packages/**",
+                    "/adoptions/listings", "/adoptions/listings/**", "/api/adoptions/listings", "/api/adoptions/listings/**",
+                    "/adoption/listings", "/adoption/listings/**", "/api/adoption/listings", "/api/adoption/listings/**"
+                ).permitAll()
                 .requestMatchers("/auth/me", "/api/auth/me").authenticated()
                 .anyRequest().authenticated()
             )

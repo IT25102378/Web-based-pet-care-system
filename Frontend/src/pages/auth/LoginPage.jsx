@@ -222,8 +222,6 @@ export const LoginPage = () => {
               {loading ? 'Authenticating...' : 'Sign In'}
             </button>
           </form>
-
-
         </div>
 
         <p className="text-center text-sm text-muted mt-4">

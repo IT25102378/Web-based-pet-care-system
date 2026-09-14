@@ -33,15 +33,14 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(String userId) {
-        com.petnexus.backend.security.SecurityUtils.getCurrentUser();
         User current = com.petnexus.backend.security.SecurityUtils.getCurrentUser();
         String effectiveUserId = userId;
-        if (effectiveUserId != null && !effectiveUserId.isBlank()) {
+        if (current != null && current.getRole() != UserRole.Admin) {
+            effectiveUserId = current.getUserId();
+        } else if (effectiveUserId != null && !effectiveUserId.isBlank()) {
             if (current != null) {
                 com.petnexus.backend.security.SecurityUtils.enforceOwnershipOrRole(effectiveUserId.trim(), UserRole.Admin);
             }
-        } else if (current != null && current.getRole() != UserRole.Admin) {
-            effectiveUserId = current.getUserId();
         }
 
         final String targetUserId = effectiveUserId;

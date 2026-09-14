@@ -125,7 +125,7 @@ export const authApi = {
       phone:            registrationData.phone || '',
       address:          registrationData.address || '',
       role:             registrationData.role,
-      status:           UserStatus.PENDING_EMAIL,
+      status:           UserStatus.PENDING_APPROVAL,
       avatarUrl:        `https://api.dicebear.com/7.x/bottts/svg?seed=${newUserId}`,
       licenseNumber:    registrationData.licenseNumber || null,
       staffId:          registrationData.staffId || null,

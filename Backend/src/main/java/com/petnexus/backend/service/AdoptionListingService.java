@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Year;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,22 +45,37 @@ public class AdoptionListingService {
         // Validate rescue case
         RescueCase rescueCase = rescueCaseRepository.findByCaseId(request.getCaseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Rescue case not found: " + request.getCaseId()));
-        if (!"ReadyForAdoption".equals(rescueCase.getStatus())) {
-            throw new BadRequestException("Only rescue cases marked ReadyForAdoption can be listed for adoption.");
+        
+        // If received from provider in InFoster, allow transitioning to ReadyForAdoption
+        if ("InFoster".equals(rescueCase.getStatus())) {
+            rescueCase.setStatus("ReadyForAdoption");
+        } else if (!"ReadyForAdoption".equals(rescueCase.getStatus())) {
+            throw new BadRequestException("Only rescue cases marked InFoster or ReadyForAdoption can be listed for adoption.");
         }
-        // Ensure no duplicate listing
-        if (listingRepository.findByRescueCase_CaseId(request.getCaseId()).isPresent()) {
-            throw new BadRequestException("An adoption listing already exists for this rescue case.");
+
+        // If listing already exists, publish it directly rather than throwing an error
+        Optional<AdoptionListing> existing = listingRepository.findByRescueCase_CaseId(request.getCaseId());
+        if (existing.isPresent()) {
+            AdoptionListing listing = existing.get();
+            listing.setPublishedForAdoption(true);
+            rescueCase.setIsPublishedForAdoption(true);
+            rescueCaseRepository.save(rescueCase);
+            listingRepository.save(listing);
+            return toDto(listing);
         }
+
         // Generate ID
         int year = Year.now().getValue();
         long count = listingRepository.count() + 1;
         String listingId = String.format("ADL-%d-%03d", year, count);
+
         // Create listing
         AdoptionListing listing = new AdoptionListing();
         listing.setListingId(listingId);
         listing.setRescueCase(rescueCase);
-        listing.setPublishedForAdoption(false);
+        listing.setPublishedForAdoption(true);
+        rescueCase.setIsPublishedForAdoption(true);
+        rescueCaseRepository.save(rescueCase);
         listingRepository.save(listing);
         return toDto(listing);
     }
@@ -68,13 +84,20 @@ public class AdoptionListingService {
     public AdoptionListingDto updateListing(String caseId, UpdateListingRequest request) {
         AdoptionListing listing = listingRepository.findByRescueCase_CaseId(caseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Adoption listing not found for caseId: " + caseId));
-        // Publish toggle only allowed if case is ReadyForAdoption
+        RescueCase rescueCase = listing.getRescueCase();
+
+        // If publishing, ensure status is ReadyForAdoption
         if (request.isPublishedForAdoption()) {
-            RescueCase rescueCase = listing.getRescueCase();
-            if (!"ReadyForAdoption".equals(rescueCase.getStatus())) {
+            if ("InFoster".equals(rescueCase.getStatus())) {
+                rescueCase.setStatus("ReadyForAdoption");
+            } else if (!"ReadyForAdoption".equals(rescueCase.getStatus())) {
                 throw new BadRequestException("Only ReadyForAdoption cases can be published.");
             }
+            rescueCase.setIsPublishedForAdoption(true);
+        } else {
+            rescueCase.setIsPublishedForAdoption(false);
         }
+        rescueCaseRepository.save(rescueCase);
         listing.setPublishedForAdoption(request.isPublishedForAdoption());
         listingRepository.save(listing);
         return toDto(listing);

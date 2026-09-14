@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { petApi } from '../../api/petApi';
 import { consultationApi } from '../../api/consultationApi';
 import { rescueApi } from '../../api/rescueApi';
+import { careServiceApi } from '../../api/careServiceApi';
 import { RescueCaseStatus } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -30,7 +31,7 @@ export const AddConsultationPage = () => {
     treatmentPlan: '',
     followUpDate: '',
     rescueMedicalSummary: '',
-    passToProvider: false,
+    passToProvider: true,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -47,22 +48,24 @@ export const AddConsultationPage = () => {
         petApi.getPets(),
         rescueApi.getRescueCases()
       ]);
-      const awaitingRescues = rescueList.filter(r => r.status === RescueCaseStatus.IN_TREATMENT);
-      setPets(petList);
+      const awaitingRescues = (rescueList || []).filter(
+        r => r.status === RescueCaseStatus.IN_TREATMENT || r.status === RescueCaseStatus.INTAKE
+      );
+      setPets(petList || []);
       setRescueCases(awaitingRescues);
 
       // If opened via Dashboard "Start Assessment" button, auto-select the rescue case
       const inboundCaseId = location.state?.rescueCaseId;
       if (inboundCaseId) {
-        const matchedCase = awaitingRescues.find(r => r.caseId === inboundCaseId);
+        const matchedCase = awaitingRescues.find(r => r.caseId === inboundCaseId) || (rescueList || []).find(r => r.caseId === inboundCaseId);
         if (matchedCase) {
           setPatientType('rescue');
           setSelectedPetId(matchedCase.caseId);
-          setFormData(prev => ({ ...prev, rescueMedicalSummary: matchedCase.medicalSummary || '', passToProvider: false }));
-        } else if (petList.length > 0) {
+          setFormData(prev => ({ ...prev, rescueMedicalSummary: matchedCase.medicalSummary || '', passToProvider: true }));
+        } else if (petList && petList.length > 0) {
           setSelectedPetId(petList[0].petId);
         }
-      } else if (petList.length > 0) {
+      } else if (petList && petList.length > 0) {
         setSelectedPetId(petList[0].petId);
       }
     };
@@ -77,7 +80,7 @@ export const AddConsultationPage = () => {
     } else if (type === 'rescue' && rescueCases.length > 0) {
       const firstRescue = rescueCases[0];
       setSelectedPetId(firstRescue.caseId);
-      setFormData(prev => ({ ...prev, rescueMedicalSummary: firstRescue.medicalSummary || '', passToProvider: false }));
+      setFormData(prev => ({ ...prev, rescueMedicalSummary: firstRescue.medicalSummary || '', passToProvider: true }));
     } else {
       setSelectedPetId('');
     }
@@ -95,7 +98,7 @@ export const AddConsultationPage = () => {
 
     try {
       if (patientType === 'rescue') {
-        const rescueObj = rescueCases.find((r) => r.caseId === selectedPetId);
+        const rescueObj = rescueCases.find((r) => r.caseId === selectedPetId) || (await rescueApi.getRescueCaseById(selectedPetId));
         created = await consultationApi.createConsultation({
           ...formData,
           caseId: selectedPetId,
@@ -105,12 +108,14 @@ export const AddConsultationPage = () => {
           vetName: currentUser?.fullName || 'Dr. Michael Chen, DVM',
         });
 
-        if (formData.passToProvider || formData.rescueMedicalSummary !== rescueObj?.medicalSummary) {
-          const updates = {};
-          if (formData.passToProvider) updates.status = RescueCaseStatus.READY_FOR_FOSTER;
-          if (formData.rescueMedicalSummary) updates.medicalSummary = formData.rescueMedicalSummary;
-          await rescueApi.updateRescueCase(selectedPetId, updates);
+        // Always update rescue case status: if passToProvider is true -> ReadyForFoster, otherwise InTreatment
+        const updates = {
+          status: formData.passToProvider ? RescueCaseStatus.READY_FOR_FOSTER : RescueCaseStatus.IN_TREATMENT,
+        };
+        if (formData.rescueMedicalSummary) {
+          updates.medicalSummary = formData.rescueMedicalSummary;
         }
+        await rescueApi.updateRescueCase(selectedPetId, updates);
 
         await rescueApi.addProgressLog(selectedPetId, {
           title: formData.passToProvider 
@@ -120,6 +125,27 @@ export const AddConsultationPage = () => {
           notes: formData.treatmentPlan,
           loggedBy: currentUser?.fullName || 'Dr. Michael Chen, DVM',
         });
+
+        if (formData.passToProvider) {
+          try {
+            await careServiceApi.createServiceLog({
+              caseId: selectedPetId,
+              petName: rescueObj ? rescueObj.temporaryName : 'Rescue Patient',
+              serviceType: 'Rehabilitation & Foster Care Intake',
+              intakeCondition: formData.objectiveFindings || 'Veterinary Assessment Cleared',
+              servicesPerformed: formData.treatmentPlan || 'Foster intake grooming and health evaluation',
+              notes: formData.rescueMedicalSummary || formData.assessmentDiagnosis || '',
+              ownerName: 'Rescue Organization',
+              providerId: 'USR-004',
+              providerName: 'Dilshan Bandara',
+              status: 'CheckedIn',
+              returnToRescue: true,
+              serviceDate: new Date().toISOString().split('T')[0],
+            });
+          } catch (logErr) {
+            console.warn('Care service log creation notice:', logErr?.message);
+          }
+        }
       } else {
         const petObj = pets.find((p) => p.petId === selectedPetId);
         created = await consultationApi.createConsultation({
@@ -132,9 +158,15 @@ export const AddConsultationPage = () => {
         });
       }
 
-      showToast('Consultation Recorded', `Clinical SOAP report saved (Ref: ${created.consultationId})`, 'success');
-      // Rescue consultations return to schedule; owned-pet consultations proceed to prescriptions
-      navigate(patientType === 'rescue' ? '/vet/schedule' : '/vet/prescriptions');
+      showToast(
+        'Consultation Recorded',
+        patientType === 'rescue' && formData.passToProvider
+          ? `Clinical report saved. ${selectedPetId} passed to Pet Care Provider.`
+          : `Clinical SOAP report saved (Ref: ${created.consultationId})`,
+        'success'
+      );
+      // Rescue consultations return to dashboard; owned-pet consultations proceed to prescriptions
+      navigate(patientType === 'rescue' ? '/vet/dashboard' : '/vet/prescriptions');
     } catch (err) {
       showToast('Error', err.message, 'error');
     } finally {

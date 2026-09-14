@@ -87,61 +87,181 @@ public class DataInitializer implements CommandLineRunner {
     private final NotificationRepository notificationRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private User seedOrUpdateUser(
+            String defaultUserId,
+            String email,
+            String fullName,
+            String phone,
+            String address,
+            UserRole role,
+            String avatarUrl,
+            String emergencyContact,
+            String licenseNumber,
+            String specialization,
+            String staffId,
+            String managerCode,
+            String badgeNumber,
+            String serviceSpecialty
+    ) {
+        return userRepository.findByEmail(email)
+                .map(existing -> {
+                    boolean modified = false;
+                    if (existing.getStatus() != UserStatus.Active) {
+                        existing.setStatus(UserStatus.Active);
+                        modified = true;
+                    }
+                    if (existing.getRole() != role) {
+                        existing.setRole(role);
+                        modified = true;
+                    }
+                    if (fullName != null && !fullName.equals(existing.getFullName())) {
+                        existing.setFullName(fullName);
+                        modified = true;
+                    }
+                    if (phone != null && existing.getPhone() == null) {
+                        existing.setPhone(phone);
+                        modified = true;
+                    }
+                    if (address != null && existing.getAddress() == null) {
+                        existing.setAddress(address);
+                        modified = true;
+                    }
+                    if (avatarUrl != null && existing.getAvatarUrl() == null) {
+                        existing.setAvatarUrl(avatarUrl);
+                        modified = true;
+                    }
+                    if (emergencyContact != null && existing.getEmergencyContact() == null) {
+                        existing.setEmergencyContact(emergencyContact);
+                        modified = true;
+                    }
+                    if (licenseNumber != null && existing.getLicenseNumber() == null) {
+                        existing.setLicenseNumber(licenseNumber);
+                        modified = true;
+                    }
+                    if (specialization != null && existing.getSpecialization() == null) {
+                        existing.setSpecialization(specialization);
+                        modified = true;
+                    }
+                    if (staffId != null && existing.getStaffId() == null) {
+                        existing.setStaffId(staffId);
+                        modified = true;
+                    }
+                    if (managerCode != null && existing.getManagerCode() == null) {
+                        existing.setManagerCode(managerCode);
+                        modified = true;
+                    }
+                    if (badgeNumber != null && existing.getBadgeNumber() == null) {
+                        existing.setBadgeNumber(badgeNumber);
+                        modified = true;
+                    }
+                    if (serviceSpecialty != null && existing.getServiceSpecialty() == null) {
+                        existing.setServiceSpecialty(serviceSpecialty);
+                        modified = true;
+                    }
+                    if (!passwordEncoder.matches("password123", existing.getPasswordHash())) {
+                        existing.setPasswordHash(passwordEncoder.encode("password123"));
+                        modified = true;
+                    }
+                    if (modified) {
+                        userRepository.save(existing);
+                        log.info("Updated stakeholder account ({}) to Active with valid credentials", email);
+                    }
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    String finalUserId = defaultUserId;
+                    if (userRepository.existsByUserId(finalUserId)) {
+                        finalUserId = "USR-" + (System.currentTimeMillis() % 100000);
+                    }
+                    User newUser = User.builder()
+                            .userId(finalUserId)
+                            .email(email)
+                            .passwordHash(passwordEncoder.encode("password123"))
+                            .fullName(fullName)
+                            .phone(phone)
+                            .address(address)
+                            .role(role)
+                            .status(UserStatus.Active)
+                            .avatarUrl(avatarUrl)
+                            .emergencyContact(emergencyContact)
+                            .licenseNumber(licenseNumber)
+                            .specialization(specialization)
+                            .staffId(staffId)
+                            .managerCode(managerCode)
+                            .badgeNumber(badgeNumber)
+                            .serviceSpecialty(serviceSpecialty)
+                            .build();
+                    User saved = userRepository.save(newUser);
+                    log.info("Seeded stakeholder account: {} ({}) with role {}", finalUserId, email, role);
+                    return saved;
+                });
+    }
+
     @Override
     public void run(String... args) {
-        // Ensure default System Administrator exists
-        userRepository.findByEmail("admin@petnexus.com")
-                .ifPresentOrElse(
-                        existingAdmin -> {
-                            boolean modified = false;
-                            if (existingAdmin.getRole() != UserRole.Admin) {
-                                existingAdmin.setRole(UserRole.Admin);
-                                modified = true;
-                            }
-                            if (existingAdmin.getStatus() != UserStatus.Active) {
-                                existingAdmin.setStatus(UserStatus.Active);
-                                modified = true;
-                            }
-                            if (modified) {
-                                userRepository.save(existingAdmin);
-                                log.info("Updated existing admin account to role=Admin, status=Active");
-                            }
-                        },
-                        () -> {
-                            String adminUserId = userRepository.existsByUserId("USR-003") ? "USR-007" : "USR-003";
-                            User newAdmin = User.builder()
-                                    .userId(adminUserId)
-                                    .email("admin@petnexus.com")
-                                    .passwordHash(passwordEncoder.encode("password123"))
-                                    .fullName("PetNexus System Administrator")
-                                    .phone("+94 11 234 5678")
-                                    .address("Pet Nexus Clinic, Colombo 05")
-                                    .role(UserRole.Admin)
-                                    .status(UserStatus.Active)
-                                    .avatarUrl("https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80")
-                                    .build();
-                            userRepository.save(newAdmin);
-                            log.info("Seeded default System Administrator account ({} - admin@petnexus.com)", adminUserId);
-                        }
-                );
+        // Ensure all 6 core Stakeholders and System Administrator exist with Active status and password123
+        User admin = seedOrUpdateUser(
+                "USR-007", "admin@petnexus.com", "PetNexus System Administrator",
+                "+94 11 234 5678", "Pet Nexus Clinic, Colombo 05", UserRole.Admin,
+                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, null, null, null
+        );
 
-        // Ensure default owner exists
-        User owner = userRepository.findByEmail("owner@petnexus.com")
-                .orElseGet(() -> {
-                    User newOwner = User.builder()
-                            .userId("USR-002")
-                            .email("owner@petnexus.com")
-                            .passwordHash(passwordEncoder.encode("password123"))
-                            .fullName("Kavindu Perera")
-                            .phone("+94 77 123 4567")
-                            .address("45/3 Galle Road, Colombo 06")
-                            .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
-                            .role(UserRole.PetOwner)
-                            .status(UserStatus.Active)
-                            .avatarUrl("https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80")
-                            .build();
-                    return userRepository.save(newOwner);
-                });
+        User owner = seedOrUpdateUser(
+                "USR-001", "owner@petnexus.com", "Kavindu Perera",
+                "+94 77 123 4567", "45/3 Galle Road, Colombo 06", UserRole.PetOwner,
+                "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+                "Thilini Perera (Spouse) - +94 77 234 9988", null, null, null, null, null, null
+        );
+
+        User vet = seedOrUpdateUser(
+                "USR-002", "vet@petnexus.com", "Dr. Sachini Wijesinghe, BVSc",
+                "+94 71 234 5678", "12 Wijerama Mawatha, Colombo 07", UserRole.Veterinarian,
+                "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80",
+                null, "SLVC-VET-2019-0842", "Small Animal Surgery & Internal Medicine", null, null, null, null
+        );
+
+        User staff = seedOrUpdateUser(
+                "USR-003", "staff@petnexus.com", "Nethmi Fernando",
+                "+94 76 345 6789", "22 Nawala Road, Rajagiriya", UserRole.ClinicStaff,
+                "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+                null, null, null, "STF-104", null, null, null
+        );
+
+        User providerUser = seedOrUpdateUser(
+                "USR-004", "provider@petnexus.com", "Dilshan Bandara",
+                "+94 70 456 7890", "78 High Level Road, Maharagama", UserRole.PetCareProvider,
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, null, null, "Master Groomer & Canine Behaviour Specialist"
+        );
+
+        User manager = seedOrUpdateUser(
+                "USR-005", "manager@petnexus.com", "Himashi Gunawardena",
+                "+94 77 567 8901", "5/1 Gregory's Road, Colombo 07", UserRole.ClinicManager,
+                "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, "MGR-001", null, null
+        );
+
+        User rescueUser = seedOrUpdateUser(
+                "USR-006", "rescue@petnexus.com", "Shehan Rajapaksha",
+                "+94 71 678 9012", "33 Baseline Road, Nugegoda", UserRole.RescueOfficer,
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, null, "RSC-882", null
+        );
+
+        // Migrate any accounts currently in PendingEmailVerification directly to PendingApproval (admin verification)
+        List<User> pendingEmailUsers = userRepository.findByStatus(UserStatus.PendingEmailVerification);
+        if (!pendingEmailUsers.isEmpty()) {
+            for (User u : pendingEmailUsers) {
+                u.setStatus(UserStatus.PendingApproval);
+                if (u.getApprovalToken() == null) {
+                    u.setApprovalToken(java.util.UUID.randomUUID().toString());
+                }
+                userRepository.save(u);
+                log.info("Migrated legacy account {} ({}) from PendingEmailVerification -> PendingApproval (admin verification)",
+                        u.getUserId(), u.getEmail());
+            }
+        }
 
         // Seed Pets
         if (petRepository.count() == 0) {
@@ -808,22 +928,6 @@ public class DataInitializer implements CommandLineRunner {
         // ------------------------------------------------------------------
         // Phase 7: Care Provider, Services, Package Bookings, Service Logs
         // ------------------------------------------------------------------
-        User providerUser = userRepository.findByEmail("provider@petnexus.com")
-                .orElseGet(() -> {
-                    User newProvider = User.builder()
-                            .userId("USR-004")
-                            .email("provider@petnexus.com")
-                            .passwordHash(passwordEncoder.encode("password123"))
-                            .fullName("Dilshan Bandara")
-                            .phone("+94 77 987 6543")
-                            .address("12 Station Road, Bambalapitiya, Colombo 04")
-                            .role(UserRole.PetCareProvider)
-                            .status(UserStatus.Active)
-                            .avatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80")
-                            .build();
-                    return userRepository.save(newProvider);
-                });
-
         careProviderRepository.findByProviderId("PRV-001")
                 .orElseGet(() -> {
                     CareProvider newPrv = CareProvider.builder()
@@ -1068,22 +1172,6 @@ public class DataInitializer implements CommandLineRunner {
         // ------------------------------------------------------------------
         // Phase 9: Feedback & Notifications
         // ------------------------------------------------------------------
-        User manager = userRepository.findByEmail("manager@petnexus.com")
-                .orElseGet(() -> {
-                    User newManager = User.builder()
-                            .userId("USR-005")
-                            .email("manager@petnexus.com")
-                            .passwordHash(passwordEncoder.encode("password123"))
-                            .fullName("Himashi Gunawardena")
-                            .phone("+94 77 567 8901")
-                            .address("5/1 Gregory's Road, Colombo 07")
-                            .role(UserRole.ClinicManager)
-                            .status(UserStatus.Active)
-                            .avatarUrl("https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80")
-                            .build();
-                    return userRepository.save(newManager);
-                });
-
         if (feedbackRepository.count() == 0) {
             log.info("Seeding initial Feedback into PetNexus database...");
             feedbackRepository.save(Feedback.builder()

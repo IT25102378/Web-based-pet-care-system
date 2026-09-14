@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { appointmentApi } from '../../api/appointmentApi';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
 import {
   Clock,
@@ -13,7 +14,9 @@ import {
   AlertCircle,
   Filter,
   Eye,
-  CheckSquare
+  CheckSquare,
+  UserX,
+  XCircle,
 } from 'lucide-react';
 import { AppointmentDetailsModal } from '../../components/common/AppointmentDetailsModal';
 
@@ -23,6 +26,10 @@ export const AppointmentQueuePage = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedApptForView, setSelectedApptForView] = useState(null);
+
+  // Cancellation Modal
+  const [cancelModalAppt, setCancelModalAppt] = useState(null);
+  const [cancelReason, setCancelReason] = useState('Patient did not show up / requested cancellation');
 
   const loadQueue = async () => {
     try {
@@ -59,6 +66,31 @@ export const AppointmentQueuePage = () => {
     }
   };
 
+  const handleMarkNoShow = async (appointmentId) => {
+    try {
+      await appointmentApi.updateStatus(appointmentId, 'NoShow');
+      showToast('Patient Marked No-Show', 'Appointment marked as missed/no-show.', 'info');
+      loadQueue();
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  };
+
+  const handleCancelSubmit = async (e) => {
+    e.preventDefault();
+    if (!cancelModalAppt) return;
+    try {
+      await appointmentApi.cancelAppointment(cancelModalAppt.appointmentId, {
+        cancellationReason: cancelReason || 'Cancelled at front desk',
+      });
+      showToast('Appointment Cancelled', `Appointment #${cancelModalAppt.appointmentId} has been cancelled.`, 'info');
+      setCancelModalAppt(null);
+      loadQueue();
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  };
+
   const filteredAppointments = appointments.filter((a) => {
     if (statusFilter === 'ALL') return true;
     return a.status === statusFilter;
@@ -82,7 +114,9 @@ export const AppointmentQueuePage = () => {
       render: (row) => (
         <div>
           <div className="font-bold text-sm" style={{ color: '#12304A' }}>{row.petName}</div>
-          <div className="text-xs text-muted">Owner: {row.ownerName} ({row.ownerPhone})</div>
+          <div className="text-xs text-muted">
+            Owner: {row.ownerName} {row.ownerPhone ? `(${row.ownerPhone})` : ''}
+          </div>
         </div>
       ),
     },
@@ -118,7 +152,7 @@ export const AppointmentQueuePage = () => {
       header: 'Queue Progression Actions',
       key: 'actions',
       render: (row) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -142,15 +176,35 @@ export const AppointmentQueuePage = () => {
           )}
 
           {(row.status === 'Scheduled' || row.status === 'Confirmed') && (
-            <button
-              type="button"
-              className="btn btn-warning btn-sm"
-              style={{ backgroundColor: '#F4A261', color: '#FFFFFF', fontWeight: 600 }}
-              onClick={() => handleUpdateStatus(row.appointmentId, 'CheckedIn')}
-              title="Mark Patient Checked-In to Lobby"
-            >
-              <UserCheck size={14} /> Check-In
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn-warning btn-sm"
+                style={{ backgroundColor: '#F4A261', color: '#FFFFFF', fontWeight: 600 }}
+                onClick={() => handleUpdateStatus(row.appointmentId, 'CheckedIn')}
+                title="Mark Patient Checked-In to Lobby"
+              >
+                <UserCheck size={14} /> Check-In
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm text-muted"
+                onClick={() => handleMarkNoShow(row.appointmentId)}
+                title="Mark Patient No-Show"
+                style={{ fontSize: '0.75rem', padding: '0.3rem 0.5rem' }}
+              >
+                <UserX size={13} /> No-Show
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm text-danger"
+                onClick={() => setCancelModalAppt(row)}
+                title="Cancel Appointment"
+                style={{ color: '#EF4444', fontSize: '0.75rem', padding: '0.3rem 0.5rem' }}
+              >
+                <XCircle size={13} /> Cancel
+              </button>
+            </>
           )}
 
           {row.status === 'CheckedIn' && (
@@ -182,6 +236,14 @@ export const AppointmentQueuePage = () => {
               <CheckCircle size={14} color="#10B981" /> Discharged
             </span>
           )}
+
+          {row.status === 'NoShow' && (
+            <span className="badge badge-secondary text-xs">Missed Visit</span>
+          )}
+
+          {row.status === 'Cancelled' && (
+            <span className="badge badge-secondary text-xs">Cancelled</span>
+          )}
         </div>
       ),
     },
@@ -196,7 +258,7 @@ export const AppointmentQueuePage = () => {
           </span>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>Front Desk Appointment Queue</h2>
           <p className="text-sm text-muted">
-            Track waiting patients, update lobby check-in tokens, and direct patients into veterinary exam rooms.
+            Track waiting patients, update lobby check-in tokens, manage no-shows, and direct patients into veterinary exam rooms.
           </p>
         </div>
 
@@ -214,7 +276,9 @@ export const AppointmentQueuePage = () => {
             <option value="Scheduled">Scheduled</option>
             <option value="CheckedIn">Checked-In (Lobby)</option>
             <option value="InRoom">In Exam Room</option>
-            <option value="Completed">Completed</option>
+            <option value="Completed">Completed / Discharged</option>
+            <option value="NoShow">No-Show</option>
+            <option value="Cancelled">Cancelled</option>
           </select>
         </div>
       </div>
@@ -230,6 +294,39 @@ export const AppointmentQueuePage = () => {
         appointment={selectedApptForView}
         onClose={() => setSelectedApptForView(null)}
       />
+
+      {/* Cancellation Dialog Modal */}
+      {cancelModalAppt && (
+        <Modal
+          isOpen={!!cancelModalAppt}
+          onClose={() => setCancelModalAppt(null)}
+          title="Cancel Appointment"
+          subtitle={`Cancelling visit for ${cancelModalAppt.petName} (Client: ${cancelModalAppt.ownerName})`}
+          size="sm"
+        >
+          <form onSubmit={handleCancelSubmit}>
+            <div className="form-group">
+              <label className="form-label">Cancellation Reason <span className="required">*</span></label>
+              <textarea
+                className="form-textarea"
+                rows={3}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <button type="button" className="btn btn-secondary" onClick={() => setCancelModalAppt(null)}>
+                Keep Appointment
+              </button>
+              <button type="submit" className="btn btn-danger" style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}>
+                <XCircle size={16} /> Confirm Cancellation
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

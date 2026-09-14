@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { CheckCircle2, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 
 export const VerifyEmailPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [verified, setVerified] = useState(false);
   const [message, setMessage] = useState('');

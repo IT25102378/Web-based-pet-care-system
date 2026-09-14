@@ -3,17 +3,21 @@ import { Link } from 'react-router-dom';
 import { rescueApi } from '../../api/rescueApi';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { FolderOpen, PlusCircle, Eye, Heart, Home } from 'lucide-react';
+import { PublishListingModal } from '../../components/common/PublishListingModal';
+import { FolderOpen, PlusCircle, Eye, Heart, Home, Globe } from 'lucide-react';
 
 export const RescueCaseListPage = () => {
   const [cases, setCases] = useState([]);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [selectedCaseForListing, setSelectedCaseForListing] = useState(null);
+  const [isListingModalOpen, setIsListingModalOpen] = useState(false);
+
+  const fetchCases = async () => {
+    const list = await rescueApi.getRescueCases();
+    setCases(list);
+  };
 
   useEffect(() => {
-    const fetchCases = async () => {
-      const list = await rescueApi.getRescueCases();
-      setCases(list);
-    };
     fetchCases();
   }, []);
 
@@ -90,9 +94,24 @@ export const RescueCaseListPage = () => {
       header: 'Actions',
       key: 'actions',
       render: (row) => (
-        <Link to={`/rescue/cases/${row.caseId}`} className="btn btn-secondary btn-sm">
-          <Eye size={14} /> Case Timeline
-        </Link>
+        <div className="flex items-center gap-2">
+          {(row.status === 'ReadyForAdoption' || row.status === 'InFoster') && !row.isPublishedForAdoption && (
+            <button
+              type="button"
+              className="btn btn-accent btn-sm flex items-center gap-1"
+              style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
+              onClick={() => {
+                setSelectedCaseForListing(row);
+                setIsListingModalOpen(true);
+              }}
+            >
+              <Heart size={12} fill="#FFFFFF" /> List for Adoption
+            </button>
+          )}
+          <Link to={`/rescue/cases/${row.caseId}`} className="btn btn-secondary btn-sm">
+            <Eye size={14} /> Case Timeline
+          </Link>
+        </div>
       ),
     },
   ];
@@ -134,6 +153,18 @@ export const RescueCaseListPage = () => {
         data={filtered}
         searchPlaceholder="Search cases by name, case number, location, breed..."
         emptyMessage="No rescue cases found matching filters."
+      />
+
+      <PublishListingModal
+        isOpen={isListingModalOpen}
+        onClose={() => {
+          setIsListingModalOpen(false);
+          setSelectedCaseForListing(null);
+        }}
+        rescueCase={selectedCaseForListing}
+        onSuccess={() => {
+          fetchCases();
+        }}
       />
     </div>
   );

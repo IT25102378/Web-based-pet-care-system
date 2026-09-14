@@ -29,14 +29,14 @@ export const AdminDashboard = () => {
 
   const loadAdminData = async () => {
     try {
-      const [allUsers, pending, history] = await Promise.all([
+      const [usersRes, pendingRes, historyRes] = await Promise.allSettled([
         userApi.getUsers(),
         userApi.getPendingApprovals(),
         userApi.getApprovalHistory(),
       ]);
-      setUsers(allUsers);
-      setPendingApplicants(pending);
-      setApprovalHistory(history);
+      if (usersRes.status === 'fulfilled' && usersRes.value) setUsers(usersRes.value);
+      if (pendingRes.status === 'fulfilled' && pendingRes.value) setPendingApplicants(pendingRes.value);
+      if (historyRes.status === 'fulfilled' && historyRes.value) setApprovalHistory(historyRes.value);
     } catch (e) {
       console.error('Error loading admin dashboard metrics:', e);
     } finally {

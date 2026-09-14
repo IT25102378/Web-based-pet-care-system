@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Mail, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ShieldCheck, ArrowRight } from 'lucide-react';
 
 export const EmailPendingPage = () => {
   const location = useLocation();
@@ -32,36 +32,36 @@ export const EmailPendingPage = () => {
             marginBottom: '1.5rem',
           }}
         >
-          <Mail size={32} />
+          <ShieldCheck size={32} />
         </div>
 
-        <h2>Verify Your Email Address</h2>
+        <h2>Pending Administrator Verification</h2>
         <p style={{ marginTop: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-          We sent a verification link to <strong className="text-main">{email}</strong>. Please check your inbox and click the link to confirm your email address.
+          Your registration for <strong className="text-main">{email}</strong> has been transferred directly to the Clinic Administrator review queue.
         </p>
 
         <div
           style={{
-            backgroundColor: 'var(--amber-subtle)',
-            border: '1px solid rgba(244, 162, 97, 0.3)',
+            backgroundColor: 'var(--primary-subtle)',
+            border: '1px solid rgba(42, 140, 130, 0.2)',
             borderRadius: 'var(--radius-md)',
             padding: '1rem',
             margin: '2rem 0',
             textAlign: 'left',
           }}
         >
-          <p className="text-xs font-semibold" style={{ color: 'var(--status-warning-text)' }}>
-            DEMO SIMULATION TOOL:
+          <p className="text-xs font-semibold text-primary">
+            ADMINISTRATOR APPROVAL REQUIRED:
           </p>
-          <p className="text-xs mt-1" style={{ color: 'var(--status-warning-text)' }}>
-            Since this is running in client test mode, click the button below to simulate opening the link from your email:
+          <p className="text-xs mt-1 text-main">
+            Email verification is not required. You can track your approval status in real-time or wait for administrator activation.
           </p>
           <Link
-            to="/verify-email?token=demo-verification-token-9988"
-            className="btn btn-warning btn-sm mt-3"
+            to="/pending-approval"
+            className="btn btn-primary btn-sm mt-3"
             style={{ width: '100%', justifyContent: 'center' }}
           >
-            Simulate Clicking Email Verification Link <ArrowRight size={14} />
+            Go to Live Approval Waiting Room <ArrowRight size={14} />
           </Link>
         </div>
 

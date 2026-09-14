@@ -3,11 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { appointmentApi } from '../../api/appointmentApi';
 import { useToast } from '../../context/ToastContext';
 import { Card } from '../../components/common/Card';
-import { UserPlus, CheckCircle, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
+import { UserPlus, CheckCircle, Clock, AlertTriangle, ArrowRight, Stethoscope } from 'lucide-react';
 
 export const WalkInRegistrationPage = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  const vets = [
+    { vetId: 'USR-002', name: 'Dr. Sachini Wijesinghe, BVSc', title: 'Small Animal Surgery & Internal Medicine' },
+    { vetId: 'USR-008', name: 'Dr. Michael Chen, DVM', title: 'Emergency Care & Critical Triage' },
+    { vetId: 'USR-009', name: 'Dr. Amanda Ramirez, DVM', title: 'Feline Specialist & Dermatology' },
+  ];
 
   const [formData, setFormData] = useState({
     ownerName: '',
@@ -16,7 +22,8 @@ export const WalkInRegistrationPage = () => {
     species: 'Dog',
     breed: '',
     serviceType: 'Emergency / Triage',
-    vetName: 'Dr. Michael Chen, DVM',
+    vetName: 'Dr. Sachini Wijesinghe, BVSc',
+    vetId: 'USR-002',
     reason: '',
     symptoms: '',
     severity: 'Moderate',
@@ -27,20 +34,33 @@ export const WalkInRegistrationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.ownerName || !formData.petName || !formData.reason) {
-      showToast('Validation Error', 'Client name, pet name, and visit reason are required.', 'error');
+    if (!formData.ownerName || !formData.petName || !formData.reason || !formData.species) {
+      showToast('Validation Error', 'Client name, pet name, species, and visit reason are required.', 'error');
       return;
     }
 
     setSubmitting(true);
     try {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
       const created = await appointmentApi.registerWalkIn({
-        ...formData,
+        ownerName: formData.ownerName.trim(),
+        ownerPhone: formData.ownerPhone.trim(),
+        petName: formData.petName.trim(),
+        species: formData.species,
+        breed: formData.breed ? formData.breed.trim() : '',
+        serviceType: formData.serviceType,
+        vetName: formData.vetName,
+        vetId: formData.vetId,
+        reason: formData.reason.trim(),
+        symptoms: formData.symptoms ? formData.symptoms.trim() : '',
+        severity: formData.severity,
         petId: null,
         ownerId: null,
-        appointmentDate: new Date().toISOString().split('T')[0],
-        timeSlot: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        notes: `Walk-in severity marked: ${formData.severity}`,
+        appointmentDate: now.toISOString().split('T')[0],
+        timeSlot: timeStr,
+        notes: `Walk-in patient [${formData.severity}]. Registered at front desk.`,
       });
 
       setCreatedToken(created);
@@ -98,9 +118,11 @@ export const WalkInRegistrationPage = () => {
             {createdToken.tokenNumber}
           </div>
 
-          <p className="text-sm text-muted max-w-md mx-auto mb-6">
-            <strong>{createdToken.petName}</strong> has been placed in the waiting lobby queue for{' '}
-            <strong>{createdToken.vetName}</strong>.
+          <p className="text-sm text-muted max-w-md mx-auto mb-2">
+            <strong>{createdToken.petName}</strong> ({createdToken.species}{createdToken.breed ? ` • ${createdToken.breed}` : ''}) has been checked into the lobby.
+          </p>
+          <p className="text-xs font-semibold text-primary mb-6">
+            Assigned to: {createdToken.vetName}
           </p>
 
           <div className="flex items-center justify-center gap-3">
@@ -116,7 +138,8 @@ export const WalkInRegistrationPage = () => {
                   species: 'Dog',
                   breed: '',
                   serviceType: 'Emergency / Triage',
-                  vetName: 'Dr. Michael Chen, DVM',
+                  vetName: 'Dr. Sachini Wijesinghe, BVSc',
+                  vetId: 'USR-002',
                   reason: '',
                   symptoms: '',
                   severity: 'Moderate',
@@ -158,7 +181,7 @@ export const WalkInRegistrationPage = () => {
                   className="form-control"
                   value={formData.ownerPhone}
                   onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="e.g. +94 77 123 4567"
                 />
               </div>
             </div>
@@ -177,7 +200,24 @@ export const WalkInRegistrationPage = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Species & Breed</label>
+                <label className="form-label">Species <span className="required">*</span></label>
+                <select
+                  className="form-select"
+                  value={formData.species}
+                  onChange={(e) => setFormData({ ...formData, species: e.target.value })}
+                  required
+                >
+                  <option value="Dog">Dog</option>
+                  <option value="Cat">Cat</option>
+                  <option value="Bird">Bird</option>
+                  <option value="Rabbit">Rabbit</option>
+                  <option value="Reptile">Reptile</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Breed</label>
                 <input
                   type="text"
                   className="form-control"
@@ -189,6 +229,29 @@ export const WalkInRegistrationPage = () => {
             </div>
 
             <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Attending Veterinarian <span className="required">*</span></label>
+                <select
+                  className="form-select"
+                  value={formData.vetName}
+                  onChange={(e) => {
+                    const selected = vets.find((v) => v.name === e.target.value);
+                    setFormData({
+                      ...formData,
+                      vetName: e.target.value,
+                      vetId: selected ? selected.vetId : formData.vetId,
+                    });
+                  }}
+                  required
+                >
+                  {vets.map((v) => (
+                    <option key={v.vetId} value={v.name}>
+                      {v.name} ({v.title})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Visit Type</label>
                 <select
@@ -202,7 +265,9 @@ export const WalkInRegistrationPage = () => {
                   <option value="Prescription Refill Consultation">Prescription Refill Consultation</option>
                 </select>
               </div>
+            </div>
 
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Triage Severity</label>
                 <select
@@ -215,28 +280,28 @@ export const WalkInRegistrationPage = () => {
                   <option value="High (Acute Trauma / Respiratory)">High (Acute Trauma / Respiratory)</option>
                 </select>
               </div>
+
+              <div className="form-group">
+                <label className="form-label">Chief Complaint / Reason <span className="required">*</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.reason}
+                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                  placeholder="e.g. Limping on right paw after playing in garden"
+                  required
+                />
+              </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Chief Complaint / Reason <span className="required">*</span></label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.reason}
-                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                placeholder="e.g. Limping on right paw after playing in garden"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Observed Symptoms</label>
+              <label className="form-label">Observed Symptoms / Notes</label>
               <textarea
                 className="form-textarea"
                 rows={2}
                 value={formData.symptoms}
                 onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
-                placeholder="Pain upon palpation, swelling, lethargy..."
+                placeholder="Pain upon palpation, swelling, lethargy, fever..."
               />
             </div>
 
@@ -246,7 +311,7 @@ export const WalkInRegistrationPage = () => {
               style={{ backgroundColor: '#E76F51', color: '#FFFFFF', fontWeight: 800, width: '100%', marginTop: '1rem' }}
               disabled={submitting}
             >
-              Issue Walk-in Token & Add to Queue
+              <Stethoscope size={18} /> Issue Walk-in Token & Check-In Patient
             </button>
           </form>
         </div>
