@@ -5,6 +5,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
+import { AdoptionApplicationStatus } from '../../types';
 import {
   FileCheck,
   Check,
@@ -48,14 +49,14 @@ export const AdoptionReviewPage = () => {
     try {
       await adoptionApi.reviewApplication(selectedApp.applicationId, {
         status,
-        reviewNotes: reviewNotes || (status === 'Approved' ? 'Application criteria verified.' : 'Application declined.'),
+        reviewNotes: reviewNotes || (status === AdoptionApplicationStatus.APPROVED ? 'Application criteria verified.' : 'Application declined.'),
         reviewedBy: currentUser?.userId || 'USR-006',
       });
 
       showToast(
-        status === 'Approved' ? 'Adoption Approved!' : 'Application Declined',
+        status === AdoptionApplicationStatus.APPROVED ? 'Adoption Approved!' : 'Application Declined',
         `Decision recorded for ${selectedApp.applicantName} (${selectedApp.petName}).`,
-        status === 'Approved' ? 'success' : 'warning'
+        status === AdoptionApplicationStatus.APPROVED ? 'success' : 'warning'
       );
 
       setSelectedApp(null);
@@ -178,12 +179,12 @@ export const AdoptionReviewPage = () => {
                   Close
                 </button>
 
-                {selectedApp.status !== 'Approved' && (
+                {selectedApp.status !== AdoptionApplicationStatus.APPROVED && (
                   <>
                     <button
                       type="button"
                       className="btn btn-danger-outline"
-                      onClick={() => handleDecision('Rejected')}
+                      onClick={() => handleDecision(AdoptionApplicationStatus.REJECTED)}
                       disabled={submitting}
                     >
                       <X size={16} /> Decline Application
@@ -191,7 +192,7 @@ export const AdoptionReviewPage = () => {
                     <button
                       type="button"
                       className="btn btn-primary"
-                      onClick={() => handleDecision('Approved')}
+                      onClick={() => handleDecision(AdoptionApplicationStatus.APPROVED)}
                       disabled={submitting}
                     >
                       <Check size={16} /> Approve & Finalize Adoption

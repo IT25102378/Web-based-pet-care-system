@@ -130,7 +130,8 @@ public class AdoptionApplicationService {
 
         AdoptionApplicationStatus status;
         try {
-            status = AdoptionApplicationStatus.valueOf(request.getStatus().trim());
+            // fromJson accepts the value the frontend sends as well as the constant name.
+            status = AdoptionApplicationStatus.fromJson(request.getStatus().trim());
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid application status: " + request.getStatus());
         }

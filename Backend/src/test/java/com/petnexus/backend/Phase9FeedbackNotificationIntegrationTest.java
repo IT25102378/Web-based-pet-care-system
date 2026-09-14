@@ -35,9 +35,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class Phase9FeedbackNotificationIntegrationTest {
 
     @Autowired

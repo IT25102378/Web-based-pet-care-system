@@ -5,7 +5,6 @@
 // Backend contract:
 //   POST /api/auth/login         → { user: UserResponse, token: String }
 //   POST /api/auth/register      → { message, userId, email }
-//   GET  /api/auth/verify-email  → { message, userId, status }
 //   POST /api/auth/forgot-password → { message }
 //   POST /api/auth/reset-password  → { message }
 //   GET  /api/auth/me            → UserResponse  (Bearer JWT required)
@@ -17,6 +16,7 @@
 import { USE_MOCK_DATA, simulateDelay, publicFetch, apiFetch, tokenStore } from './client';
 import { mockStore } from '../data/mockStore';
 import { UserStatus } from '../types';
+import { DEFAULT_AVATAR_URL } from '../utils/constants';
 
 // ---------------------------------------------------------------------------
 // Helpers to detect account-status errors from backend message strings
@@ -24,8 +24,6 @@ import { UserStatus } from '../types';
 // ---------------------------------------------------------------------------
 function detectStatusCode(message = '') {
   const m = message.toLowerCase();
-  if (m.includes('pending email') || m.includes('verify your email'))
-    return 'PENDING_EMAIL';
   if (m.includes('pending approval') || m.includes('awaiting') || m.includes('admin review'))
     return 'PENDING_APPROVAL';
   if (m.includes('rejected'))
@@ -78,13 +76,6 @@ export const authApi = {
       err.user = user;
       throw err;
     }
-    if (user.status === UserStatus.PENDING_EMAIL) {
-      const err = new Error('Please verify your email address before logging in.');
-      err.code = 'PENDING_EMAIL';
-      err.user = user;
-      throw err;
-    }
-
     const token = `mock-token-${user.userId}-${Date.now()}`;
     tokenStore.setToken(token);
     tokenStore.setUser(user);
@@ -125,8 +116,8 @@ export const authApi = {
       phone:            registrationData.phone || '',
       address:          registrationData.address || '',
       role:             registrationData.role,
-      status:           UserStatus.PENDING_EMAIL,
-      avatarUrl:        `https://api.dicebear.com/7.x/bottts/svg?seed=${newUserId}`,
+      status:           UserStatus.PENDING_APPROVAL,
+      avatarUrl:        DEFAULT_AVATAR_URL,
       licenseNumber:    registrationData.licenseNumber || null,
       staffId:          registrationData.staffId || null,
       managerCode:      registrationData.managerCode || null,
@@ -153,49 +144,23 @@ export const authApi = {
       mockStore.insertItem('userVerificationDocuments', doc);
     }
 
+    // Tell the administrator straight away — the application is already in the queue.
+    mockStore.insertItem('notifications', {
+      notificationId: `NTF-${Date.now()}`,
+      userId:  'USR-007',
+      type:    'Approval',
+      title:   'New Applicant Awaiting Approval',
+      message: `${newUser.fullName} (${newUser.role}) registered and is awaiting account approval.`,
+      isRead:  false,
+      link:    '/admin/approvals',
+      createdAt: new Date().toISOString(),
+    });
+
     return {
-      message: 'Registration successful! Please check your email to verify your account.',
+      message: 'Registration successful! Your application is now pending administrator review.',
       userId: newUserId,
       email:  newUser.email,
       approvalToken: mockApprovalToken,
-    };
-  },
-
-  // ---------------------------------------------------------------------------
-  // VERIFY EMAIL
-  // ---------------------------------------------------------------------------
-  async verifyEmail(token) {
-    if (!USE_MOCK_DATA) {
-      const res = await publicFetch(`/auth/verify-email?token=${encodeURIComponent(token)}`);
-      if (res?.approvalToken) {
-        localStorage.setItem('petnexus_approval_token', res.approvalToken);
-      }
-      return res;
-    }
-
-    // ── Mock mode ──────────────────────────────────────────────────────────
-    await simulateDelay(300);
-    const users       = mockStore.getTable('users');
-    const pendingUser = users.find((u) => u.status === UserStatus.PENDING_EMAIL) || users[users.length - 1];
-    if (pendingUser) {
-      mockStore.updateItem('users', 'userId', pendingUser.userId, { status: UserStatus.PENDING_APPROVAL });
-      mockStore.insertItem('notifications', {
-        notificationId: `NTF-${Date.now()}`,
-        userId:  'USR-007',
-        type:    'Approval',
-        title:   'New Applicant Verification Pending',
-        message: `${pendingUser.fullName} (${pendingUser.role}) verified their email and is awaiting account approval.`,
-        isRead:  false,
-        link:    '/admin/approvals',
-        createdAt: new Date().toISOString(),
-      });
-    }
-    const approvalToken = localStorage.getItem('petnexus_approval_token') || 'mock-approval-token';
-    return {
-      success: true,
-      message: 'Email verified successfully! Your application is now pending admin review.',
-      user:    pendingUser,
-      approvalToken,
     };
   },
 
@@ -207,17 +172,24 @@ export const authApi = {
       return await publicFetch(`/auth/approval-status?token=${encodeURIComponent(token)}`);
     }
 
+    // ── Mock mode ──────────────────────────────────────────────────────────
+    // Look the applicant up by their own approval token, the same way the
+    // backend does with findByApprovalToken.
     await simulateDelay(200);
     const users = mockStore.getTable('users');
-    const user = users.find((u) => u.status === UserStatus.ACTIVE) || users[users.length - 1];
+    const user  = users.find((u) => u.approvalToken === token);
+    if (!user) {
+      throw new Error('Invalid or expired approval token.');
+    }
+
     return {
-      userId: user?.userId || 'USR-001',
-      fullName: user?.fullName || 'Mock Applicant',
-      email: user?.email || 'user@example.com',
-      role: user?.role || 'PetOwner',
-      status: user?.status || UserStatus.PENDING_APPROVAL,
-      approved: user?.status === UserStatus.ACTIVE,
-      rejectionReason: user?.rejectionReason || null,
+      userId: user.userId,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      approved: user.status === UserStatus.ACTIVE,
+      rejectionReason: user.rejectionReason || null,
     };
   },
 
@@ -237,12 +209,24 @@ export const authApi = {
       return { user, token };
     }
 
+    // ── Mock mode ──────────────────────────────────────────────────────────
+    // Only the applicant holding this approval token may be signed in, and only
+    // once their account has actually been approved.
     await simulateDelay(200);
     const users = mockStore.getTable('users');
-    const user = users.find((u) => u.status === UserStatus.ACTIVE) || users[users.length - 1];
+    const user  = users.find((u) => u.approvalToken === approvalToken);
+    if (!user) {
+      throw new Error('Invalid or expired approval token.');
+    }
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new Error(`Account is not active yet. Current status: ${user.status}`);
+    }
+
     const token = `mock-token-${user.userId}-${Date.now()}`;
     tokenStore.setToken(token);
     tokenStore.setUser(user);
+    // Invalidate the approval token once it has been exchanged for a session.
+    mockStore.updateItem('users', 'userId', user.userId, { approvalToken: null });
     localStorage.removeItem('petnexus_approval_token');
     return { user, token };
   },
@@ -257,8 +241,21 @@ export const authApi = {
         body: JSON.stringify({ email }),
       });
     }
+
+    // ── Mock mode ──────────────────────────────────────────────────────────
     await simulateDelay(300);
-    return { message: 'If an account exists with this email, a password reset link has been dispatched.' };
+    const users = mockStore.getTable('users');
+    const user  = users.find((u) => u.email.toLowerCase() === email.toLowerCase().trim());
+    if (!user) {
+      return { message: 'No account exists with this email address.', resetToken: null };
+    }
+
+    const resetToken = `mock-reset-${user.userId}-${Date.now()}`;
+    mockStore.updateItem('users', 'userId', user.userId, { passwordResetToken: resetToken });
+    return {
+      message: 'Your password reset link is ready. Continue to choose a new password.',
+      resetToken,
+    };
   },
 
   // ---------------------------------------------------------------------------
@@ -271,7 +268,19 @@ export const authApi = {
         body: JSON.stringify({ token, newPassword }),
       });
     }
+
+    // ── Mock mode ──────────────────────────────────────────────────────────
     await simulateDelay(300);
+    const users = mockStore.getTable('users');
+    const user  = users.find((u) => u.passwordResetToken === token);
+    if (!user) {
+      throw new Error('Invalid or expired password reset token.');
+    }
+
+    mockStore.updateItem('users', 'userId', user.userId, {
+      password: newPassword,
+      passwordResetToken: null,
+    });
     return { message: 'Your password has been successfully reset. You may now log in.' };
   },
 

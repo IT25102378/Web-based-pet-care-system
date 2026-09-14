@@ -1,5 +1,6 @@
 package com.petnexus.backend.controller;
 
+import jakarta.validation.Valid;
 import com.petnexus.backend.dto.CareServiceLogCreateRequest;
 import com.petnexus.backend.dto.CareServiceLogResponseDto;
 import com.petnexus.backend.dto.ServiceLogStatusUpdateRequest;
@@ -53,7 +54,7 @@ public class CareServiceLogController {
     // ------------------- CREATE -------------------
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('PetCareProvider', 'ClinicManager', 'Admin')")
     @PostMapping
-    public ResponseEntity<CareServiceLogResponseDto> createLog(@RequestBody CareServiceLogCreateRequest request) {
+    public ResponseEntity<CareServiceLogResponseDto> createLog(@Valid @RequestBody CareServiceLogCreateRequest request) {
         CareServiceLogResponseDto created = logService.createLog(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -63,7 +64,7 @@ public class CareServiceLogController {
     @PutMapping("/{serviceLogId}/status")
     public ResponseEntity<CareServiceLogResponseDto> updateStatus(
             @PathVariable String serviceLogId,
-            @RequestBody ServiceLogStatusUpdateRequest request) {
+            @Valid @RequestBody ServiceLogStatusUpdateRequest request) {
         ServiceStatus newStatus = request.getStatus();
         String notes = request.getNotes();
         CareServiceLogResponseDto updated = logService.updateStatus(serviceLogId, newStatus, notes);

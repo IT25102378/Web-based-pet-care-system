@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Phase 10A — Authentication & JWT Security Integration Tests.
@@ -44,6 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test")
 public class Phase10AAuthenticationSecurityIntegrationTest {
 
     @Autowired
@@ -110,7 +112,8 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
                         .rejectionReason("Invalid medical license")
                         .build()));
 
-        // Pending Email Verification User
+        // Legacy account saved before registration became immediate.
+        // It still carries the old PendingEmailVerification status.
         pendingEmailUser = userRepository.findByEmail("pending.email@petnexus.com")
                 .orElseGet(() -> userRepository.save(User.builder()
                         .userId("USR-SEC-04")
@@ -119,7 +122,6 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
                         .fullName("Pending Email User")
                         .role(UserRole.PetOwner)
                         .status(UserStatus.PendingEmailVerification)
-                        .emailVerificationToken(UUID.randomUUID().toString())
                         .build()));
 
         // Pending Admin Approval User
@@ -231,10 +233,10 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
     }
 
     // -------------------------------------------------------------
-    // 6. Pending Email Verification User Rejected
+    // 6. Legacy Pending Email Verification User Rejected
     // -------------------------------------------------------------
     @Test
-    @DisplayName("6. Pending Email Verification User Rejected (400)")
+    @DisplayName("6. Legacy Pending Email Verification User Rejected (400)")
     void testPendingEmailUserRejected() throws Exception {
         LoginRequest loginRequest = new LoginRequest("pending.email@petnexus.com", "Password123!");
 
@@ -243,7 +245,8 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Please verify your email address before logging in."));
+                .andExpect(jsonPath("$.message")
+                        .value("Your account is awaiting admin approval. You will be able to sign in once it is reviewed."));
     }
 
     // -------------------------------------------------------------
@@ -259,7 +262,8 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Your account is awaiting admin approval. You will receive an email once reviewed."));
+                .andExpect(jsonPath("$.message")
+                        .value("Your account is awaiting admin approval. You will be able to sign in once it is reviewed."));
     }
 
     // -------------------------------------------------------------
@@ -411,19 +415,19 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
     }
 
     // -------------------------------------------------------------
-    // 17. Public Email Verification Remains Accessible without Token
+    // 17. Removed Email Verification Endpoint Is No Longer Public
     // -------------------------------------------------------------
     @Test
-    @DisplayName("17. Public /api/auth/verify-email Accessible without Token")
-    void testPublicVerifyEmailAccessibleWithoutToken() throws Exception {
-        String token = pendingEmailUser.getEmailVerificationToken();
-        assertNotNull(token);
+    @DisplayName("17. Removed /api/auth/verify-email Is No Longer Public")
+    void testRemovedVerifyEmailEndpointIsNotPublic() throws Exception {
+        // The endpoint was deleted along with the email verification step, and its
+        // permitAll() entry was removed, so an anonymous request is now rejected.
+        assertEquals(UserStatus.PendingEmailVerification, pendingEmailUser.getStatus());
 
         mockMvc.perform(get("/api/auth/verify-email")
                         .servletPath("/api")
-                        .param("token", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.verified").value(true));
+                        .param("token", "any-token"))
+                .andExpect(status().isUnauthorized());
     }
 
     // -------------------------------------------------------------

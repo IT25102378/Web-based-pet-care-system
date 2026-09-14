@@ -13,8 +13,6 @@ import { AboutContactPage } from './pages/public/AboutContactPage';
 // Auth Pages
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
-import { EmailPendingPage } from './pages/auth/EmailPendingPage';
-import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { PendingApprovalPage } from './pages/auth/PendingApprovalPage';
@@ -87,8 +85,6 @@ export function App() {
         {/* Auth Flows */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/email-pending" element={<EmailPendingPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/pending-approval" element={<PendingApprovalPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

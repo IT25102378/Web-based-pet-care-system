@@ -15,6 +15,7 @@ import {
   ArrowRight,
   ShieldAlert,
 } from 'lucide-react';
+import { AdoptionApplicationStatus } from '../../types';
 
 export const RescueDashboard = () => {
   const [cases, setCases] = useState([]);
@@ -46,7 +47,8 @@ export const RescueDashboard = () => {
   const inFosterCount = cases.filter((c) => c.status === 'InFoster').length;
   const readyAdoptionCount = cases.filter((c) => c.status === 'ReadyForAdoption').length;
   const pendingReviewApps = applications.filter(
-    (a) => a.status === 'Submitted' || a.status === 'UnderReview'
+    (a) => a.status === AdoptionApplicationStatus.SUBMITTED
+      || a.status === AdoptionApplicationStatus.UNDER_REVIEW
   ).length;
 
   return (

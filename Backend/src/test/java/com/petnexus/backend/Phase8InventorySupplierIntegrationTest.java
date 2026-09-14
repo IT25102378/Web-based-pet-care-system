@@ -29,10 +29,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @Transactional
 @WithMockUser(username = "admin", roles = {"Admin"})
+@ActiveProfiles("test")
 public class Phase8InventorySupplierIntegrationTest {
 
     @Autowired

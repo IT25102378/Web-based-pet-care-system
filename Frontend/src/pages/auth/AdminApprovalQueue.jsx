@@ -16,6 +16,7 @@ import {
   User,
   Clock,
 } from 'lucide-react';
+import { DEFAULT_AVATAR_URL } from '../../utils/constants';
 
 export const AdminApprovalQueue = () => {
   const { showToast } = useToast();
@@ -88,7 +89,7 @@ export const AdminApprovalQueue = () => {
       render: (row) => (
         <div className="flex items-center gap-3">
           <img
-            src={row.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${row.userId}`}
+            src={row.avatarUrl || DEFAULT_AVATAR_URL}
             alt={row.fullName}
             style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
           />

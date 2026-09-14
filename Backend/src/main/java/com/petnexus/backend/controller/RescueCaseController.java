@@ -1,5 +1,6 @@
 package com.petnexus.backend.controller;
 
+import jakarta.validation.Valid;
 import com.petnexus.backend.dto.*;
 import com.petnexus.backend.service.RescueCaseService;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,7 @@ public class RescueCaseController {
     // -----------------------------------------------------------------------
     @PreAuthorize("hasAnyRole('RescueOfficer', 'Admin')")
     @PostMapping
-    public ResponseEntity<RescueCaseResponse> createRescueCase(@RequestBody RescueCaseRequest request) {
+    public ResponseEntity<RescueCaseResponse> createRescueCase(@Valid @RequestBody RescueCaseRequest request) {
         RescueCaseResponse created = rescueCaseService.createRescueCase(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -63,7 +64,7 @@ public class RescueCaseController {
     @PutMapping("/{caseId}")
     public ResponseEntity<RescueCaseResponse> updateRescueCase(
             @PathVariable String caseId,
-            @RequestBody RescueCaseRequest request) {
+            @Valid @RequestBody RescueCaseRequest request) {
 
         return ResponseEntity.ok(rescueCaseService.updateRescueCase(caseId, request));
     }
@@ -76,7 +77,7 @@ public class RescueCaseController {
     @PostMapping("/{caseId}/logs")
     public ResponseEntity<RescueProgressLogResponse> addProgressLog(
             @PathVariable String caseId,
-            @RequestBody RescueProgressLogRequest request) {
+            @Valid @RequestBody RescueProgressLogRequest request) {
 
         RescueProgressLogResponse log = rescueCaseService.addProgressLog(caseId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(log);
@@ -90,7 +91,7 @@ public class RescueCaseController {
     @PostMapping("/{caseId}/photos")
     public ResponseEntity<RescuePhotoResponse> addPhoto(
             @PathVariable String caseId,
-            @RequestBody RescuePhotoRequest request) {
+            @Valid @RequestBody RescuePhotoRequest request) {
 
         RescuePhotoResponse photo = rescueCaseService.addPhoto(caseId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(photo);
@@ -104,7 +105,7 @@ public class RescueCaseController {
     @PostMapping("/{caseId}/foster")
     public ResponseEntity<RescueCaseResponse> assignFoster(
             @PathVariable String caseId,
-            @RequestBody FosterAssignRequest request) {
+            @Valid @RequestBody FosterAssignRequest request) {
 
         return ResponseEntity.ok(rescueCaseService.assignFoster(caseId, request));
     }

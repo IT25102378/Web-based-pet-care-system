@@ -1,5 +1,6 @@
 package com.petnexus.backend.controller;
 
+import jakarta.validation.Valid;
 import com.petnexus.backend.dto.PrescriptionCreateRequest;
 import com.petnexus.backend.dto.PrescriptionResponse;
 import com.petnexus.backend.service.PrescriptionService;
@@ -49,7 +50,7 @@ public class PrescriptionController {
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('Veterinarian')")
     @PostMapping
     public ResponseEntity<PrescriptionResponse> createPrescription(
-            @RequestBody PrescriptionCreateRequest request
+            @Valid @RequestBody PrescriptionCreateRequest request
     ) {
         PrescriptionResponse response = prescriptionService.createPrescription(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

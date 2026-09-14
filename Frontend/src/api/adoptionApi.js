@@ -180,7 +180,7 @@ export const adoptionApi = {
       // Backend has no separate /adoptions/records endpoint.
       // Retrieve approved applications and normalise the shape for AdoptionHistoryPage.
       const apps = await apiFetch('/adoptions/applications');
-      const approved = (apps || []).filter((a) => a.status === 'Approved');
+      const approved = (apps || []).filter((a) => a.status === AdoptionApplicationStatus.APPROVED);
       return approved.map((a) => ({
         adoptionRecordId: a.applicationId,
         caseId: a.caseId,

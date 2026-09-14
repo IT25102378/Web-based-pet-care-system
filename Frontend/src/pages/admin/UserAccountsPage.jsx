@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
+import { DEFAULT_AVATAR_URL } from '../../utils/constants';
 
 export const UserAccountsPage = () => {
   const { currentUser } = useAuth();
@@ -115,7 +116,7 @@ export const UserAccountsPage = () => {
       render: (row) => (
         <div className="flex items-center gap-3">
           <img
-            src={row.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${row.userId}`}
+            src={row.avatarUrl || DEFAULT_AVATAR_URL}
             alt={row.fullName}
             style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
           />
@@ -274,7 +275,6 @@ export const UserAccountsPage = () => {
               <option value="ALL">All Statuses</option>
               <option value={UserStatus.ACTIVE}>Active</option>
               <option value={UserStatus.PENDING_APPROVAL}>Pending Approval</option>
-              <option value={UserStatus.PENDING_EMAIL}>Pending Email</option>
               <option value={UserStatus.REJECTED}>Rejected</option>
               <option value={UserStatus.SUSPENDED}>Suspended</option>
             </select>
@@ -309,7 +309,7 @@ export const UserAccountsPage = () => {
             {/* Header Avatar Card */}
             <div className="flex items-center gap-4 p-3 rounded" style={{ backgroundColor: 'var(--bg-subtle)' }}>
               <img
-                src={selectedUserForView.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedUserForView.userId}`}
+                src={selectedUserForView.avatarUrl || DEFAULT_AVATAR_URL}
                 alt={selectedUserForView.fullName}
                 style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }}
               />

@@ -154,7 +154,7 @@ public class AppointmentController {
     @PutMapping("/{appointmentId}/cancel")
     public ResponseEntity<AppointmentResponse> cancelAppointment(
             @PathVariable String appointmentId,
-            @RequestBody(required = false) CancelRequest request,
+            @Valid @RequestBody(required = false) CancelRequest request,
             @RequestHeader(value = "X-User-Id", required = false) String callerOwnerId
     ) {
         return ResponseEntity.ok(appointmentService.cancelAppointment(appointmentId, request, callerOwnerId));

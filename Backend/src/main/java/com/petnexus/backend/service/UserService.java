@@ -1,5 +1,6 @@
 package com.petnexus.backend.service;
 
+import com.petnexus.backend.constants.AppConstants;
 import com.petnexus.backend.dto.*;
 import com.petnexus.backend.entity.User;
 import com.petnexus.backend.enums.UserRole;
@@ -28,7 +29,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final ApprovalHistoryService approvalHistoryService;
-    private final EmailService emailService;
 
     // =========================================================================
     // Authentication Operations
@@ -38,7 +38,10 @@ public class UserService {
      * Register a new user.
      *
      * Registration / Approval Workflow:
-     *   register() → status = PendingEmailVerification
+     *   register() → status = PendingApproval
+     *
+     * The account is queued for administrator review straight away. There is no
+     * email confirmation step, so registration completes without any outside service.
      *
      * Business rules enforced:
      * - Admin role cannot be self-registered via this endpoint.
@@ -63,9 +66,6 @@ public class UserService {
         // Generate unique userId in USR-xxx format
         String userId = generateUserId();
 
-        // Generate email verification token
-        String emailToken = UUID.randomUUID().toString();
-
         // Generate cryptographically secure approval token for browser polling & automatic login
         String approvalToken = UUID.randomUUID().toString();
 
@@ -78,31 +78,24 @@ public class UserService {
                 .phone(request.getPhone())
                 .address(request.getAddress())
                 .role(request.getRole())
-                .status(UserStatus.PendingEmailVerification)
+                .status(UserStatus.PendingApproval)
                 .avatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl()
-                        : "https://api.dicebear.com/7.x/bottts/svg?seed=" + userId)
+                        : AppConstants.DEFAULT_AVATAR_URL)
                 .licenseNumber(request.getLicenseNumber())
                 .specialization(request.getSpecialization())
                 .staffId(request.getStaffId())
                 .managerCode(request.getManagerCode())
                 .badgeNumber(request.getBadgeNumber())
                 .serviceSpecialty(request.getServiceSpecialty())
-                .emailVerificationToken(emailToken)
                 .approvalToken(approvalToken)
                 .build();
 
         userRepository.save(user);
-        // Send verification email
-        try {
-            emailService.sendVerificationEmail(user.getEmail(), emailToken);
-        } catch (Exception e) {
-            log.error("Failed to send verification email to {}: {}", user.getEmail(), e.getMessage());
-            // Continue without failing registration; user can request resend later
-        }
-        log.info("New user registered: {} ({}), status=PendingEmailVerification", userId, request.getEmail());
+
+        log.info("New user registered: {} ({}), status=PendingApproval", userId, request.getEmail());
 
         return new RegisterResponse(
-                "Registration successful! Please check your email to verify your account.",
+                "Registration successful! Your application is now pending administrator review.",
                 userId,
                 user.getEmail(),
                 approvalToken
@@ -127,11 +120,11 @@ public class UserService {
 
         // Status checks — must match frontend's error code expectations
         switch (user.getStatus()) {
-            case PendingEmailVerification ->
-                throw new BadRequestException("Please verify your email address before logging in.");
-            case PendingApproval ->
+            // PendingEmailVerification can only occur on accounts created before
+            // registration became immediate. Treat it exactly like PendingApproval.
+            case PendingEmailVerification, PendingApproval ->
                 throw new BadRequestException(
-                    "Your account is awaiting admin approval. You will receive an email once reviewed."
+                    "Your account is awaiting admin approval. You will be able to sign in once it is reviewed."
                 );
             case Rejected -> {
                 String reason = user.getRejectionReason() != null
@@ -156,51 +149,31 @@ public class UserService {
     }
 
     /**
-     * Verify email token.
+     * Initiate forgot-password flow.
      *
-     * Workflow:  PendingEmailVerification → PendingApproval
+     * Generates a reset token, stores it against the account and returns it to the
+     * caller. The system has no mail server, so the token is handed straight back
+     * to the browser and the user continues on the reset screen.
+     *
+     * Because the token is returned only when the account exists, the response also
+     * reveals whether an email is registered. That is accepted for this project.
      */
     @Transactional
-    public VerifyEmailResponse verifyEmail(String token) {
-        User user = userRepository.findByEmailVerificationToken(token)
-                .orElseThrow(() -> new BadRequestException("Invalid or expired email verification token."));
-
-        if (!UserStatus.PendingEmailVerification.equals(user.getStatus())) {
-            throw new BadRequestException("This verification link has already been used.");
+    public ForgotPasswordResponse forgotPassword(String email) {
+        User user = userRepository.findByEmail(email.toLowerCase().trim()).orElse(null);
+        if (user == null) {
+            return new ForgotPasswordResponse("No account exists with this email address.", null);
         }
 
-        if (user.getApprovalToken() == null) {
-            user.setApprovalToken(UUID.randomUUID().toString());
-        }
-        user.setStatus(UserStatus.PendingApproval);
-        user.setEmailVerificationToken(null); // clear token after use
+        String resetToken = UUID.randomUUID().toString();
+        user.setPasswordResetToken(resetToken);
         userRepository.save(user);
 
-        log.info("Email verified for user: {}, status=PendingApproval", user.getUserId());
-
-        return new VerifyEmailResponse(
-                true,
-                "Email verified successfully! Your application is now pending admin review.",
-                UserResponse.from(user),
-                user.getApprovalToken()
+        log.info("Password reset token generated for user: {}", user.getUserId());
+        return new ForgotPasswordResponse(
+                "Your password reset link is ready. Continue to choose a new password.",
+                resetToken
         );
-    }
-
-    /**
-     * Initiate forgot-password flow.
-     * Generates a reset token and stores it (email sending is a stub in Phase 1).
-     */
-    @Transactional
-    public String forgotPassword(String email) {
-        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
-            String resetToken = UUID.randomUUID().toString();
-            user.setPasswordResetToken(resetToken);
-            userRepository.save(user);
-            // TODO: Phase 2 — send email with reset link containing the token
-            log.info("Password reset token generated for user: {} (token not sent — stub)", user.getUserId());
-        });
-        // Always return the same message to prevent email enumeration
-        return "If an account exists with this email, a password reset link has been dispatched.";
     }
 
     /**
@@ -514,17 +487,15 @@ public class UserService {
     // Inner Response Record Classes
     // =========================================================================
 
+    /** Reply to a forgot-password request. resetToken is null when no account matched. */
+    public record ForgotPasswordResponse(String message, String resetToken) { }
+
     public record RegisterResponse(String message, String userId, String email, String approvalToken) {
         public RegisterResponse(String message, String userId, String email) {
             this(message, userId, email, null);
         }
     }
 
-    public record VerifyEmailResponse(boolean verified, String message, UserResponse user, String approvalToken) {
-        public VerifyEmailResponse(boolean verified, String message, UserResponse user) {
-            this(verified, message, user, null);
-        }
-    }
 
     public record ApprovalStatusResponse(
             String userId,

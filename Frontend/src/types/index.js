@@ -23,6 +23,8 @@ export const UserRoleLabels = {
 };
 
 export const UserStatus = {
+  // No longer assigned to new accounts. Retained only so that accounts saved
+  // before registration became immediate still display and guard correctly.
   PENDING_EMAIL: 'PendingEmailVerification',
   PENDING_APPROVAL: 'PendingApproval',
   ACTIVE: 'Active',
