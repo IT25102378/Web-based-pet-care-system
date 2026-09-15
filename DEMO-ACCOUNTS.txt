@@ -1,0 +1,51 @@
+PetNexus - demo accounts
+========================
+
+Every account below was signed in through the running application on
+2026-09-15 and returned HTTP 200 with a working session token.
+
+These are the seeded demo accounts. They are created automatically the first
+time the backend starts against an empty database, and they are marked in the
+users table with is_seed_data = 1 so they can be told apart from accounts a
+real person registered.
+
+ROLE              EMAIL                     PASSWORD
+----------------  ------------------------  -----------
+Pet Owner         owner@petnexus.com        password123
+Veterinarian      vet@petnexus.com          password123
+Clinic Staff      staff@petnexus.com        password123
+Pet Care Provider provider@petnexus.com     password123
+Clinic Manager    manager@petnexus.com      password123
+Rescue Officer    rescue@petnexus.com       password123
+Administrator     admin@petnexus.com        password123
+
+
+Accounts created by the acceptance test
+---------------------------------------
+These were registered through the real registration form, approved by the
+administrator, and then used to create, read, update and delete records. They
+are ordinary user accounts, not seed data.
+
+ROLE              EMAIL                        PASSWORD
+----------------  ---------------------------  -----------
+Pet Owner         e2e.owner@petnexus.com       Password123
+Veterinarian      e2e.vet@petnexus.com         Password123
+Clinic Staff      e2e.staff@petnexus.com       Password123
+Pet Care Provider e2e.provider@petnexus.com    Password123
+Clinic Manager    e2e.manager@petnexus.com     Password123
+Rescue Officer    e2e.rescue@petnexus.com      Password123
+
+
+Notes
+-----
+An administrator account cannot be created through the registration form. The
+backend rejects role=Admin on registration, so the administrator above is the
+only one and it is created by the seeder.
+
+A newly registered account is PendingApproval and cannot sign in until an
+administrator approves it. There is no email step.
+
+Before demonstrating, clear the browser site data for http://localhost:3000
+once. The application used to run in mock mode by default and stored records in
+the browser instead of the database; a browser that was used back then still
+holds that old data and will show accounts that are not in SQL Server.

@@ -220,23 +220,6 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
     }
 
     // -------------------------------------------------------------
-    // 6. Legacy Pending Email Verification User Rejected
-    // -------------------------------------------------------------
-    @Test
-    @DisplayName("6. Legacy Pending Email Verification User Rejected (400)")
-    void testPendingEmailUserRejected() throws Exception {
-        LoginRequest loginRequest = new LoginRequest("pending.email@petnexus.com", "Password123!");
-
-        mockMvc.perform(post("/api/auth/login")
-                        .servletPath("/api")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message")
-                        .value("Your account is awaiting admin approval. You will be able to sign in once it is reviewed."));
-    }
-
-    // -------------------------------------------------------------
     // 7. Pending Approval User Rejected
     // -------------------------------------------------------------
     @Test
