@@ -109,6 +109,25 @@ public class AdoptionApplicationService {
         application.setPetName(petName);
         application.setApplicantName(applicantName);
         application.setApplicantPhone(applicantPhone);
+
+        // The wizard collects these and the rescue officer reads them when
+        // deciding, so they are stored instead of being dropped on the floor.
+        application.setApplicantEmail(request.getApplicantEmail());
+        application.setApplicantAddress(request.getApplicantAddress());
+        application.setOccupation(request.getOccupation());
+        application.setHousingType(request.getHousingType());
+        application.setHasFencedYard(request.getHasFencedYard());
+        application.setPetExperienceYears(request.getPetExperienceYears());
+        application.setDailyAloneHours(request.getDailyAloneHours());
+        application.setHasOtherPets(request.getHasOtherPets());
+        application.setOtherPetsDetails(request.getOtherPetsDetails());
+        application.setReasonForAdoption(request.getReasonForAdoption());
+        application.setTermsAccepted(request.getTermsAccepted());
+        application.setSignatureDataUrl(request.getSignatureDataUrl());
+        if (Boolean.TRUE.equals(request.getTermsAccepted())) {
+            application.setSignedAt(LocalDateTime.now());
+        }
+
         application.setStatus(AdoptionApplicationStatus.SUBMITTED);
         application.setCreatedAt(LocalDateTime.now());
 
@@ -164,7 +183,20 @@ public class AdoptionApplicationService {
                 app.getPetName(),
                 app.getApplicantName(),
                 app.getApplicantPhone(),
-                app.getStatus() != null ? app.getStatus().name() : null,
+                app.getApplicantEmail(),
+                app.getApplicantAddress(),
+                app.getOccupation(),
+                app.getHousingType(),
+                app.getHasFencedYard(),
+                app.getPetExperienceYears(),
+                app.getDailyAloneHours(),
+                app.getHasOtherPets(),
+                app.getOtherPetsDetails(),
+                app.getReasonForAdoption(),
+                app.getTermsAccepted(),
+                app.getSignatureDataUrl(),
+                app.getSignedAt(),
+                app.getStatus(),
                 app.getReviewNotes(),
                 app.getReviewedBy() != null ? app.getReviewedBy().getUserId() : null,
                 app.getCreatedAt(),

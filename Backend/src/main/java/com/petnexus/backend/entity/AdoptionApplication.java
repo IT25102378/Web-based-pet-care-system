@@ -38,6 +38,53 @@ public class AdoptionApplication {
     @Column(name = "status", nullable = false)
     private AdoptionApplicationStatus status;
 
+    // ------------------------------------------------------------------
+    // Applicant answers from the adoption wizard.
+    // These are what the rescue officer reads when deciding, so they are
+    // stored rather than discarded. All are nullable: applications created
+    // before these columns existed have none of them.
+    // ------------------------------------------------------------------
+
+    @Column(name = "applicant_email", length = 255)
+    private String applicantEmail;
+
+    @Column(name = "applicant_address", length = 500)
+    private String applicantAddress;
+
+    @Column(name = "occupation", length = 150)
+    private String occupation;
+
+    @Column(name = "housing_type", length = 100)
+    private String housingType;
+
+    @Column(name = "has_fenced_yard")
+    private Boolean hasFencedYard;
+
+    @Column(name = "pet_experience_years")
+    private Integer petExperienceYears;
+
+    @Column(name = "daily_alone_hours", length = 50)
+    private String dailyAloneHours;
+
+    @Column(name = "has_other_pets")
+    private Boolean hasOtherPets;
+
+    @Column(name = "other_pets_details", length = 1000)
+    private String otherPetsDetails;
+
+    @Column(name = "reason_for_adoption", length = 2000)
+    private String reasonForAdoption;
+
+    @Column(name = "terms_accepted")
+    private Boolean termsAccepted;
+
+    /** Base64 image of the signature drawn in the wizard, so it can be large. */
+    @Column(name = "signature_data_url", columnDefinition = "varchar(MAX)")
+    private String signatureDataUrl;
+
+    @Column(name = "signed_at")
+    private LocalDateTime signedAt;
+
     @Column(name = "review_notes")
     private String reviewNotes;
 
