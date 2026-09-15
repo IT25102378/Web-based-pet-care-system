@@ -87,12 +87,12 @@ export const authApi = {
   // ---------------------------------------------------------------------------
   async register(registrationData) {
     if (!USE_MOCK_DATA) {
-      // Strip verificationDocument — backend doesn't accept it
-      // eslint-disable-next-line no-unused-vars
-      const { verificationDocument, password: pw, ...rest } = registrationData;
+      // The whole payload goes, including the uploaded identity or credential
+      // document. It used to be stripped here, which left the administrator
+      // approving a role claim with nothing to check it against.
       const data = await publicFetch('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ ...rest, password: pw }),
+        body: JSON.stringify(registrationData),
       });
       if (data?.approvalToken) {
         localStorage.setItem('petnexus_approval_token', data.approvalToken);

@@ -42,4 +42,10 @@ public class RegisterRequest {
     private String badgeNumber;
     private String serviceSpecialty;
     private String avatarUrl;
+
+    /**
+     * Proof of identity or professional credential, uploaded on the
+     * registration form and read by the administrator before approval.
+     */
+    private VerificationDocumentUpload verificationDocument;
 }

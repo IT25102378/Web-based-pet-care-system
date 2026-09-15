@@ -3,12 +3,14 @@ package com.petnexus.backend.service;
 import com.petnexus.backend.constants.AppConstants;
 import com.petnexus.backend.dto.*;
 import com.petnexus.backend.entity.User;
+import com.petnexus.backend.entity.UserVerificationDocument;
 import com.petnexus.backend.enums.UserRole;
 import com.petnexus.backend.enums.UserStatus;
 import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.EmailAlreadyExistsException;
 import com.petnexus.backend.exception.UserNotFoundException;
 import com.petnexus.backend.repository.UserRepository;
+import com.petnexus.backend.repository.UserVerificationDocumentRepository;
 import com.petnexus.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final ApprovalHistoryService approvalHistoryService;
+    private final UserVerificationDocumentRepository verificationDocumentRepository;
 
     // =========================================================================
     // Authentication Operations
@@ -91,6 +94,22 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+
+        // Keep the uploaded credential document. Without it the administrator is
+        // asked to verify a role claim with nothing in front of them.
+        VerificationDocumentUpload upload = request.getVerificationDocument();
+        if (upload != null && upload.getUrl() != null && !upload.getUrl().isBlank()) {
+            long next = verificationDocumentRepository.count() + 1;
+            verificationDocumentRepository.save(UserVerificationDocument.builder()
+                    .documentId(String.format("VD-%04d", next))
+                    .user(user)
+                    .documentType("Identity / Credential Document")
+                    .fileName(upload.getName())
+                    .fileSize(upload.getSize())
+                    .fileUrl(upload.getUrl())
+                    .build());
+            log.info("Stored verification document for {}", userId);
+        }
 
         log.info("New user registered: {} ({}), status=PendingApproval", userId, request.getEmail());
 
@@ -215,7 +234,10 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<UserResponse> getPendingApprovals() {
         return userRepository.findByStatus(UserStatus.PendingApproval).stream()
-                .map(UserResponse::from)
+                .map(u -> UserResponse.from(u,
+                        verificationDocumentRepository.findByUser_UserId(u.getUserId()).stream()
+                                .map(VerificationDocumentDto::from)
+                                .collect(Collectors.toList())))
                 .collect(Collectors.toList());
     }
 

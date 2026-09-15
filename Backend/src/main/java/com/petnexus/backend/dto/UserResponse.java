@@ -6,6 +6,7 @@ import com.petnexus.backend.enums.UserStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Safe user response DTO — never exposes passwordHash or token fields.
@@ -39,6 +40,12 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    /**
+     * Populated only where the caller needs it, such as the approval queue.
+     * Null elsewhere, so an ordinary user lookup does not carry file data.
+     */
+    private List<VerificationDocumentDto> verificationDocuments;
+
     /** Map a User entity to a safe UserResponse DTO. */
     public static UserResponse from(User user) {
         UserResponse dto = new UserResponse();
@@ -61,6 +68,13 @@ public class UserResponse {
         dto.setSuspensionReason(user.getSuspensionReason());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
+        return dto;
+    }
+
+    /** Same mapping, with the applicant's uploaded documents attached. */
+    public static UserResponse from(User user, List<VerificationDocumentDto> documents) {
+        UserResponse dto = from(user);
+        dto.setVerificationDocuments(documents);
         return dto;
     }
 }

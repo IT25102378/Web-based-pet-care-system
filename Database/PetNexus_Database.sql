@@ -3,7 +3,7 @@
 --
 -- Generated from the live PetNexus database on 2026-09-15.
 -- This file is the schema of record for the project. It is a structure-only
--- script: it creates the database, its 24 tables, and every key, constraint
+-- script: it creates the database, every table, and every key, constraint
 -- and index on them. It inserts no rows, because the application seeds its own
 -- demo data on first start.
 --
@@ -33,6 +33,19 @@ CREATE TABLE [dbo].[adoption_applications] (
     [applicant_id] bigint NOT NULL,
     [case_id] bigint NOT NULL,
     [reviewed_by] bigint NULL,
+    [applicant_address] varchar(500) NULL,
+    [applicant_email] varchar(255) NULL,
+    [daily_alone_hours] varchar(50) NULL,
+    [has_fenced_yard] bit NULL,
+    [has_other_pets] bit NULL,
+    [housing_type] varchar(100) NULL,
+    [occupation] varchar(150) NULL,
+    [other_pets_details] varchar(1000) NULL,
+    [pet_experience_years] int NULL,
+    [reason_for_adoption] varchar(2000) NULL,
+    [signature_data_url] varchar(MAX) NULL,
+    [signed_at] datetime2(7) NULL,
+    [terms_accepted] bit NULL,
     CONSTRAINT [PK__adoption__3BCBDCF25A028E88] PRIMARY KEY ([application_id]),
     CONSTRAINT [CK__adoption___statu__49C3F6B7] CHECK ([status]='CANCELLED' OR [status]='REJECTED' OR [status]='APPROVED' OR [status]='UNDER_REVIEW' OR [status]='SUBMITTED')
 );
@@ -455,6 +468,20 @@ CREATE TABLE [dbo].[suppliers] (
 );
 GO
 
+CREATE TABLE [dbo].[user_verification_documents] (
+    [id] bigint IDENTITY(1,1) NOT NULL,
+    [document_id] varchar(30) NOT NULL,
+    [document_type] varchar(100) NULL,
+    [file_name] varchar(255) NULL,
+    [file_size] varchar(40) NULL,
+    [file_url] varchar(MAX) NULL,
+    [uploaded_at] datetime2(7) NOT NULL,
+    [user_id] bigint NOT NULL,
+    CONSTRAINT [PK__user_ver__3213E83F3970C517] PRIMARY KEY ([id]),
+    CONSTRAINT [UKnb2yfc2ykncuxxnf1f2aomgc5] UNIQUE ([document_id])
+);
+GO
+
 CREATE TABLE [dbo].[users] (
     [id] bigint IDENTITY(1,1) NOT NULL,
     [address] varchar(300) NULL,
@@ -633,6 +660,11 @@ ALTER TABLE [dbo].[rescue_progress_logs] ADD CONSTRAINT [fk_rescue_logs_case]
     ON DELETE NO ACTION;
 GO
 
+ALTER TABLE [dbo].[user_verification_documents] ADD CONSTRAINT [FK2b9uhvotnexoj0jqw6o68meu3]
+    FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([id])
+    ON DELETE NO ACTION;
+GO
+
 ALTER TABLE [dbo].[vaccinations] ADD CONSTRAINT [fk_vaccinations_pet]
     FOREIGN KEY ([pet_id]) REFERENCES [dbo].[pets] ([id])
     ON DELETE NO ACTION;
@@ -690,5 +722,6 @@ CREATE INDEX [ix_rescue_photos_rescue_case_fk_id] ON [dbo].[rescue_photos] ([res
 CREATE INDEX [idx_rescue_logs_case_id] ON [dbo].[rescue_progress_logs] ([case_id]);
 CREATE INDEX [idx_rescue_logs_log_date] ON [dbo].[rescue_progress_logs] ([log_date]);
 CREATE INDEX [ix_rescue_progress_logs_rescue_case_fk_id] ON [dbo].[rescue_progress_logs] ([rescue_case_fk_id]);
+CREATE INDEX [ix_user_verification_documents_user_id] ON [dbo].[user_verification_documents] ([user_id]);
 CREATE INDEX [ix_vaccinations_pet_id] ON [dbo].[vaccinations] ([pet_id]);
 GO
