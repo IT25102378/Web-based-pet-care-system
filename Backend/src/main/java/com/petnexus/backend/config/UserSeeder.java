@@ -23,24 +23,13 @@ public class UserSeeder {
     private final PasswordEncoder passwordEncoder;
 
     public void seed() {
-        // Ensure default System Administrator exists
+        // Ensure the default System Administrator exists. If the account is already
+        // there it is left exactly as it is: an administrator who was deliberately
+        // suspended must stay suspended instead of being reset on every restart.
         userRepository.findByEmail("admin@petnexus.com")
                 .ifPresentOrElse(
-                        existingAdmin -> {
-                            boolean modified = false;
-                            if (existingAdmin.getRole() != UserRole.Admin) {
-                                existingAdmin.setRole(UserRole.Admin);
-                                modified = true;
-                            }
-                            if (existingAdmin.getStatus() != UserStatus.Active) {
-                                existingAdmin.setStatus(UserStatus.Active);
-                                modified = true;
-                            }
-                            if (modified) {
-                                userRepository.save(existingAdmin);
-                                log.info("Updated existing admin account to role=Admin, status=Active");
-                            }
-                        },
+                        existingAdmin -> log.info("Administrator account already present ({}), left unchanged",
+                                existingAdmin.getUserId()),
                         () -> {
                             String adminUserId = userRepository.existsByUserId("USR-003") ? "USR-007" : "USR-003";
                             User newAdmin = User.builder()
@@ -53,6 +42,7 @@ public class UserSeeder {
                                     .role(UserRole.Admin)
                                     .status(UserStatus.Active)
                                     .avatarUrl("/avatars/avatar-admin.jpg")
+                                    .seedData(true)
                                     .build();
                             userRepository.save(newAdmin);
                             log.info("Seeded default System Administrator account ({} - admin@petnexus.com)", adminUserId);
@@ -73,6 +63,7 @@ public class UserSeeder {
                             .role(UserRole.PetOwner)
                             .status(UserStatus.Active)
                             .avatarUrl("/avatars/avatar-pet-owner.jpg")
+                            .seedData(true)
                             .build();
                     return userRepository.save(newOwner);
                 });
@@ -92,6 +83,7 @@ public class UserSeeder {
                             .role(UserRole.Veterinarian)
                             .status(UserStatus.Active)
                             .avatarUrl("/avatars/avatar-veterinarian.jpg")
+                            .seedData(true)
                             .licenseNumber("SLVC-VET-2019-0842")
                             .specialization("Small Animal Surgery & Internal Medicine")
                             .build();
@@ -111,6 +103,7 @@ public class UserSeeder {
                             .role(UserRole.ClinicStaff)
                             .status(UserStatus.Active)
                             .avatarUrl("/avatars/avatar-clinic-staff.jpg")
+                            .seedData(true)
                             .staffId("STF-104")
                             .build();
                     return userRepository.save(newStaff);
@@ -129,6 +122,7 @@ public class UserSeeder {
                             .role(UserRole.RescueOfficer)
                             .status(UserStatus.Active)
                             .avatarUrl("/avatars/avatar-rescue-officer.jpg")
+                            .seedData(true)
                             .badgeNumber("RSC-882")
                             .build();
                     return userRepository.save(newRescueOfficer);
@@ -147,6 +141,7 @@ public class UserSeeder {
                             .role(UserRole.PetCareProvider)
                             .status(UserStatus.Active)
                             .avatarUrl("/avatars/avatar-rejected-applicant.jpg")
+                            .seedData(true)
                             .build();
                     return userRepository.save(newProvider);
                 });
@@ -164,6 +159,7 @@ public class UserSeeder {
                             .role(UserRole.ClinicManager)
                             .status(UserStatus.Active)
                             .avatarUrl("/avatars/avatar-clinic-manager.jpg")
+                            .seedData(true)
                             .build();
                     return userRepository.save(newManager);
                 });

@@ -154,6 +154,15 @@ public class User {
     @Column(length = 100)
     private String approvalToken;
 
+    /**
+     * True for the demo accounts created by UserSeeder, false for an account a real
+     * person registered through the application. Lets seed data be told apart from
+     * genuine records when reading the users table directly.
+     */
+    @Column(name = "is_seed_data", columnDefinition = "bit NOT NULL DEFAULT 0")
+    @Builder.Default
+    private boolean seedData = false;
+
     // -----------------------------------------------------------------------
     // Timestamps
     // -----------------------------------------------------------------------

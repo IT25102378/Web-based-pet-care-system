@@ -2,11 +2,15 @@
 // Pet Nexus — Centralized API Client
 // Phase 11A: Real backend integration
 //
-// VITE_USE_MOCK_DATA=false  → all calls route to Spring Boot via Vite proxy
-// VITE_USE_MOCK_DATA=true   → mock/localStorage mode (dev fallback)
+// VITE_USE_MOCK_DATA=true   → mock/localStorage mode, for working without a backend
+// anything else (including unset) → all calls route to Spring Boot via the Vite proxy
+//
+// Mock mode must be asked for explicitly. It used to be the default, which meant
+// a machine with no .env file silently saved everything to localStorage while the
+// UI reported success, and nothing ever reached SQL Server.
 // =============================================================================
 
-export const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+export const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const simulateDelay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
