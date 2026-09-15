@@ -1,5 +1,6 @@
 package com.petnexus.backend.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -87,6 +88,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex) {
         return buildError(HttpStatus.NOT_FOUND,
                 "No endpoint found for the requested path: " + ex.getResourcePath());
+    }
+
+    /**
+     * A row cannot be removed while other rows still point at it. Deleting a pet that
+     * still has appointments, consultations or prescriptions is the usual case. Those
+     * records are clinical history, so they are deliberately not cascade-deleted; the
+     * caller is told what is in the way instead of receiving a 500.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        return buildError(HttpStatus.CONFLICT,
+                "This record is still referenced by other records and cannot be deleted. "
+                        + "Remove or reassign those records first.");
     }
 
     @ExceptionHandler(Exception.class)
