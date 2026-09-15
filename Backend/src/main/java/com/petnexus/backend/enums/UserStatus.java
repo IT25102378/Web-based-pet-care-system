@@ -14,12 +14,6 @@ package com.petnexus.backend.enums;
  * Approval only grants access — it does not escalate privileges.
  */
 public enum UserStatus {
-    /**
-     * No longer assigned to new accounts. Retained only so that rows saved before
-     * registration became immediate can still be read back without error.
-     * Such an account is treated exactly like PendingApproval.
-     */
-    PendingEmailVerification,
     PendingApproval,
     Active,
     Rejected,

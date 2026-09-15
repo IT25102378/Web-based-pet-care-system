@@ -40,8 +40,7 @@ export const DashboardLayout = ({ allowedRoles = [] }) => {
   // Blocked status → redirect to login with context
   if (
     userStatus === UserStatus.PENDING_APPROVAL ||
-    userStatus === UserStatus.REJECTED ||
-    userStatus === UserStatus.PENDING_EMAIL
+    userStatus === UserStatus.REJECTED
   ) {
     return <Navigate to="/login" replace />;
   }

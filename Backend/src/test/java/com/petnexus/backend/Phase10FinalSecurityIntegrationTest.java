@@ -87,7 +87,6 @@ public class Phase10FinalSecurityIntegrationTest {
     private User suspendedUser;
     private User rejectedUser;
     private User pendingApprovalUser;
-    private User pendingEmailUser;
 
     // Shared resources
     private Pet petA;
@@ -216,16 +215,6 @@ public class Phase10FinalSecurityIntegrationTest {
                         .fullName("Pending App User")
                         .role(UserRole.Veterinarian)
                         .status(UserStatus.PendingApproval)
-                        .build()));
-
-        pendingEmailUser = userRepository.findByEmail("pendingemail.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
-                        .userId("USR-PVE-01")
-                        .email("pendingemail.sec@petnexus.com")
-                        .passwordHash(passwordEncoder.encode("Password123!"))
-                        .fullName("Pending Email User")
-                        .role(UserRole.PetOwner)
-                        .status(UserStatus.PendingEmailVerification)
                         .build()));
 
         // Seed test pets
@@ -977,15 +966,6 @@ public class Phase10FinalSecurityIntegrationTest {
     @DisplayName("48. Pending approval user blocked by JWT filter -> 401 Unauthorized")
     void testPendingApprovalUserBlockedByJwt() throws Exception {
         String token = jwtService.generateToken(pendingApprovalUser);
-        mockMvc.perform(get("/api/auth/me").servletPath("/api")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @DisplayName("49. Pending verification user blocked by JWT filter -> 401 Unauthorized")
-    void testPendingVerificationUserBlockedByJwt() throws Exception {
-        String token = jwtService.generateToken(pendingEmailUser);
         mockMvc.perform(get("/api/auth/me").servletPath("/api")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());

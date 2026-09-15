@@ -120,9 +120,7 @@ public class UserService {
 
         // Status checks — must match frontend's error code expectations
         switch (user.getStatus()) {
-            // PendingEmailVerification can only occur on accounts created before
-            // registration became immediate. Treat it exactly like PendingApproval.
-            case PendingEmailVerification, PendingApproval ->
+            case PendingApproval ->
                 throw new BadRequestException(
                     "Your account is awaiting admin approval. You will be able to sign in once it is reviewed."
                 );

@@ -67,7 +67,6 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
     private User activeUser;
     private User suspendedUser;
     private User rejectedUser;
-    private User pendingEmailUser;
     private User pendingApprovalUser;
 
     @BeforeEach
@@ -110,18 +109,6 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
                         .role(UserRole.Veterinarian)
                         .status(UserStatus.Rejected)
                         .rejectionReason("Invalid medical license")
-                        .build()));
-
-        // Legacy account saved before registration became immediate.
-        // It still carries the old PendingEmailVerification status.
-        pendingEmailUser = userRepository.findByEmail("pending.email@petnexus.com")
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .userId("USR-SEC-04")
-                        .email("pending.email@petnexus.com")
-                        .passwordHash(passwordEncoder.encode("Password123!"))
-                        .fullName("Pending Email User")
-                        .role(UserRole.PetOwner)
-                        .status(UserStatus.PendingEmailVerification)
                         .build()));
 
         // Pending Admin Approval User
@@ -422,8 +409,6 @@ public class Phase10AAuthenticationSecurityIntegrationTest {
     void testRemovedVerifyEmailEndpointIsNotPublic() throws Exception {
         // The endpoint was deleted along with the email verification step, and its
         // permitAll() entry was removed, so an anonymous request is now rejected.
-        assertEquals(UserStatus.PendingEmailVerification, pendingEmailUser.getStatus());
-
         mockMvc.perform(get("/api/auth/verify-email")
                         .servletPath("/api")
                         .param("token", "any-token"))

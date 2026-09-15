@@ -4,7 +4,6 @@ const STATUS_CONFIG = {
   // User Statuses
   Active: { label: 'Active', class: 'badge-success' },
   PendingApproval: { label: 'Pending Approval', class: 'badge-warning' },
-  PendingEmailVerification: { label: 'Email Pending', class: 'badge-warning' },
   Rejected: { label: 'Rejected', class: 'badge-danger' },
   Suspended: { label: 'Suspended', class: 'badge-danger' },
 
