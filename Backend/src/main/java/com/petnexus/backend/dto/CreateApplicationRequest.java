@@ -2,6 +2,8 @@ package com.petnexus.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
+import com.petnexus.backend.validation.ValidationRules;
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
@@ -17,6 +19,7 @@ public class CreateApplicationRequest {
     private String petName;
     private String applicantName;
     private String applicantPhone;
+    @Email(message = ValidationRules.EMAIL_MESSAGE)
     private String applicantEmail;
     private String applicantAddress;
     private String occupation;

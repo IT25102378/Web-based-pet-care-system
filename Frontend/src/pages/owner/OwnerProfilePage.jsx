@@ -142,8 +142,9 @@ export const OwnerProfilePage = () => {
       showToast('Validation Error', 'Full name is required.', 'error');
       return;
     }
-    if (!profileForm.email.trim()) {
-      showToast('Validation Error', 'Email address is required.', 'error');
+    const emailError = validateEmail(profileForm.email);
+    if (emailError) {
+      showToast('Validation Error', emailError, 'error');
       return;
     }
 

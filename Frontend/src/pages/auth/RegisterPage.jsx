@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { FileUploadField } from '../../components/common/FileUploadField';
-import { validatePassword, validatePasswordConfirmation } from '../../utils/validation';
+import { validateEmail, validatePassword, validatePasswordConfirmation } from '../../utils/validation';
 import { UserRole } from '../../types';
 import { Heart, ShieldCheck, Check, ArrowRight, Loader2 } from 'lucide-react';
 
@@ -39,7 +39,8 @@ export const RegisterPage = () => {
   const validate = () => {
     const errs = {};
     if (!formData.fullName.trim()) errs.fullName = 'Full legal name is required';
-    if (!formData.email.trim()) errs.email = 'Valid email is required';
+    const emailError = validateEmail(formData.email);
+    if (emailError) errs.email = emailError;
     const passwordError = validatePassword(formData.password);
     if (passwordError) errs.password = passwordError;
     const confirmationError = validatePasswordConfirmation(formData.password, formData.confirmPassword);

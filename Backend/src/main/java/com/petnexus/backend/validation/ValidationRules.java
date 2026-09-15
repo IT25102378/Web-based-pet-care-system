@@ -12,6 +12,14 @@ package com.petnexus.backend.validation;
  */
 public final class ValidationRules {
 
+    /**
+     * Wording used whenever an email address fails validation.
+     * The format itself is checked by @Email; the matching frontend rule
+     * lives in Frontend/src/utils/validation.js.
+     */
+    public static final String EMAIL_MESSAGE =
+            "Enter a valid email address, for example name@example.com, and try again";
+
     /** Minimum number of characters in a password. */
     public static final int PASSWORD_MIN_LENGTH = 6;
 

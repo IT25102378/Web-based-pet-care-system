@@ -1,5 +1,6 @@
 package com.petnexus.backend.dto;
 
+import com.petnexus.backend.validation.ValidationRules;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -28,7 +29,7 @@ public class SupplierRequest {
     private String contactPerson;
 
     @NotBlank(message = "Email address is required")
-    @Email(message = "Please provide a valid email address")
+    @Email(message = ValidationRules.EMAIL_MESSAGE)
     @Size(max = 100)
     private String email;
 

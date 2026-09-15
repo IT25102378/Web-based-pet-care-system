@@ -6,6 +6,31 @@
 // keeps a matching copy in com.petnexus.backend.validation.ValidationRules.
 // =============================================================================
 
+/**
+ * An address with no spaces, one @, and a dot in the part after it.
+ * Deliberately permissive: the goal is to catch a typo before the form is
+ * submitted, not to police which addresses exist.
+ */
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Shown whenever an email fails the rule above. */
+export const EMAIL_MESSAGE =
+  'Enter a valid email address, for example name@example.com, and try again';
+
+/**
+ * Checks an email against the shared rule.
+ * Returns an error message, or null when the address is acceptable.
+ */
+export function validateEmail(email) {
+  if (!email || !email.trim()) {
+    return 'Email address is required';
+  }
+  if (!EMAIL_PATTERN.test(email.trim())) {
+    return EMAIL_MESSAGE;
+  }
+  return null;
+}
+
 /** Minimum number of characters in a password. */
 export const PASSWORD_MIN_LENGTH = 6;
 

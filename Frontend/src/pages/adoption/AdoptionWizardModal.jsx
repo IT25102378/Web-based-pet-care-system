@@ -8,6 +8,7 @@ import { adoptionApi } from '../../api/adoptionApi';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { ArrowLeft, ArrowRight, Check, Heart, Loader2 } from 'lucide-react';
+import { validateEmail } from '../../utils/validation';
 
 export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
   const { currentUser } = useAuth();
@@ -64,7 +65,8 @@ export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
     const errs = {};
     if (step === 1) {
       if (!formData.applicantName?.trim()) errs.applicantName = 'Full name is required';
-      if (!formData.applicantEmail?.trim()) errs.applicantEmail = 'Email is required';
+      const emailError = validateEmail(formData.applicantEmail);
+      if (emailError) errs.applicantEmail = emailError;
       if (!formData.applicantPhone?.trim()) errs.applicantPhone = 'Phone number is required';
       if (!formData.applicantAddress?.trim()) errs.applicantAddress = 'Address is required';
       if (!formData.occupation?.trim()) errs.occupation = 'Occupation is required';

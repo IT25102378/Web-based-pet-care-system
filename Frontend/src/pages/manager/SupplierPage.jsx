@@ -4,6 +4,7 @@ import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
 import { Truck, Plus, Send, Phone, Mail, MapPin, Star, Check, Edit2 } from 'lucide-react';
+import { validateEmail } from '../../utils/validation';
 
 export const SupplierPage = () => {
   const { showToast } = useToast();
@@ -54,9 +55,9 @@ export const SupplierPage = () => {
       showToast('Validation Error', 'Email address is required.', 'error');
       return false;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email.trim())) {
-      showToast('Validation Error', 'Please provide a valid email address.', 'error');
+    const emailError = validateEmail(data.email);
+    if (emailError) {
+      showToast('Validation Error', emailError, 'error');
       return false;
     }
     if (data.leadTimeDays !== undefined && (isNaN(data.leadTimeDays) || Number(data.leadTimeDays) < 0)) {
