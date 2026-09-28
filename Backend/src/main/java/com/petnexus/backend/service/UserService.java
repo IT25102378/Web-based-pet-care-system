@@ -481,14 +481,18 @@ public class UserService {
         List<User> allUsers = userRepository.findAll();
         List<User> matchedUsers;
         if (trimmed.isEmpty()) {
-            matchedUsers = allUsers.stream().limit(15).toList();
+            matchedUsers = allUsers.stream()
+                    .sorted((u1, u2) -> Long.compare(u2.getId(), u1.getId()))
+                    .limit(25)
+                    .toList();
         } else {
             matchedUsers = allUsers.stream()
                     .filter(u -> (u.getEmail() != null && u.getEmail().toLowerCase().contains(trimmed)) ||
                                  (u.getFullName() != null && u.getFullName().toLowerCase().contains(trimmed)) ||
                                  (u.getUserId() != null && u.getUserId().toLowerCase().contains(trimmed)) ||
                                  (u.getRole() != null && u.getRole().name().toLowerCase().contains(trimmed)))
-                    .limit(15)
+                    .sorted((u1, u2) -> Long.compare(u2.getId(), u1.getId()))
+                    .limit(25)
                     .toList();
         }
 

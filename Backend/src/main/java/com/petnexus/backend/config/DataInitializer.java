@@ -114,7 +114,7 @@ public class DataInitializer implements CommandLineRunner {
                         existing.setRole(role);
                         modified = true;
                     }
-                    if (fullName != null && !fullName.equals(existing.getFullName())) {
+                    if (fullName != null && existing.getFullName() == null) {
                         existing.setFullName(fullName);
                         modified = true;
                     }
