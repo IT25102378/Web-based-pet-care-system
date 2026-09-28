@@ -1,0 +1,3 @@
+Status: 400
+Body:
+{"error":"Bad Request","message":"Missing required parameter: vetName","timestamp":"2026-09-28T14:36:34.781233600","status":400}

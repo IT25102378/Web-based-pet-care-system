@@ -1,0 +1,26 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Backend - Maven
+Backend/target/
+
+# Frontend - Node
+Frontend/node_modules/
+Frontend/dist/
+
+# Environment files
+Frontend/.env
+Frontend/.env.local
+Frontend/.env.*.local
+Backend/.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation & Diagrams (kept outside git repository)
+docs/

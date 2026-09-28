@@ -1,0 +1,3 @@
+Status: 200
+Body:
+[{"notificationId":"NTF-01","userId":"USR-001","type":"Appointment","title":"Appointment Reminder","message":"Barnaby is checked in for today’s Routine Wellness visit with Dr. Sachini Wijesinghe (Token: A-01).","isRead":false,"link":"/owner/appointments","createdAt":"2026-08-15T09:30:00","read":false},{"notificationId":"NTF-02","userId":"USR-001","type":"Adoption","title":"Adoption Application Under Review","message":"Your adoption application for Luna (RSC-2026-001) has been received and is being reviewed by Rescue Officer Shehan Rajapaksha.","isRead":false,"link":"/owner/adopt","createdAt":"2026-08-13T10:00:00","read":false}]
