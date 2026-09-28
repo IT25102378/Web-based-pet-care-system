@@ -6,7 +6,7 @@
 // VITE_USE_MOCK_DATA=true   → mock/localStorage mode (dev fallback)
 // =============================================================================
 
-export const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+export const USE_MOCK_DATA = false;
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const simulateDelay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));

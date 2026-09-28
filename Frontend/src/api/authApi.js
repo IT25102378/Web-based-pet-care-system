@@ -215,8 +215,9 @@ export const authApi = {
       try {
         backendResults = await publicFetch(`/auth/suggest-accounts?query=${encodeURIComponent(query)}`);
       } catch (err) {
-        console.warn('Backend suggest-accounts query failed, falling back:', err);
+        console.warn('Backend suggest-accounts query failed:', err);
       }
+      return backendResults; // Strictly return backend results, NO mock merging.
     }
 
     // Always merge with local users table so any recently registered accounts in mock store / localStorage are included
@@ -256,18 +257,7 @@ export const authApi = {
       };
     });
 
-    // Merge backend results and localFormatted by email to ensure zero missing accounts
-    const mapByEmail = new Map();
-    (backendResults || []).forEach((item) => {
-      if (item && item.email) mapByEmail.set(item.email.toLowerCase(), item);
-    });
-    localFormatted.forEach((item) => {
-      if (item && item.email && !mapByEmail.has(item.email.toLowerCase())) {
-        mapByEmail.set(item.email.toLowerCase(), item);
-      }
-    });
-
-    return Array.from(mapByEmail.values()).slice(0, 25);
+    return localFormatted.slice(0, 25);
   },
 
   // ---------------------------------------------------------------------------
