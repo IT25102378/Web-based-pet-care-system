@@ -1,0 +1,1362 @@
+package com.petnexus.backend.config;
+
+import com.petnexus.backend.entity.Pet;
+import com.petnexus.backend.entity.PetDocument;
+import com.petnexus.backend.entity.User;
+import com.petnexus.backend.entity.Vaccination;
+import com.petnexus.backend.enums.UserRole;
+import com.petnexus.backend.enums.UserStatus;
+import com.petnexus.backend.entity.Appointment;
+import com.petnexus.backend.enums.AppointmentStatus;
+import com.petnexus.backend.entity.Consultation;
+import com.petnexus.backend.entity.Prescription;
+import com.petnexus.backend.entity.PrescriptionItem;
+import com.petnexus.backend.entity.RescueCase;
+import com.petnexus.backend.entity.RescueProgressLog;
+import com.petnexus.backend.entity.RescuePhoto;
+import com.petnexus.backend.entity.FosterRecord;
+import com.petnexus.backend.repository.AppointmentRepository;
+import com.petnexus.backend.repository.ConsultationRepository;
+import com.petnexus.backend.repository.PetDocumentRepository;
+import com.petnexus.backend.repository.PetRepository;
+import com.petnexus.backend.repository.PrescriptionRepository;
+import com.petnexus.backend.repository.UserRepository;
+import com.petnexus.backend.repository.VaccinationRepository;
+import com.petnexus.backend.repository.RescueCaseRepository;
+import com.petnexus.backend.repository.RescueProgressLogRepository;
+import com.petnexus.backend.repository.RescuePhotoRepository;
+import com.petnexus.backend.repository.FosterRecordRepository;
+import com.petnexus.backend.entity.CareProvider;
+import com.petnexus.backend.entity.CareService;
+import com.petnexus.backend.entity.CareServiceLog;
+import com.petnexus.backend.entity.ServicePackageBooking;
+import com.petnexus.backend.enums.ServiceStatus;
+import com.petnexus.backend.repository.CareProviderRepository;
+import com.petnexus.backend.repository.CareServiceRepository;
+import com.petnexus.backend.repository.CareServiceLogRepository;
+import com.petnexus.backend.repository.ServicePackageBookingRepository;
+import com.petnexus.backend.entity.Supplier;
+import com.petnexus.backend.entity.InventoryItem;
+import com.petnexus.backend.enums.StockStatus;
+import com.petnexus.backend.repository.SupplierRepository;
+import com.petnexus.backend.repository.InventoryItemRepository;
+import com.petnexus.backend.entity.Feedback;
+import com.petnexus.backend.entity.Notification;
+import com.petnexus.backend.enums.NotificationType;
+import com.petnexus.backend.repository.FeedbackRepository;
+import com.petnexus.backend.repository.NotificationRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * Seeds initial Pets, Vaccinations, Pet Documents, Appointments, Consultations, Prescriptions,
+ * Rescue Cases, Pet Care / Grooming, and Pharmacy Inventory & Suppliers.
+ * Ensures the centralized PetNexus database has baseline data matching frontend initialData.js.
+ */
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class DataInitializer implements CommandLineRunner {
+
+    private final UserRepository userRepository;
+    private final PetRepository petRepository;
+    private final VaccinationRepository vaccinationRepository;
+    private final PetDocumentRepository petDocumentRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final ConsultationRepository consultationRepository;
+    private final PrescriptionRepository prescriptionRepository;
+    private final RescueCaseRepository rescueCaseRepository;
+    private final RescueProgressLogRepository rescueProgressLogRepository;
+    private final RescuePhotoRepository rescuePhotoRepository;
+    private final FosterRecordRepository fosterRecordRepository;
+    private final CareProviderRepository careProviderRepository;
+    private final CareServiceRepository careServiceRepository;
+    private final CareServiceLogRepository careServiceLogRepository;
+    private final ServicePackageBookingRepository servicePackageBookingRepository;
+    private final SupplierRepository supplierRepository;
+    private final InventoryItemRepository inventoryItemRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final NotificationRepository notificationRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    private User seedOrUpdateUser(
+            String defaultUserId,
+            String email,
+            String fullName,
+            String phone,
+            String address,
+            UserRole role,
+            String avatarUrl,
+            String emergencyContact,
+            String licenseNumber,
+            String specialization,
+            String staffId,
+            String managerCode,
+            String badgeNumber,
+            String serviceSpecialty
+    ) {
+        return userRepository.findByEmail(email)
+                .map(existing -> {
+                    boolean modified = false;
+                    if (existing.getStatus() != UserStatus.Active) {
+                        existing.setStatus(UserStatus.Active);
+                        modified = true;
+                    }
+                    if (existing.getRole() != role) {
+                        existing.setRole(role);
+                        modified = true;
+                    }
+                    if (fullName != null && !fullName.equals(existing.getFullName())) {
+                        existing.setFullName(fullName);
+                        modified = true;
+                    }
+                    if (phone != null && existing.getPhone() == null) {
+                        existing.setPhone(phone);
+                        modified = true;
+                    }
+                    if (address != null && existing.getAddress() == null) {
+                        existing.setAddress(address);
+                        modified = true;
+                    }
+                    if (avatarUrl != null && existing.getAvatarUrl() == null) {
+                        existing.setAvatarUrl(avatarUrl);
+                        modified = true;
+                    }
+                    if (emergencyContact != null && existing.getEmergencyContact() == null) {
+                        existing.setEmergencyContact(emergencyContact);
+                        modified = true;
+                    }
+                    if (licenseNumber != null && existing.getLicenseNumber() == null) {
+                        existing.setLicenseNumber(licenseNumber);
+                        modified = true;
+                    }
+                    if (specialization != null && existing.getSpecialization() == null) {
+                        existing.setSpecialization(specialization);
+                        modified = true;
+                    }
+                    if (staffId != null && existing.getStaffId() == null) {
+                        existing.setStaffId(staffId);
+                        modified = true;
+                    }
+                    if (managerCode != null && existing.getManagerCode() == null) {
+                        existing.setManagerCode(managerCode);
+                        modified = true;
+                    }
+                    if (badgeNumber != null && existing.getBadgeNumber() == null) {
+                        existing.setBadgeNumber(badgeNumber);
+                        modified = true;
+                    }
+                    if (serviceSpecialty != null && existing.getServiceSpecialty() == null) {
+                        existing.setServiceSpecialty(serviceSpecialty);
+                        modified = true;
+                    }
+                    if (!passwordEncoder.matches("password123", existing.getPasswordHash())) {
+                        existing.setPasswordHash(passwordEncoder.encode("password123"));
+                        modified = true;
+                    }
+                    if (modified) {
+                        userRepository.save(existing);
+                        log.info("Updated stakeholder account ({}) to Active with valid credentials", email);
+                    }
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    String finalUserId = defaultUserId;
+                    if (userRepository.existsByUserId(finalUserId)) {
+                        finalUserId = "USR-" + (System.currentTimeMillis() % 100000);
+                    }
+                    User newUser = User.builder()
+                            .userId(finalUserId)
+                            .email(email)
+                            .passwordHash(passwordEncoder.encode("password123"))
+                            .fullName(fullName)
+                            .phone(phone)
+                            .address(address)
+                            .role(role)
+                            .status(UserStatus.Active)
+                            .avatarUrl(avatarUrl)
+                            .emergencyContact(emergencyContact)
+                            .licenseNumber(licenseNumber)
+                            .specialization(specialization)
+                            .staffId(staffId)
+                            .managerCode(managerCode)
+                            .badgeNumber(badgeNumber)
+                            .serviceSpecialty(serviceSpecialty)
+                            .build();
+                    User saved = userRepository.save(newUser);
+                    log.info("Seeded stakeholder account: {} ({}) with role {}", finalUserId, email, role);
+                    return saved;
+                });
+    }
+
+    @Override
+    public void run(String... args) {
+        // Ensure all 6 core Stakeholders and System Administrator exist with Active status and password123
+        seedOrUpdateUser(
+                "USR-007", "admin@petnexus.com", "PetNexus System Administrator",
+                "+94 11 234 5678", "Pet Nexus Clinic, Colombo 05", UserRole.Admin,
+                "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, null, null, null
+        );
+
+        User owner = seedOrUpdateUser(
+                "USR-001", "owner@petnexus.com", "Kavindu Perera",
+                "+94 77 123 4567", "45/3 Galle Road, Colombo 06", UserRole.PetOwner,
+                "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+                "Thilini Perera (Spouse) - +94 77 234 9988", null, null, null, null, null, null
+        );
+
+        seedOrUpdateUser(
+                "USR-002", "vet@petnexus.com", "Dr. Sachini Wijesinghe, BVSc",
+                "+94 71 234 5678", "12 Wijerama Mawatha, Colombo 07", UserRole.Veterinarian,
+                "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80",
+                null, "SLVC-VET-2019-0842", "Small Animal Surgery & Internal Medicine", null, null, null, null
+        );
+
+        seedOrUpdateUser(
+                "USR-003", "staff@petnexus.com", "Nethmi Fernando",
+                "+94 76 345 6789", "22 Nawala Road, Rajagiriya", UserRole.ClinicStaff,
+                "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+                null, null, null, "STF-104", null, null, null
+        );
+
+        User providerUser = seedOrUpdateUser(
+                "USR-004", "provider@petnexus.com", "Dilshan Bandara",
+                "+94 70 456 7890", "78 High Level Road, Maharagama", UserRole.PetCareProvider,
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, null, null, "Master Groomer & Canine Behaviour Specialist"
+        );
+
+        User manager = seedOrUpdateUser(
+                "USR-005", "manager@petnexus.com", "Himashi Gunawardena",
+                "+94 77 567 8901", "5/1 Gregory's Road, Colombo 07", UserRole.ClinicManager,
+                "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, "MGR-001", null, null
+        );
+
+        seedOrUpdateUser(
+                "USR-006", "rescue@petnexus.com", "Shehan Rajapaksha",
+                "+94 71 678 9012", "33 Baseline Road, Nugegoda", UserRole.RescueOfficer,
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+                null, null, null, null, null, "RSC-882", null
+        );
+
+        // User-created stakeholder accounts
+        seedOrUpdateUser(
+                "USR-013", "ifaza@petnexus.com", "Ifaza Dilshad",
+                "0789984329", "colombo", UserRole.PetOwner,
+                "https://api.dicebear.com/7.x/bottts/svg?seed=USR-013",
+                null, null, null, null, null, null, null
+        );
+
+        seedOrUpdateUser(
+                "USR-014", "oshada@petnexus.com", "Oshada",
+                "0704685236", "Rajagiriya", UserRole.Veterinarian,
+                "https://api.dicebear.com/7.x/bottts/svg?seed=USR-014",
+                null, "VET-NY-765", "Clinical Veterinarian", null, null, null, null
+        );
+
+        seedOrUpdateUser(
+                "USR-015", "lakdin@petnexus.com", "Lakdin",
+                "0705896156", "Colombo", UserRole.ClinicStaff,
+                "https://api.dicebear.com/7.x/bottts/svg?seed=USR-015",
+                null, null, null, "STF-098", null, null, null
+        );
+
+        seedOrUpdateUser(
+                "USR-016", "eshani@petnexus.com", "Eshani",
+                "0704564985", "Colombo", UserRole.PetCareProvider,
+                "https://api.dicebear.com/7.x/bottts/svg?seed=USR-016",
+                null, null, null, null, null, null, "Master Groomer"
+        );
+
+        seedOrUpdateUser(
+                "USR-017", "ediriweera@petnexus.com", "Ediriweera D.L",
+                "07784521695", "COlombo", UserRole.ClinicManager,
+                "https://api.dicebear.com/7.x/bottts/svg?seed=USR-017",
+                null, null, null, null, "MGR-PASS-002", null, null
+        );
+
+
+
+        // Seed Pets
+        if (petRepository.count() == 0) {
+            log.info("Seeding initial pets into PetNexus database...");
+
+            Pet barnaby = Pet.builder()
+                    .petId("PET-001")
+                    .owner(owner)
+                    .name("Barnaby")
+                    .species("Dog")
+                    .breed("Golden Retriever")
+                    .gender("Male")
+                    .ageYears(3)
+                    .ageMonths(4)
+                    .dateOfBirth(LocalDate.of(2023, 4, 12))
+                    .weightKg(new BigDecimal("31.50"))
+                    .microchipId("985141002948123")
+                    .allergies("Chicken protein, Penicillin")
+                    .medicalNotes("Mild seasonal allergies in spring. Very friendly with children.")
+                    .imageUrl("https://images.unsplash.com/photo-1552053831-71594a27632d?w=500&auto=format&fit=crop&q=80")
+                    .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
+                    .createdAt(LocalDateTime.of(2026, 1, 12, 10, 0, 0))
+                    .build();
+
+            Pet cleo = Pet.builder()
+                    .petId("PET-002")
+                    .owner(owner)
+                    .name("Cleo")
+                    .species("Cat")
+                    .breed("British Shorthair")
+                    .gender("Female")
+                    .ageYears(2)
+                    .ageMonths(1)
+                    .dateOfBirth(LocalDate.of(2024, 7, 1))
+                    .weightKg(new BigDecimal("4.20"))
+                    .microchipId("985141009182344")
+                    .allergies("None recorded")
+                    .medicalNotes("Indoor cat. Spayed. Dental tartar check recommended at next visit.")
+                    .imageUrl("https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500&auto=format&fit=crop&q=80")
+                    .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
+                    .createdAt(LocalDateTime.of(2026, 1, 15, 14, 30, 0))
+                    .build();
+
+            Pet milo = Pet.builder()
+                    .petId("PET-003")
+                    .owner(owner)
+                    .name("Milo")
+                    .species("Rabbit")
+                    .breed("Holland Lop")
+                    .gender("Male")
+                    .ageYears(1)
+                    .ageMonths(6)
+                    .dateOfBirth(LocalDate.of(2025, 2, 18))
+                    .weightKg(new BigDecimal("1.80"))
+                    .microchipId("985141005512999")
+                    .allergies("None")
+                    .medicalNotes("Needs Timothy hay rich diet. Teeth checked normal last quarter.")
+                    .imageUrl("https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=500&auto=format&fit=crop&q=80")
+                    .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
+                    .createdAt(LocalDateTime.of(2026, 2, 1, 9, 0, 0))
+                    .build();
+
+            petRepository.saveAll(List.of(barnaby, cleo, milo));
+            log.info("Seeded 3 initial pets.");
+
+            // Seed Vaccinations
+            Vaccination v1 = Vaccination.builder()
+                    .vaccineId("VAC-001")
+                    .pet(barnaby)
+                    .petName(barnaby.getName())
+                    .vaccineName("Rabies 3-Year")
+                    .batchNumber("RB-2025-9921")
+                    .administeredDate(LocalDate.of(2025, 5, 10))
+                    .nextDueDate(LocalDate.of(2028, 5, 10))
+                    .administeredBy("Dr. Sachini Wijesinghe, BVSc")
+                    .status("Up-to-Date")
+                    .build();
+
+            Vaccination v2 = Vaccination.builder()
+                    .vaccineId("VAC-002")
+                    .pet(barnaby)
+                    .petName(barnaby.getName())
+                    .vaccineName("DHPP (Distemper, Hepatitis, Parvo, Parainfluenza)")
+                    .batchNumber("DH-2026-1044")
+                    .administeredDate(LocalDate.of(2026, 1, 18))
+                    .nextDueDate(LocalDate.of(2027, 1, 18))
+                    .administeredBy("Dr. Sachini Wijesinghe, BVSc")
+                    .status("Up-to-Date")
+                    .build();
+
+            Vaccination v3 = Vaccination.builder()
+                    .vaccineId("VAC-003")
+                    .pet(barnaby)
+                    .petName(barnaby.getName())
+                    .vaccineName("Bordetella (Kennel Cough)")
+                    .batchNumber("BD-2026-4401")
+                    .administeredDate(LocalDate.of(2026, 2, 10))
+                    .nextDueDate(LocalDate.of(2026, 8, 10))
+                    .administeredBy("Dr. Sachini Wijesinghe, BVSc")
+                    .status("Due Soon")
+                    .build();
+
+            Vaccination v4 = Vaccination.builder()
+                    .vaccineId("VAC-004")
+                    .pet(cleo)
+                    .petName(cleo.getName())
+                    .vaccineName("FVRCP (Feline Viral Rhinotracheitis, Calicivirus, Panleukopenia)")
+                    .batchNumber("FV-2025-3392")
+                    .administeredDate(LocalDate.of(2025, 8, 14))
+                    .nextDueDate(LocalDate.of(2026, 8, 14))
+                    .administeredBy("Dr. Sachini Wijesinghe, BVSc")
+                    .status("Due Soon")
+                    .build();
+
+            Vaccination v5 = Vaccination.builder()
+                    .vaccineId("VAC-005")
+                    .pet(cleo)
+                    .petName(cleo.getName())
+                    .vaccineName("Feline Rabies")
+                    .batchNumber("FR-2025-8812")
+                    .administeredDate(LocalDate.of(2025, 8, 14))
+                    .nextDueDate(LocalDate.of(2026, 8, 14))
+                    .administeredBy("Dr. Sachini Wijesinghe, BVSc")
+                    .status("Due Soon")
+                    .build();
+
+            vaccinationRepository.saveAll(List.of(v1, v2, v3, v4, v5));
+            log.info("Seeded 5 initial vaccinations.");
+
+            // Seed Pet Documents
+            String ownerId = owner.getUserId();
+            PetDocument d1 = PetDocument.builder()
+                    .documentId("DOC-101")
+                    .pet(barnaby)
+                    .petName(barnaby.getName())
+                    .ownerId(ownerId)
+                    .documentType("Vaccination Certificate")
+                    .fileName("Barnaby_Rabies_Certificate_2025.pdf")
+                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileSize("1.2 MB")
+                    .uploadedAt(LocalDateTime.of(2025, 5, 10, 14, 30, 0))
+                    .notes("Official 3-year rabies vaccination certification signed by Dr. Sachini Wijesinghe.")
+                    .build();
+
+            PetDocument d2 = PetDocument.builder()
+                    .documentId("DOC-102")
+                    .pet(barnaby)
+                    .petName(barnaby.getName())
+                    .ownerId(ownerId)
+                    .documentType("Prescription")
+                    .fileName("Rx_Apoquel_Dermatology_Barnaby.pdf")
+                    .fileUrl("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80")
+                    .fileSize("680 KB")
+                    .uploadedAt(LocalDateTime.of(2026, 7, 20, 11, 15, 0))
+                    .notes("Apoquel 16mg allergy treatment dosage schedule and prescription details.")
+                    .build();
+
+            PetDocument d3 = PetDocument.builder()
+                    .documentId("DOC-103")
+                    .pet(barnaby)
+                    .petName(barnaby.getName())
+                    .ownerId(ownerId)
+                    .documentType("Medical Report")
+                    .fileName("Comprehensive_Blood_Panel_Barnaby_2026.pdf")
+                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileSize("2.4 MB")
+                    .uploadedAt(LocalDateTime.of(2026, 1, 18, 10, 0, 0))
+                    .notes("Annual biochemistry and complete blood count lab diagnostics report.")
+                    .build();
+
+            PetDocument d4 = PetDocument.builder()
+                    .documentId("DOC-104")
+                    .pet(barnaby)
+                    .petName(barnaby.getName())
+                    .ownerId(ownerId)
+                    .documentType("Other")
+                    .fileName("Kennel_Club_Registration_Barnaby.pdf")
+                    .fileUrl("https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=600&auto=format&fit=crop&q=80")
+                    .fileSize("1.5 MB")
+                    .uploadedAt(LocalDateTime.of(2024, 6, 12, 9, 0, 0))
+                    .notes("Pedigree and breed registration certificate.")
+                    .build();
+
+            PetDocument d5 = PetDocument.builder()
+                    .documentId("DOC-105")
+                    .pet(cleo)
+                    .petName(cleo.getName())
+                    .ownerId(ownerId)
+                    .documentType("Vaccination Certificate")
+                    .fileName("Cleo_FVRCP_Booster_Record.pdf")
+                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileSize("850 KB")
+                    .uploadedAt(LocalDateTime.of(2025, 8, 14, 9, 20, 0))
+                    .notes("Feline core tri-cat immunization card.")
+                    .build();
+
+            PetDocument d6 = PetDocument.builder()
+                    .documentId("DOC-106")
+                    .pet(cleo)
+                    .petName(cleo.getName())
+                    .ownerId(ownerId)
+                    .documentType("Medical Report")
+                    .fileName("Cleo_Spay_Surgery_Discharge_Summary.pdf")
+                    .fileUrl("https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80")
+                    .fileSize("1.1 MB")
+                    .uploadedAt(LocalDateTime.of(2024, 12, 5, 16, 0, 0))
+                    .notes("Ovariohysterectomy post-operative recovery protocol and surgical notes.")
+                    .build();
+
+            PetDocument d7 = PetDocument.builder()
+                    .documentId("DOC-107")
+                    .pet(milo)
+                    .petName(milo.getName())
+                    .ownerId(ownerId)
+                    .documentType("Medical Report")
+                    .fileName("Milo_Dental_Incisor_Report.pdf")
+                    .fileUrl("https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&auto=format&fit=crop&q=80")
+                    .fileSize("540 KB")
+                    .uploadedAt(LocalDateTime.of(2026, 2, 1, 15, 45, 0))
+                    .notes("Exotic dental evaluation and malocclusion check.")
+                    .build();
+
+            petDocumentRepository.saveAll(List.of(d1, d2, d3, d4, d5, d6, d7));
+            log.info("Seeded 7 initial pet documents.");
+        }
+
+        // Seed Appointments
+        if (appointmentRepository.count() == 0) {
+            log.info("Seeding initial appointments into PetNexus database...");
+
+            Pet barnaby = petRepository.findByPetId("PET-001").orElse(null);
+            Pet cleo = petRepository.findByPetId("PET-002").orElse(null);
+            User vetSachini = userRepository.findByEmail("vet@petnexus.com").orElse(null);
+
+            Appointment apt1 = Appointment.builder()
+                    .appointmentId("APT-1001")
+                    .pet(barnaby)
+                    .petId(barnaby != null ? barnaby.getPetId() : "PET-001")
+                    .petName(barnaby != null ? barnaby.getName() : "Barnaby")
+                    .species(barnaby != null ? barnaby.getSpecies() : "Dog")
+                    .breed(barnaby != null ? barnaby.getBreed() : "Golden Retriever")
+                    .owner(owner)
+                    .ownerId(owner.getUserId())
+                    .ownerName(owner.getFullName())
+                    .ownerPhone(owner.getPhone())
+                    .veterinarian(vetSachini)
+                    .vetId(vetSachini != null ? vetSachini.getUserId() : "USR-001")
+                    .vetName("Dr. Sachini Wijesinghe, BVSc")
+                    .serviceType("Routine Wellness & Vaccination")
+                    .appointmentDate(LocalDate.of(2026, 8, 15))
+                    .timeSlot("09:30 AM")
+                    .status(AppointmentStatus.CheckedIn)
+                    .tokenNumber("A-01")
+                    .reason("Annual health checkup and Bordetella booster shot.")
+                    .symptoms("Healthy energy, normal appetite.")
+                    .notes("Owner requested weight monitoring chart update.")
+                    .createdAt(LocalDateTime.of(2026, 8, 10, 11, 0, 0))
+                    .build();
+
+            Appointment apt2 = Appointment.builder()
+                    .appointmentId("APT-1002")
+                    .pet(barnaby)
+                    .petId(barnaby != null ? barnaby.getPetId() : "PET-001")
+                    .petName(barnaby != null ? barnaby.getName() : "Barnaby")
+                    .species(barnaby != null ? barnaby.getSpecies() : "Dog")
+                    .breed(barnaby != null ? barnaby.getBreed() : "Golden Retriever")
+                    .owner(owner)
+                    .ownerId(owner.getUserId())
+                    .ownerName(owner.getFullName())
+                    .ownerPhone(owner.getPhone())
+                    .veterinarian(null)
+                    .vetId("USR-002")
+                    .vetName("Dr. Michael Chen")
+                    .serviceType("Routine Wellness Checkup")
+                    .appointmentDate(LocalDate.of(2026, 9, 5))
+                    .timeSlot("10:00 AM")
+                    .status(AppointmentStatus.Scheduled)
+                    .tokenNumber("A-02")
+                    .reason("Annual booster vaccination and general health examination.")
+                    .symptoms("Normal appetite and energy levels.")
+                    .notes("Pre-consultation intake complete.")
+                    .createdAt(LocalDateTime.of(2026, 8, 28, 9, 0, 0))
+                    .build();
+
+            Appointment apt3 = Appointment.builder()
+                    .appointmentId("APT-1004")
+                    .pet(cleo)
+                    .petId(cleo != null ? cleo.getPetId() : "PET-002")
+                    .petName(cleo != null ? cleo.getName() : "Cleo")
+                    .species(cleo != null ? cleo.getSpecies() : "Cat")
+                    .breed(cleo != null ? cleo.getBreed() : "British Shorthair")
+                    .owner(owner)
+                    .ownerId(owner.getUserId())
+                    .ownerName(owner.getFullName())
+                    .ownerPhone(owner.getPhone())
+                    .veterinarian(null)
+                    .vetId("USR-002")
+                    .vetName("Dr. Michael Chen")
+                    .serviceType("Dental Consultation")
+                    .appointmentDate(LocalDate.of(2026, 9, 8))
+                    .timeSlot("11:00 AM")
+                    .status(AppointmentStatus.Confirmed)
+                    .tokenNumber("A-03")
+                    .reason("Dental plaque evaluation and routine tartar check.")
+                    .symptoms("Mild bad breath, no eating discomfort.")
+                    .notes("Confirmed by clinic reception.")
+                    .createdAt(LocalDateTime.of(2026, 8, 29, 11, 30, 0))
+                    .build();
+
+            Appointment apt4 = Appointment.builder()
+                    .appointmentId("APT-1003")
+                    .pet(null)
+                    .petId(null)
+                    .petName("Rocky (German Shepherd)")
+                    .species("Dog")
+                    .breed("German Shepherd")
+                    .owner(null)
+                    .ownerId(null)
+                    .ownerName("Dinuka Jayasinghe (Walk-in)")
+                    .ownerPhone("+94 71 777 8899")
+                    .veterinarian(vetSachini)
+                    .vetId(vetSachini != null ? vetSachini.getUserId() : "USR-001")
+                    .vetName("Dr. Sachini Wijesinghe, BVSc")
+                    .serviceType("Emergency / Triage")
+                    .appointmentDate(LocalDate.of(2026, 8, 15))
+                    .timeSlot("10:15 AM")
+                    .status(AppointmentStatus.InRoom)
+                    .tokenNumber("W-01")
+                    .reason("Limping on front right paw after park sprint.")
+                    .symptoms("Swollen metacarpal pad, vocalizes when pressed.")
+                    .notes("X-ray ordered to rule out hairline fracture.")
+                    .createdAt(LocalDateTime.of(2026, 8, 15, 9, 45, 0))
+                    .build();
+
+            Appointment apt5 = Appointment.builder()
+                    .appointmentId("APT-0998")
+                    .pet(barnaby)
+                    .petId(barnaby != null ? barnaby.getPetId() : "PET-001")
+                    .petName(barnaby != null ? barnaby.getName() : "Barnaby")
+                    .species(barnaby != null ? barnaby.getSpecies() : "Dog")
+                    .breed(barnaby != null ? barnaby.getBreed() : "Golden Retriever")
+                    .owner(owner)
+                    .ownerId(owner.getUserId())
+                    .ownerName(owner.getFullName())
+                    .ownerPhone(owner.getPhone())
+                    .veterinarian(vetSachini)
+                    .vetId(vetSachini != null ? vetSachini.getUserId() : "USR-001")
+                    .vetName("Dr. Sachini Wijesinghe, BVSc")
+                    .serviceType("Dermatology Follow-up")
+                    .appointmentDate(LocalDate.of(2026, 7, 20))
+                    .timeSlot("10:00 AM")
+                    .status(AppointmentStatus.Completed)
+                    .tokenNumber("C-12")
+                    .reason("Skin redness on belly.")
+                    .symptoms("Resolved after Apoquel regimen.")
+                    .notes("Skin barrier is fully restored. Advised hypoallergenic wash.")
+                    .createdAt(LocalDateTime.of(2026, 7, 15, 9, 0, 0))
+                    .build();
+
+            appointmentRepository.saveAll(List.of(apt1, apt2, apt3, apt4, apt5));
+            log.info("Seeded 5 initial appointments.");
+        }
+
+        // Seed Consultations
+        if (consultationRepository.count() == 0) {
+            log.info("Seeding initial consultations into PetNexus database...");
+
+            Pet barnaby = petRepository.findByPetId("PET-001").orElse(null);
+            Appointment aptCompleted = appointmentRepository.findByAppointmentId("APT-0998").orElse(null);
+            User vetSachini = userRepository.findByEmail("vet@petnexus.com").orElse(null);
+
+            Consultation c1 = Consultation.builder()
+                    .consultationId("CNS-2026-01")
+                    .appointment(aptCompleted)
+                    .appointmentId("APT-0998")
+                    .pet(barnaby)
+                    .petId("PET-001")
+                    .petName("Barnaby")
+                    .veterinarian(vetSachini)
+                    .vetId(vetSachini != null ? vetSachini.getUserId() : "USR-001")
+                    .vetName("Dr. Sachini Wijesinghe, BVSc")
+                    .consultationDate(LocalDateTime.of(2026, 7, 20, 10, 15, 0))
+                    .temperatureC(new BigDecimal("38.4"))
+                    .heartRateBpm(88)
+                    .respiratoryRateBpm(22)
+                    .weightKg(new BigDecimal("31.50"))
+                    .subjectiveNotes("Owner reports frequent scratching and licking around lower abdomen over past 5 days.")
+                    .objectiveFindings("Erythema and mild papular dermatitis localized to inguinal region. No flea dirt observed.")
+                    .assessmentDiagnosis("Allergic Contact Dermatitis (likely environmental grass pollen)")
+                    .treatmentPlan("Prescribe Apoquel 16mg once daily for 14 days, combined with weekly Chlorhexidine bath.")
+                    .followUpDate(LocalDate.of(2026, 8, 15))
+                    .status("Completed")
+                    .build();
+
+            consultationRepository.save(c1);
+            log.info("Seeded initial consultation CNS-2026-01.");
+
+            // Seed Prescriptions & Prescription Items
+            if (prescriptionRepository.count() == 0) {
+                log.info("Seeding initial prescriptions into PetNexus database...");
+
+                Prescription rx1 = Prescription.builder()
+                        .prescriptionId("RX-2026-001")
+                        .consultation(c1)
+                        .consultationId("CNS-2026-01")
+                        .pet(barnaby)
+                        .petId("PET-001")
+                        .petName("Barnaby")
+                        .ownerName("Kavindu Perera")
+                        .veterinarian(vetSachini)
+                        .vetId(vetSachini != null ? vetSachini.getUserId() : "USR-001")
+                        .vetName("Dr. Sachini Wijesinghe, BVSc")
+                        .vetLicense("SLVC-VET-2019-0842")
+                        .issueDate(LocalDate.of(2026, 7, 20))
+                        .validUntil(LocalDate.of(2026, 8, 20))
+                        .status("Active")
+                        .instructions("Administer with breakfast meal. Do not crush tablets.")
+                        .digitalSignature("Dr. Sachini Wijesinghe, BVSc [Digital Signoff verified]")
+                        .build();
+
+                PrescriptionItem item1 = PrescriptionItem.builder()
+                        .itemId("RXI-01")
+                        .prescription(rx1)
+                        .prescriptionId("RX-2026-001")
+                        .medicationName("Apoquel (Oclacitinib) 16mg")
+                        .dosage("1 tablet (16mg)")
+                        .frequency("Once Daily (Morning)")
+                        .durationDays(14)
+                        .quantityPrescribed(14)
+                        .refillsAllowed(1)
+                        .build();
+
+                PrescriptionItem item2 = PrescriptionItem.builder()
+                        .itemId("RXI-02")
+                        .prescription(rx1)
+                        .prescriptionId("RX-2026-001")
+                        .medicationName("Douxo S3 PYO Medicated Shampoo")
+                        .dosage("Topical lather for 10 mins")
+                        .frequency("Twice Weekly")
+                        .durationDays(21)
+                        .quantityPrescribed(1)
+                        .refillsAllowed(2)
+                        .build();
+
+                rx1.setItems(List.of(item1, item2));
+                prescriptionRepository.save(rx1);
+                log.info("Seeded initial prescription RX-2026-001 with 2 items.");
+            }
+        }
+
+        // =====================================================================
+        // Seed Rescue Cases (Phase 5)
+        // Mirrors initialRescueCases in frontend initialData.js
+        // =====================================================================
+        if (rescueCaseRepository.count() == 0) {
+            log.info("Seeding rescue cases, progress logs, photos, and foster records...");
+
+            // RSC-2026-001 — Luna (Intake)
+            RescueCase luna = rescueCaseRepository.save(RescueCase.builder()
+                    .caseId("RSC-2026-001")
+                    .caseNumber("RC-2026-01")
+                    .temporaryName("Luna")
+                    .species("Dog")
+                    .breed("Australian Shepherd Mix")
+                    .estimatedAge("1.5 years")
+                    .gender("Female")
+                    .rescueLocation("Found near Kandy Road, Kelaniya")
+                    .intakeDate(LocalDate.of(2026, 7, 2))
+                    .conditionSeverity("Moderate")
+                    .status("Intake")
+                    .isPublishedForAdoption(false)
+                    .microchipId("985141099238471")
+                    .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
+                    .description("Energetic, affectionate, and great with humans. Luna was found dehydrated and underweight, but has made a 100% recovery.")
+                    .medicalSummary("Spayed, fully vaccinated, treated for tick fever, negative for heartworm.")
+                    .coverPhotoUrl("https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=600&auto=format&fit=crop&q=80")
+                    .fosterParentId("FST-001")
+                    .fosterParentName("Piumi Senanayake")
+                    .build());
+
+            // RSC-2026-002 — Oliver & Pip (InFoster, published)
+            RescueCase oliverPip = rescueCaseRepository.save(RescueCase.builder()
+                    .caseId("RSC-2026-002")
+                    .caseNumber("RC-2026-02")
+                    .temporaryName("Oliver & Pip (Bonded Pair)")
+                    .species("Cat")
+                    .breed("Domestic Short Hair (Tabby)")
+                    .estimatedAge("8 months")
+                    .gender("Male & Female")
+                    .rescueLocation("Abandoned in carrier outside Dehiwala Industrial Area")
+                    .intakeDate(LocalDate.of(2026, 7, 18))
+                    .conditionSeverity("Low")
+                    .status("InFoster")
+                    .isPublishedForAdoption(true)
+                    .microchipId("985141088339102")
+                    .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
+                    .description("Inseparable brother and sister duo who love curling up together and chasing laser pointers.")
+                    .medicalSummary("Neutered/spayed, microchipped, dewormed, negative for FIV/FeLV.")
+                    .coverPhotoUrl("https://images.unsplash.com/photo-1574158622682-e40e69881006?w=600&auto=format&fit=crop&q=80")
+                    .fosterParentId("FST-002")
+                    .fosterParentName("Chamara & Nadeeka Jayawardena")
+                    .build());
+
+            // RSC-2026-003 — Zeus (InTreatment)
+            RescueCase zeus = rescueCaseRepository.save(RescueCase.builder()
+                    .caseId("RSC-2026-003")
+                    .caseNumber("RC-2026-03")
+                    .temporaryName("Zeus")
+                    .species("Dog")
+                    .breed("Siberian Husky")
+                    .estimatedAge("4 years")
+                    .gender("Male")
+                    .rescueLocation("Found stray near Beira Lake, Colombo 02")
+                    .intakeDate(LocalDate.of(2026, 8, 1))
+                    .conditionSeverity("High")
+                    .status("InTreatment")
+                    .isPublishedForAdoption(false)
+                    .microchipId("985141077448291")
+                    .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
+                    .description("Majestic blue-eyed husky currently rehabilitating a minor pelvic fracture and corneal abrasion.")
+                    .medicalSummary("Undergoing physical therapy with Dr. Wijesinghe. Pain managed with Meloxicam.")
+                    .coverPhotoUrl("https://images.unsplash.com/photo-1605568427561-40dd23c2acea?w=600&auto=format&fit=crop&q=80")
+                    .build());
+
+            // RSC-2026-004 — Daisy (ReadyForAdoption, published)
+            rescueCaseRepository.save(RescueCase.builder()
+                    .caseId("RSC-2026-004")
+                    .caseNumber("RC-2026-04")
+                    .temporaryName("Daisy")
+                    .species("Dog")
+                    .breed("Beagle")
+                    .estimatedAge("2 years")
+                    .gender("Female")
+                    .rescueLocation("Transferred from Colombo Municipal Shelter, Borella")
+                    .intakeDate(LocalDate.of(2026, 8, 10))
+                    .conditionSeverity("Low")
+                    .status("ReadyForAdoption")
+                    .isPublishedForAdoption(true)
+                    .microchipId("985141066551920")
+                    .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")
+                    .description("Sweet, gentle natured beagle who loves scent games and cuddles on the couch.")
+                    .medicalSummary("Dental prophylaxis done, vaccinations up to date, spayed.")
+                    .coverPhotoUrl("https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=600&auto=format&fit=crop&q=80")
+                    .build());
+
+            // RSC-2026-005 — Brownie (Reported by Pet Owner Kavindu Perera, awaiting officer triage)
+            RescueCase brownie = rescueCaseRepository.save(RescueCase.builder()
+                    .caseId("RSC-2026-005")
+                    .caseNumber("RC-2026-05")
+                    .temporaryName("Brownie (Injured Stray)")
+                    .species("Dog")
+                    .breed("Indie / Sri Lankan Stray")
+                    .estimatedAge("1 year")
+                    .gender("Male")
+                    .rescueLocation("Near Viharamahadevi Park, Library Gate")
+                    .intakeDate(LocalDate.of(2026, 8, 15))
+                    .conditionSeverity("High")
+                    .status("Reported")
+                    .isPublishedForAdoption(false)
+                    .reportedByUserId("USR-001")
+                    .reportedByUserName("Kavindu Perera")
+                    .reportedByUserPhone("+94 77 123 4567")
+                    .description("Found limping on left hind leg, sheltering under park bench. Very timid but friendly with treats.")
+                    .medicalSummary("Noticeable left rear leg laceration, needs clinical cleaning and x-ray.")
+                    .coverPhotoUrl("https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80")
+                    .build());
+
+            log.info("Seeded 5 rescue cases (including community-reported case).");
+
+            // ------------------------------------------------------------------
+            // Progress Logs — mirrors initialRescueProgressLogs
+            // ------------------------------------------------------------------
+            rescueProgressLogRepository.save(RescueProgressLog.builder()
+                    .logId("RPL-501")
+                    .rescueCase(luna)
+                    .caseId("RSC-2026-001")
+                    .loggedBy("Dr. Sachini Wijesinghe")
+                    .logDate(LocalDateTime.of(2026, 7, 3, 11, 0, 0))
+                    .logType("Medical")
+                    .title("Intake Physical & IV Fluid Hydration")
+                    .notes("Patient was 4kg underweight with mild anemia from ticks. Started Doxycycline regimen and premium nutrient paste.")
+                    .build());
+
+            rescueProgressLogRepository.save(RescueProgressLog.builder()
+                    .logId("RPL-502")
+                    .rescueCase(luna)
+                    .caseId("RSC-2026-001")
+                    .loggedBy("Shehan Rajapaksha")
+                    .logDate(LocalDateTime.of(2026, 7, 15, 15, 30, 0))
+                    .logType("Behavioral")
+                    .title("Foster Home Placement with Piumi")
+                    .notes("Luna transitioned to foster home smoothly. Shows zero food aggression and interacts gently with resident labrador.")
+                    .build());
+
+            rescueProgressLogRepository.save(RescueProgressLog.builder()
+                    .logId("RPL-503")
+                    .rescueCase(luna)
+                    .caseId("RSC-2026-001")
+                    .loggedBy("Dr. Sachini Wijesinghe")
+                    .logDate(LocalDateTime.of(2026, 7, 28, 10, 0, 0))
+                    .logType("Milestone")
+                    .title("Cleared for Public Adoption")
+                    .notes("Bloodwork normal. Weight reached 22kg healthy goal. Spay incision completely healed. Status changed to ReadyForAdoption.")
+                    .build());
+
+            rescueProgressLogRepository.save(RescueProgressLog.builder()
+                    .logId("RPL-504")
+                    .rescueCase(zeus)
+                    .caseId("RSC-2026-003")
+                    .loggedBy("Dr. Sachini Wijesinghe")
+                    .logDate(LocalDateTime.of(2026, 8, 2, 9, 0, 0))
+                    .logType("Medical")
+                    .title("Pelvic Radiograph & Stabilization")
+                    .notes("Stable non-displaced pelvic hairline fissure. Conservative crate rest for 3 weeks recommended alongside laser therapy.")
+                    .build());
+
+            rescueProgressLogRepository.save(RescueProgressLog.builder()
+                    .logId("RPL-505")
+                    .rescueCase(brownie)
+                    .caseId("RSC-2026-005")
+                    .loggedBy("Kavindu Perera (Pet Owner)")
+                    .logDate(LocalDateTime.of(2026, 8, 15, 8, 45, 0))
+                    .logType("Community Report")
+                    .title("Animal Needing Rescue Reported")
+                    .notes("Observed near Viharamahadevi Park with visible rear leg injury. Requires rescue field response.")
+                    .build());
+
+            log.info("Seeded 5 rescue progress logs.");
+
+            // ------------------------------------------------------------------
+            // Photos — mirrors initialRescuePhotos
+            // ------------------------------------------------------------------
+            rescuePhotoRepository.save(RescuePhoto.builder()
+                    .photoId("RPH-01")
+                    .rescueCase(luna)
+                    .caseId("RSC-2026-001")
+                    .photoUrl("https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=800&auto=format&fit=crop&q=80")
+                    .caption("Luna smiling during afternoon foster play session")
+                    .uploadedAt(LocalDateTime.of(2026, 7, 28, 10, 30, 0))
+                    .tag("Adoption Profile")
+                    .build());
+
+            rescuePhotoRepository.save(RescuePhoto.builder()
+                    .photoId("RPH-02")
+                    .rescueCase(luna)
+                    .caseId("RSC-2026-001")
+                    .photoUrl("https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&auto=format&fit=crop&q=80")
+                    .caption("Luna on first day of intake rescue")
+                    .uploadedAt(LocalDateTime.of(2026, 7, 2, 10, 35, 0))
+                    .tag("Intake Evidence")
+                    .build());
+
+            rescuePhotoRepository.save(RescuePhoto.builder()
+                    .photoId("RPH-03")
+                    .rescueCase(oliverPip)
+                    .caseId("RSC-2026-002")
+                    .photoUrl("https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&auto=format&fit=crop&q=80")
+                    .caption("Oliver and Pip napping together")
+                    .uploadedAt(LocalDateTime.of(2026, 7, 20, 16, 0, 0))
+                    .tag("Foster Life")
+                    .build());
+
+            log.info("Seeded 3 rescue photos.");
+
+            // ------------------------------------------------------------------
+            // Foster Records — mirrors initialFosterRecords
+            // ------------------------------------------------------------------
+            fosterRecordRepository.save(FosterRecord.builder()
+                    .fosterId("FST-001")
+                    .fullName("Piumi Senanayake")
+                    .phone("+94 77 333 7711")
+                    .email("piumi.senanayake@example.com")
+                    .address("27/A Havelock Road, Colombo 05")
+                    .homeType("Single Family with Walled Garden")
+                    .activePlacements(1)
+                    .maxCapacity(2)
+                    .rating(new BigDecimal("5.0"))
+                    .status("Active")
+                    .build());
+
+            fosterRecordRepository.save(FosterRecord.builder()
+                    .fosterId("FST-002")
+                    .fullName("Chamara & Nadeeka Jayawardena")
+                    .phone("+94 71 444 8822")
+                    .email("jayawardena.family@example.com")
+                    .address("8 Torrington Avenue, Colombo 07")
+                    .homeType("Spacious Apartment (Cat Friendly)")
+                    .activePlacements(1)
+                    .maxCapacity(3)
+                    .rating(new BigDecimal("4.9"))
+                    .status("Active")
+                    .build());
+
+            log.info("Seeded 2 foster records.");
+        }
+
+        // ------------------------------------------------------------------
+        // Phase 7: Care Provider, Services, Package Bookings, Service Logs
+        // ------------------------------------------------------------------
+        careProviderRepository.findByUser_Id(providerUser.getId())
+                .or(() -> careProviderRepository.findByProviderId("PRV-001"))
+                .orElseGet(() -> {
+                    CareProvider newPrv = CareProvider.builder()
+                            .providerId("PRV-001")
+                            .user(providerUser)
+                            .providerName("Dilshan Bandara")
+                            .contactPhone("+94 77 987 6543")
+                            .contactEmail("provider@petnexus.com")
+                            .active(true)
+                            .build();
+                    return careProviderRepository.save(newPrv);
+                });
+
+        if (careServiceRepository.count() == 0) {
+            log.info("Seeding initial Care Services into PetNexus database...");
+            careServiceRepository.save(CareService.builder()
+                    .serviceId("CSR-001")
+                    .name("Deluxe Spa & Hydrotherapy Grooming Plan")
+                    .description("Full grooming with hydrobath, coat conditioning, ear cleaning, and paw pad trim")
+                    .price(new BigDecimal("15000.00"))
+                    .durationMinutes(90)
+                    .status(ServiceStatus.SCHEDULED)
+                    .createdBy(providerUser)
+                    .build());
+
+            careServiceRepository.save(CareService.builder()
+                    .serviceId("CSR-002")
+                    .name("De-Shedding & Blowout Treatment")
+                    .description("Deep brush out, de-shedding shampoo, and high-velocity blowout")
+                    .price(new BigDecimal("8500.00"))
+                    .durationMinutes(60)
+                    .status(ServiceStatus.SCHEDULED)
+                    .createdBy(providerUser)
+                    .build());
+
+            careServiceRepository.save(CareService.builder()
+                    .serviceId("CSR-003")
+                    .name("Puppy Spa & Gentle Bath")
+                    .description("Tearless shampoo, gentle warm water rinse, light brush, and nail trim")
+                    .price(new BigDecimal("5500.00"))
+                    .durationMinutes(45)
+                    .status(ServiceStatus.SCHEDULED)
+                    .createdBy(providerUser)
+                    .build());
+            log.info("Seeded 3 care services.");
+        }
+
+        if (servicePackageBookingRepository.count() == 0) {
+            log.info("Seeding initial Service Package Bookings into PetNexus database...");
+            // Booking 1: Owned Pet Barnaby (Owner: Kavindu Perera USR-001)
+            servicePackageBookingRepository.save(ServicePackageBooking.builder()
+                    .bookingId("PKB-101")
+                    .ownerId("USR-001")
+                    .ownerName("Kavindu Perera")
+                    .petId("PET-001")
+                    .petName("Barnaby (Golden Retriever)")
+                    .packageId("PKG-03")
+                    .packageName("Deluxe Spa & Hydrotherapy Grooming Plan")
+                    .totalSessions(3)
+                    .completedSessions(1)
+                    .remainingSessions(2)
+                    .purchaseDate(LocalDate.of(2026, 7, 10))
+                    .expiryDate(LocalDate.of(2027, 1, 10))
+                    .status("Active")
+                    .createdAt(LocalDate.of(2026, 7, 10))
+                    .build());
+
+            // Booking 2: Owned Cat Cleo (Owner: Kavindu Perera USR-001)
+            servicePackageBookingRepository.save(ServicePackageBooking.builder()
+                    .bookingId("PKB-102")
+                    .ownerId("USR-001")
+                    .ownerName("Kavindu Perera")
+                    .petId("PET-002")
+                    .petName("Cleo (British Shorthair)")
+                    .packageId("PKG-03")
+                    .packageName("Deluxe Spa & Hydrotherapy Grooming Plan")
+                    .totalSessions(2)
+                    .completedSessions(0)
+                    .remainingSessions(2)
+                    .purchaseDate(LocalDate.of(2026, 8, 5))
+                    .expiryDate(LocalDate.of(2027, 2, 5))
+                    .status("Active")
+                    .createdAt(LocalDate.of(2026, 8, 5))
+                    .build());
+            log.info("Seeded 2 service package bookings.");
+        }
+
+        if (careServiceLogRepository.count() == 0) {
+            log.info("Seeding initial Care Service Logs into PetNexus database...");
+            // Log 1: Completed session on owned pet Barnaby
+            careServiceLogRepository.save(CareServiceLog.builder()
+                    .serviceLogId("CSL-201")
+                    .petId("PET-001")
+                    .petName("Barnaby (Golden Retriever)")
+                    .ownerId("USR-001")
+                    .ownerName("Kavindu Perera")
+                    .providerId(providerUser.getUserId())
+                    .providerName(providerUser.getFullName())
+                    .serviceType("Deluxe Spa Grooming Session #1")
+                    .serviceDate(LocalDate.of(2026, 7, 25))
+                    .status(ServiceStatus.COMPLETED)
+                    .intakeCondition("Coat slightly matted near ears, very cooperative and friendly.")
+                    .servicesPerformed("Hydro-massage warm oatmeal bath, blow dry, ear cleaning, paw pad trim, sanitary cut.")
+                    .notes("Coat is silky and lustrous. Recommended hypoallergenic coconut leave-in conditioner.")
+                    .returnToRescue(false)
+                    .createdAt(LocalDate.of(2026, 7, 25))
+                    .build());
+
+            // Log 2: In-Progress session on owned pet Barnaby
+            careServiceLogRepository.save(CareServiceLog.builder()
+                    .serviceLogId("CSL-202")
+                    .petId("PET-001")
+                    .petName("Barnaby (Golden Retriever)")
+                    .ownerId("USR-001")
+                    .ownerName("Kavindu Perera")
+                    .providerId(providerUser.getUserId())
+                    .providerName(providerUser.getFullName())
+                    .serviceType("Deluxe Spa Session #2 - De-Shedding & Paw Balming")
+                    .serviceDate(LocalDate.of(2026, 8, 15))
+                    .status(ServiceStatus.IN_PROGRESS)
+                    .intakeCondition("Checked in at 09:00 AM. Excellent spirits, ready for coat thinning.")
+                    .servicesPerformed("High-velocity blowout completed. Currently applying soothing paw pad balm.")
+                    .notes("Owner requested gentle dremel buffing for nails.")
+                    .returnToRescue(false)
+                    .createdAt(LocalDate.of(2026, 8, 15))
+                    .build());
+
+            // Log 3: Rescued Animal Care & Rehabilitation (Cross-Module: Connects Rescue Case RSC-2026-001 Luna)
+            careServiceLogRepository.save(CareServiceLog.builder()
+                    .serviceLogId("CSL-203")
+                    .caseId("RSC-2026-001")
+                    .petName("Luna (Rescue Australian Shepherd Mix)")
+                    .providerId(providerUser.getUserId())
+                    .providerName(providerUser.getFullName())
+                    .serviceType("Rescue Rehabilitation Medicated Bath & Desensitization")
+                    .serviceDate(LocalDate.of(2026, 7, 26))
+                    .status(ServiceStatus.COMPLETED)
+                    .intakeCondition("Nervous around water, healing tick bites on torso.")
+                    .servicesPerformed("Medicated chlorhexidine wash, slow towel dry, gentle positive-reinforcement brushing.")
+                    .notes("Luna became very trusting after 20 minutes. Skin irritation reduced. Cleared to return to foster parent Piumi Senanayake.")
+                    .returnToRescue(true)
+                    .createdAt(LocalDate.of(2026, 7, 26))
+                    .build());
+
+            // Log 4: Rescued Animal Care & Rehabilitation (Cross-Module: Connects Rescue Case RSC-2026-003 Zeus)
+            careServiceLogRepository.save(CareServiceLog.builder()
+                    .serviceLogId("CSL-204")
+                    .caseId("RSC-2026-003")
+                    .petName("Zeus (Rescue Siberian Husky)")
+                    .providerId(providerUser.getUserId())
+                    .providerName(providerUser.getFullName())
+                    .serviceType("Therapeutic Hydrobath & Undercoat Brush")
+                    .serviceDate(LocalDate.of(2026, 8, 14))
+                    .status(ServiceStatus.READY_FOR_PICKUP)
+                    .intakeCondition("Post-pelvic fracture physical rehab support. Supported with sling.")
+                    .servicesPerformed("Warm hydrotherapy muscle soak, light dry-brushing to remove dead undercoat.")
+                    .notes("Muscles relaxed noticeably. Animal standing comfortably. Ready for Rescue Officer Shehan Rajapaksha pickup.")
+                    .returnToRescue(true)
+                    .createdAt(LocalDate.of(2026, 8, 14))
+                    .build());
+
+            log.info("Seeded 4 care service logs connecting owned pets and rescue cases.");
+        }
+
+        // ------------------------------------------------------------------
+        // Phase 8: Suppliers & Inventory Items
+        // ------------------------------------------------------------------
+        if (supplierRepository.count() == 0) {
+            log.info("Seeding initial Suppliers into PetNexus database...");
+            Supplier sup01 = supplierRepository.save(Supplier.builder()
+                    .supplierId("SUP-01")
+                    .companyName("Zoetis Animal Health Sri Lanka (Pvt) Ltd")
+                    .contactPerson("Ruwan Abeysekara")
+                    .email("orders@zoetis-sl.com")
+                    .phone("+94 11 234 7700")
+                    .category("Pharmaceuticals & Vaccines")
+                    .leadTimeDays(2)
+                    .rating(new BigDecimal("4.9"))
+                    .address("117 Sir James Peiris Mawatha, Colombo 02")
+                    .active(true)
+                    .build());
+
+            Supplier sup02 = supplierRepository.save(Supplier.builder()
+                    .supplierId("SUP-02")
+                    .companyName("Sathosa Veterinary & Medical Supplies (Pvt) Ltd")
+                    .contactPerson("Pradeep Kumara")
+                    .email("supply@sathosamedicalsupplies.lk")
+                    .phone("+94 11 456 8800")
+                    .category("Surgical & Clinical Equipment")
+                    .leadTimeDays(3)
+                    .rating(new BigDecimal("4.8"))
+                    .address("45 Vauxhall Street, Colombo 02")
+                    .active(true)
+                    .build());
+
+            Supplier sup03 = supplierRepository.save(Supplier.builder()
+                    .supplierId("SUP-03")
+                    .companyName("Royal Canin Sri Lanka & Hill's Science Nutrition")
+                    .contactPerson("Anoma Rajapaksha")
+                    .email("vetcare@royalcanin-sl.com")
+                    .phone("+94 11 789 5500")
+                    .category("Prescription Diets & Nutrition")
+                    .leadTimeDays(4)
+                    .rating(new BigDecimal("4.7"))
+                    .address("23 R.A. De Mel Mawatha, Colombo 04")
+                    .active(true)
+                    .build());
+
+            log.info("Seeded 3 suppliers.");
+
+            if (inventoryItemRepository.count() == 0) {
+                log.info("Seeding initial Inventory Items into PetNexus database...");
+                inventoryItemRepository.save(InventoryItem.builder()
+                        .itemId("INV-101")
+                        .name("Apoquel 16mg (Oclacitinib) 100ct")
+                        .category("Pharmaceuticals")
+                        .sku("MED-APQ-016")
+                        .batchNumber("BT-88912")
+                        .currentStock(18)
+                        .minStockThreshold(10)
+                        .unit("Bottles")
+                        .unitPrice(new BigDecimal("38000.00"))
+                        .sellingPrice(new BigDecimal("52000.00"))
+                        .expiryDate(LocalDate.of(2027, 11, 30))
+                        .supplier(sup01)
+                        .supplierName(sup01.getCompanyName())
+                        .status(StockStatus.IN_STOCK)
+                        .build());
+
+                inventoryItemRepository.save(InventoryItem.builder()
+                        .itemId("INV-102")
+                        .name("Rabies 3-Year Canine/Feline Vaccine 50-Dose")
+                        .category("Vaccines")
+                        .sku("VAC-RAB-03Y")
+                        .batchNumber("BT-99411")
+                        .currentStock(4)
+                        .minStockThreshold(8)
+                        .unit("Vials (Pack)")
+                        .unitPrice(new BigDecimal("22500.00"))
+                        .sellingPrice(new BigDecimal("38500.00"))
+                        .expiryDate(LocalDate.of(2027, 4, 15))
+                        .supplier(sup01)
+                        .supplierName(sup01.getCompanyName())
+                        .status(StockStatus.LOW_STOCK)
+                        .build());
+
+                inventoryItemRepository.save(InventoryItem.builder()
+                        .itemId("INV-103")
+                        .name("Surgical Suture Vicryl 3-0 with Reverse Cutting Needle")
+                        .category("Surgical Supplies")
+                        .sku("SUR-SUT-VIC30")
+                        .batchNumber("BT-44102")
+                        .currentStock(32)
+                        .minStockThreshold(15)
+                        .unit("Boxes (12/pk)")
+                        .unitPrice(new BigDecimal("11000.00"))
+                        .sellingPrice(new BigDecimal("17500.00"))
+                        .expiryDate(LocalDate.of(2028, 9, 1))
+                        .supplier(sup02)
+                        .supplierName(sup02.getCompanyName())
+                        .status(StockStatus.IN_STOCK)
+                        .build());
+
+                inventoryItemRepository.save(InventoryItem.builder()
+                        .itemId("INV-104")
+                        .name("Royal Canin Veterinary Gastrointestinal Low Fat 12kg")
+                        .category("Prescription Diet")
+                        .sku("NUT-RC-GI-12K")
+                        .batchNumber("BT-10293")
+                        .currentStock(2)
+                        .minStockThreshold(6)
+                        .unit("Bags")
+                        .unitPrice(new BigDecimal("18000.00"))
+                        .sellingPrice(new BigDecimal("25000.00"))
+                        .expiryDate(LocalDate.of(2026, 12, 15))
+                        .supplier(sup03)
+                        .supplierName(sup03.getCompanyName())
+                        .status(StockStatus.LOW_STOCK)
+                        .build());
+
+                inventoryItemRepository.save(InventoryItem.builder()
+                        .itemId("INV-105")
+                        .name("Isoflurane Inhalation Anesthetic USP 250ml")
+                        .category("Anesthetics")
+                        .sku("MED-ISO-250ML")
+                        .batchNumber("BT-66129")
+                        .currentStock(12)
+                        .minStockThreshold(5)
+                        .unit("Bottles")
+                        .unitPrice(new BigDecimal("14500.00"))
+                        .sellingPrice(new BigDecimal("21500.00"))
+                        .expiryDate(LocalDate.of(2028, 1, 20))
+                        .supplier(sup02)
+                        .supplierName(sup02.getCompanyName())
+                        .status(StockStatus.IN_STOCK)
+                        .build());
+
+                log.info("Seeded 5 inventory items.");
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // Phase 9: Feedback & Notifications
+        // ------------------------------------------------------------------
+        if (feedbackRepository.count() == 0) {
+            log.info("Seeding initial Feedback into PetNexus database...");
+            feedbackRepository.save(Feedback.builder()
+                    .feedbackId("FDB-001")
+                    .user(owner)
+                    .userName("Kavindu Perera")
+                    .serviceCategory("Veterinary Consultation")
+                    .rating(5)
+                    .title("Outstanding care by Dr. Wijesinghe for Barnaby's allergies")
+                    .comments("Dr. Wijesinghe took the time to explain the difference between food and environmental allergies. Barnaby stopped itching within 48 hours. Incredible clinic atmosphere!")
+                    .staffMentioned("Dr. Sachini Wijesinghe")
+                    .managerResponse("Thank you Kavindu! We are thrilled to hear Barnaby is feeling playful and allergy-free.")
+                    .managerRespondedAt(LocalDateTime.of(2026, 7, 23, 9, 30))
+                    .createdAt(LocalDateTime.of(2026, 7, 22, 14, 0))
+                    .build());
+
+            feedbackRepository.save(Feedback.builder()
+                    .feedbackId("FDB-002")
+                    .user(owner)
+                    .userName("Kavindu Perera")
+                    .serviceCategory("Grooming & Spa")
+                    .rating(5)
+                    .title("Dilshan is a master with big golden retrievers")
+                    .comments("Barnaby came out looking like a show dog! His coat smells fresh and clean, and he wasn’t stressed at all.")
+                    .staffMentioned("Dilshan Bandara")
+                    .managerResponse("We love having Barnaby in the salon! Thank you for trusting us with his grooming.")
+                    .managerRespondedAt(LocalDateTime.of(2026, 7, 27, 10, 0))
+                    .createdAt(LocalDateTime.of(2026, 7, 26, 16, 30))
+                    .build());
+            log.info("Seeded 2 feedback entries.");
+        }
+
+        if (notificationRepository.count() == 0) {
+            log.info("Seeding initial Notifications into PetNexus database...");
+            notificationRepository.save(Notification.builder()
+                    .notificationId("NTF-01")
+                    .user(owner)
+                    .type(NotificationType.Appointment)
+                    .title("Appointment Reminder")
+                    .message("Barnaby is checked in for today’s Routine Wellness visit with Dr. Sachini Wijesinghe (Token: A-01).")
+                    .isRead(false)
+                    .link("/owner/appointments")
+                    .createdAt(LocalDateTime.of(2026, 8, 15, 9, 30))
+                    .build());
+
+            notificationRepository.save(Notification.builder()
+                    .notificationId("NTF-02")
+                    .user(owner)
+                    .type(NotificationType.Adoption)
+                    .title("Adoption Application Under Review")
+                    .message("Your adoption application for Luna (RSC-2026-001) has been received and is being reviewed by Rescue Officer Shehan Rajapaksha.")
+                    .isRead(false)
+                    .link("/owner/adopt")
+                    .createdAt(LocalDateTime.of(2026, 8, 13, 10, 0))
+                    .build());
+
+            notificationRepository.save(Notification.builder()
+                    .notificationId("NTF-04")
+                    .user(manager)
+                    .type(NotificationType.Inventory)
+                    .title("Low Stock Alert: Rabies Vaccine")
+                    .message("Rabies 3-Year Vaccine has fallen below minimum reorder threshold (4 vials remaining).")
+                    .isRead(false)
+                    .link("/manager/inventory")
+                    .createdAt(LocalDateTime.of(2026, 8, 15, 8, 0))
+                    .build());
+            log.info("Seeded 3 notifications.");
+        }
+    }
+}
