@@ -99,7 +99,7 @@ public class PrescriptionService {
         String vetName = request.resolveVetName() != null ? request.resolveVetName().trim() :
                 (vet != null ? vet.getFullName() : "Dr. Michael Chen, DVM");
         String vetLicense = request.resolveVetLicense() != null ? request.resolveVetLicense().trim() :
-                (vet != null ? vet.getLicenseNumber() : "VET-NY-84920");
+                (vet != null ? (vet instanceof com.petnexus.backend.entity.Veterinarian v ? v.getLicenseNumber() : null) : "VET-NY-84920");
 
         Prescription rx = Prescription.builder()
                 .prescriptionId(newRxId)

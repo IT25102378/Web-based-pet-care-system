@@ -108,7 +108,7 @@ public class Phase10FinalSecurityIntegrationTest {
 
         // 2. Clinic Manager
         manager = userRepository.findByEmail("manager.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(ClinicManager.builder()
                         .userId("USR-MGR-01")
                         .email("manager.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -120,7 +120,7 @@ public class Phase10FinalSecurityIntegrationTest {
 
         // 3. Veterinarian
         vet = userRepository.findByEmail("vet.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(Veterinarian.builder()
                         .userId("USR-VET-01")
                         .email("vet.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -133,7 +133,7 @@ public class Phase10FinalSecurityIntegrationTest {
 
         // 4. Rescue Officer
         rescue = userRepository.findByEmail("rescue.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(RescueOfficer.builder()
                         .userId("USR-RSC-01")
                         .email("rescue.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -145,7 +145,7 @@ public class Phase10FinalSecurityIntegrationTest {
 
         // 5. Pet Care Provider
         provider = userRepository.findByEmail("provider.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(PetCareProvider.builder()
                         .userId("USR-PRV-01")
                         .email("provider.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -157,7 +157,7 @@ public class Phase10FinalSecurityIntegrationTest {
 
         // 6. Pet Owner A
         ownerA = userRepository.findByEmail("ownera.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(PetOwner.builder()
                         .userId("USR-OWN-01")
                         .email("ownera.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -168,7 +168,7 @@ public class Phase10FinalSecurityIntegrationTest {
 
         // 7. Pet Owner B
         ownerB = userRepository.findByEmail("ownerb.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(PetOwner.builder()
                         .userId("USR-OWN-02")
                         .email("ownerb.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -179,7 +179,7 @@ public class Phase10FinalSecurityIntegrationTest {
 
         // Non-active accounts
         suspendedUser = userRepository.findByEmail("suspended.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(PetOwner.builder()
                         .userId("USR-SUS-01")
                         .email("suspended.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -190,7 +190,7 @@ public class Phase10FinalSecurityIntegrationTest {
                         .build()));
 
         rejectedUser = userRepository.findByEmail("rejected.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(Veterinarian.builder()
                         .userId("USR-REJ-01")
                         .email("rejected.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
@@ -201,7 +201,7 @@ public class Phase10FinalSecurityIntegrationTest {
                         .build()));
 
         pendingApprovalUser = userRepository.findByEmail("pendingapp.sec@petnexus.com").orElseGet(() ->
-                userRepository.save(User.builder()
+                userRepository.save(Veterinarian.builder()
                         .userId("USR-PND-01")
                         .email("pendingapp.sec@petnexus.com")
                         .passwordHash(passwordEncoder.encode("Password123!"))
