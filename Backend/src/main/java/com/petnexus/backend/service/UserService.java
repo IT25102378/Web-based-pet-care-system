@@ -68,26 +68,42 @@ public class UserService {
         String approvalToken = UUID.randomUUID().toString();
 
         // Build user entity — BCrypt hash the password
-        User user = User.builder()
-                .userId(userId)
-                .email(request.getEmail().toLowerCase().trim())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
-                .phone(request.getPhone())
-                .address(request.getAddress())
-                .emergencyContact(request.getEmergencyContact())
-                .role(request.getRole())
-                .status(UserStatus.PendingApproval)
-                .avatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl()
-                        : "https://api.dicebear.com/7.x/initials/svg?seed=" + request.getFullName().replaceAll("\\s+", ""))
-                .licenseNumber(request.getLicenseNumber())
-                .specialization(request.getSpecialization())
-                .staffId(request.getStaffId())
-                .managerCode(request.getManagerCode())
-                .badgeNumber(request.getBadgeNumber())
-                .serviceSpecialty(request.getServiceSpecialty())
-                .approvalToken(approvalToken)
-                .build();
+        
+        User user;
+        switch (request.getRole()) {
+            case Veterinarian -> user = com.petnexus.backend.entity.Veterinarian.builder()
+                    .licenseNumber(request.getLicenseNumber())
+                    .specialization(request.getSpecialization())
+                    .build();
+            case ClinicStaff -> user = com.petnexus.backend.entity.ClinicStaff.builder()
+                    .staffId(request.getStaffId())
+                    .build();
+            case ClinicManager -> user = com.petnexus.backend.entity.ClinicManager.builder()
+                    .managerCode(request.getManagerCode())
+                    .build();
+            case RescueOfficer -> user = com.petnexus.backend.entity.RescueOfficer.builder()
+                    .badgeNumber(request.getBadgeNumber())
+                    .build();
+            case PetCareProvider -> user = com.petnexus.backend.entity.PetCareProvider.builder()
+                    .serviceSpecialty(request.getServiceSpecialty())
+                    .build();
+            case PetOwner -> user = com.petnexus.backend.entity.PetOwner.builder().build();
+            default -> user = new User();
+        }
+
+        user.setUserId(userId);
+        user.setEmail(request.getEmail().toLowerCase().trim());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
+        user.setAddress(request.getAddress());
+        user.setEmergencyContact(request.getEmergencyContact());
+        user.setRole(request.getRole());
+        user.setStatus(UserStatus.PendingApproval);
+        user.setAvatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl()
+                : "https://api.dicebear.com/7.x/initials/svg?seed=" + request.getFullName().replaceAll("\s+", ""));
+        user.setApprovalToken(approvalToken);
+
 
         userRepository.save(user);
 
@@ -113,12 +129,17 @@ public class UserService {
                 .orElseThrow(() -> new BadRequestException("Invalid email or password."));
 
         // Verify password against BCrypt hash
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Invalid email or password.");
         }
 
         // Status checks — must match frontend's error code expectations
-        switch (user.getStatus()) {
+        UserStatus status = user.getStatus();
+        if (status == null) {
+            throw new BadRequestException("Account status is unassigned. Please contact administrator.");
+        }
+
+        switch (status) {
             case PendingApproval ->
                 throw new BadRequestException(
                     "Your account is awaiting admin approval. You will receive an email once reviewed."
@@ -356,22 +377,22 @@ public class UserService {
 
         // Professional fields can only be set if user role matches or by Admin
         if (request.getLicenseNumber() != null && (isAdmin || user.getRole() == UserRole.Veterinarian)) {
-            user.setLicenseNumber(request.getLicenseNumber());
+            if (user instanceof com.petnexus.backend.entity.Veterinarian v) v.setLicenseNumber(request.getLicenseNumber());
         }
         if (request.getSpecialization() != null && (isAdmin || user.getRole() == UserRole.Veterinarian)) {
-            user.setSpecialization(request.getSpecialization());
+            if (user instanceof com.petnexus.backend.entity.Veterinarian v) v.setSpecialization(request.getSpecialization());
         }
         if (request.getStaffId() != null && (isAdmin || user.getRole() == UserRole.ClinicStaff || user.getRole() == UserRole.ClinicManager)) {
-            user.setStaffId(request.getStaffId());
+            if (user instanceof com.petnexus.backend.entity.ClinicStaff s) s.setStaffId(request.getStaffId());
         }
         if (request.getManagerCode() != null && (isAdmin || user.getRole() == UserRole.ClinicManager)) {
-            user.setManagerCode(request.getManagerCode());
+            if (user instanceof com.petnexus.backend.entity.ClinicManager m) m.setManagerCode(request.getManagerCode());
         }
         if (request.getBadgeNumber() != null && (isAdmin || user.getRole() == UserRole.RescueOfficer)) {
-            user.setBadgeNumber(request.getBadgeNumber());
+            if (user instanceof com.petnexus.backend.entity.RescueOfficer r) r.setBadgeNumber(request.getBadgeNumber());
         }
         if (request.getServiceSpecialty() != null && (isAdmin || user.getRole() == UserRole.PetCareProvider)) {
-            user.setServiceSpecialty(request.getServiceSpecialty());
+            if (user instanceof com.petnexus.backend.entity.PetCareProvider p) p.setServiceSpecialty(request.getServiceSpecialty());
         }
 
         userRepository.save(user);

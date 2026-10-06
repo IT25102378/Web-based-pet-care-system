@@ -51,12 +51,12 @@ public class UserResponse {
         dto.setRole(user.getRole());
         dto.setStatus(user.getStatus());
         dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setLicenseNumber(user.getLicenseNumber());
-        dto.setSpecialization(user.getSpecialization());
-        dto.setStaffId(user.getStaffId());
-        dto.setManagerCode(user.getManagerCode());
-        dto.setBadgeNumber(user.getBadgeNumber());
-        dto.setServiceSpecialty(user.getServiceSpecialty());
+        dto.setLicenseNumber((user instanceof com.petnexus.backend.entity.Veterinarian v ? v.getLicenseNumber() : null));
+        dto.setSpecialization((user instanceof com.petnexus.backend.entity.Veterinarian v ? v.getSpecialization() : null));
+        dto.setStaffId((user instanceof com.petnexus.backend.entity.ClinicStaff s ? s.getStaffId() : null));
+        dto.setManagerCode((user instanceof com.petnexus.backend.entity.ClinicManager m ? m.getManagerCode() : null));
+        dto.setBadgeNumber((user instanceof com.petnexus.backend.entity.RescueOfficer r ? r.getBadgeNumber() : null));
+        dto.setServiceSpecialty((user instanceof com.petnexus.backend.entity.PetCareProvider p ? p.getServiceSpecialty() : null));
         dto.setRejectionReason(user.getRejectionReason());
         dto.setSuspensionReason(user.getSuspensionReason());
         dto.setCreatedAt(user.getCreatedAt());
