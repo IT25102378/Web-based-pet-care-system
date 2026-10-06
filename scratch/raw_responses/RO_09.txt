@@ -1,3 +1,0 @@
-Status: 404
-Body:
-{"error":"Not Found","message":"Resource not found: rescue-cases/1/foster","timestamp":"2026-09-28T14:36:34.982091300","status":404} | {"error":"Not Found","message":"Resource not found: rescue-cases/1/foster","timestamp":"2026-09-28T14:36:34.988085800","status":404}

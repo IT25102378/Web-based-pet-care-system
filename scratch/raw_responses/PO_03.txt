@@ -1,3 +1,0 @@
-Status: 400
-Body:
-{"error":"Bad Request","message":"Invalid email or password.","timestamp":"2026-09-28T14:36:34.532446300","status":400}

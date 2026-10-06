@@ -1,3 +1,0 @@
-Status: 404
-Body:
-{"error":"Not Found","message":"Resource not found: package-bookings","timestamp":"2026-09-28T14:36:35.255156200","status":404}

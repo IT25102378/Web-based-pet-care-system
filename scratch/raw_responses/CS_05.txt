@@ -1,3 +1,0 @@
-Status: 400
-Body:
-{"error":"Bad Request","message":"appointmentDate: appointmentDate is required, timeSlot: timeSlot is required","timestamp":"2026-09-28T14:36:34.810228","status":400}

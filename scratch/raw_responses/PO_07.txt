@@ -1,3 +1,0 @@
-Status: 404
-Body:
-{"error":"Not Found","message":"Resource not found: pets/438/vaccinations","timestamp":"2026-09-28T14:36:34.680231100","status":404}

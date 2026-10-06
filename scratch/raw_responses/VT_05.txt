@@ -1,3 +1,0 @@
-Status: 400
-Body:
-{"error":"Bad Request","message":"Pet ID is required to generate a prescription.","timestamp":"2026-09-28T14:36:35.082084500","status":400}

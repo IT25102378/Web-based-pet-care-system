@@ -1,3 +1,0 @@
-Status: 400
-Body:
-{"error":"Bad Request","message":"name: Pet name is required","timestamp":"2026-09-28T14:36:34.637232300","status":400}

@@ -1,3 +1,0 @@
-Status: 404
-Body:
-{"error":"Not Found","message":"Appointment not found with ID: 1","timestamp":"2026-09-28T14:36:34.831233900","status":404} | {"error":"Not Found","message":"Appointment not found with ID: 1","timestamp":"2026-09-28T14:36:34.843745100","status":404}
