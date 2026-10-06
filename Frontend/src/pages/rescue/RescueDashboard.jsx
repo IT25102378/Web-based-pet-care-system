@@ -65,7 +65,7 @@ export const RescueDashboard = () => {
   return (
     <div>
       {/* Apple Liquid Glass Header Banner */}
-      <div className="apple-liquid-glass p-6 mb-8 flex items-center justify-between flex-wrap gap-4">
+      <div className="apple-liquid-glass p-6 mb-8 flex items-center justify-between gap-4" style={{ flexWrap: 'wrap', animation: 'fadeIn 0.6s ease-out' }}>
         <div>
           <span className="apple-eyebrow mb-1">WILDLIFE & RESCUE TELEMETRY</span>
           <h1 style={{ fontSize: '2.1rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.025em', margin: '4px 0' }}>
@@ -122,47 +122,47 @@ export const RescueDashboard = () => {
       </div>
 
       {/* Signature Apple Element: Rescue Incident Dispatch Radar & Foster Capacity Beacon */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid-3 mb-8" style={{ animation: 'fadeIn 0.8s ease-out' }}>
         {/* Real-time Field Dispatch Radar (2 cols) */}
-        <div className="apple-radar-beacon apple-liquid-glass-dark lg:col-span-2">
-          <div className="flex items-center justify-between pb-3 mb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="apple-radar-beacon apple-liquid-glass-dark" style={{ gridColumn: 'span 2' }}>
+          <div className="flex items-center justify-between mb-4" style={{ paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="flex items-center gap-2">
               <span className="sos-beacon-dot"></span>
               <span style={{ fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#F87171', fontWeight: 800 }}>
                 ACTIVE RESCUE RADAR • REAL-TIME DISPATCH
               </span>
             </div>
-            <div className="text-xs opacity-75 font-mono text-white">
+            <div className="text-xs opacity-75 text-inverse" style={{ fontFamily: 'monospace' }}>
               GPS Latency: 24ms • Grid Active
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
-            <div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Incoming Field Reports</div>
-              <div className="text-4xl font-extrabold text-white tracking-tight">
+          <div className="grid-3 items-center">
+            <div style={{ padding: '0.5rem' }}>
+              <div className="text-xs mb-1" style={{ color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Incoming Field Reports</div>
+              <div className="font-bold text-inverse" style={{ fontSize: '2.5rem', letterSpacing: '-0.025em', lineHeight: 1 }}>
                 {reportedPendingCases.length}
               </div>
-              <div className="text-xs mt-1" style={{ color: reportedPendingCases.length > 0 ? '#F87171' : '#10B981' }}>
+              <div className="text-xs mt-1" style={{ color: reportedPendingCases.length > 0 ? '#F87171' : '#10B981', fontWeight: 600 }}>
                 {reportedPendingCases.length > 0 ? 'Urgent triage required' : 'All field cases assigned ✓'}
               </div>
             </div>
 
-            <div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Rehabilitation Stage</div>
-              <div className="text-sm font-semibold text-white">
+            <div style={{ padding: '0.5rem' }}>
+              <div className="text-xs mb-1" style={{ color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rehabilitation Stage</div>
+              <div className="text-sm font-semibold text-inverse">
                 {inTreatmentCount} in Vet Rehab • {inFosterCount} in Foster
               </div>
-              <div className="text-xs text-gray-400 mt-1">
+              <div className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
                 {readyAdoptionCount} companions awaiting adoption placement
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" style={{ padding: '0.5rem' }}>
               <Link
                 to="/rescue/cases"
-                className="apple-pill-btn apple-pill-btn-primary w-full text-center justify-center text-xs py-2"
-                style={{ background: '#E76F51', color: '#FFFFFF' }}
+                className="apple-pill-btn apple-pill-btn-primary justify-center text-xs"
+                style={{ background: '#E76F51', color: '#FFFFFF', width: '100%', padding: '0.75rem 0' }}
               >
                 Launch Dispatch Sweep <ArrowRight size={14} />
               </Link>
@@ -171,7 +171,7 @@ export const RescueDashboard = () => {
         </div>
 
         {/* Foster Sanctuary Capacity Barometer */}
-        <div className="apple-liquid-glass p-5 flex flex-col justify-between">
+        <div className="apple-liquid-glass p-6 flex-col justify-between" style={{ display: 'flex' }}>
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="apple-eyebrow">SANCTUARY CAPACITY</span>
@@ -205,10 +205,13 @@ export const RescueDashboard = () => {
             </div>
           </div>
 
-          <div className="pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <div className="mt-4" style={{ paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
             <Link
               to="/rescue/foster"
               className="text-xs font-semibold text-primary flex items-center justify-between"
+              style={{ transition: 'transform 0.2s' }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateX(0)'}
             >
               <span>Manage Foster Parent Network</span>
               <ArrowRight size={14} />
@@ -227,9 +230,13 @@ export const RescueDashboard = () => {
             padding: '1.5rem',
             marginBottom: '2rem',
             boxShadow: 'var(--shadow-sm)',
+            animation: 'fadeIn 1s ease-out',
+            transition: 'transform 0.3s ease',
           }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.01)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+          <div className="flex items-center justify-between mb-2 gap-2" style={{ flexWrap: 'wrap' }}>
             <div className="flex items-center gap-2">
               <AlertTriangle size={22} color="var(--accent)" />
               <h3 className="font-bold" style={{ color: 'var(--accent)', fontSize: '1.25rem' }}>
@@ -256,7 +263,10 @@ export const RescueDashboard = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.75rem',
+                  transition: 'all 0.3s ease',
                 }}
+                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(231, 111, 81, 0.15)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
@@ -276,7 +286,7 @@ export const RescueDashboard = () => {
                 </div>
 
                 <div className="text-xs text-muted" style={{ backgroundColor: 'var(--bg-subtle)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
-                  <div className="flex items-center gap-1 mb-0.5">
+                  <div className="flex items-center gap-1 mb-1">
                     <MapPin size={13} style={{ color: 'var(--accent)' }} /> <strong>Location:</strong> {rc.rescueLocation}
                   </div>
                   {rc.reportedByUserName && (
@@ -323,9 +333,10 @@ export const RescueDashboard = () => {
             borderRadius: 'var(--radius-xl)',
             padding: '1.5rem',
             marginBottom: '2rem',
+            animation: 'fadeIn 1.2s ease-out'
           }}
         >
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center justify-between mb-3 gap-2" style={{ flexWrap: 'wrap' }}>
             <div className="flex items-center gap-2">
               <Sparkles size={20} color="var(--accent)" />
               <h3 className="font-bold" style={{ color: 'var(--accent)' }}>
@@ -353,7 +364,10 @@ export const RescueDashboard = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '0.75rem',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                 }}
+                onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 <div className="flex items-center gap-3">
                   <img
