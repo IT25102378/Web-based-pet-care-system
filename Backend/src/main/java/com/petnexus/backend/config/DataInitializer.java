@@ -134,28 +134,28 @@ public class DataInitializer implements CommandLineRunner {
                         existing.setEmergencyContact(emergencyContact);
                         modified = true;
                     }
-                    if (licenseNumber != null && existing.getLicenseNumber() == null) {
-                        existing.setLicenseNumber(licenseNumber);
+                    if (licenseNumber != null && (existing instanceof com.petnexus.backend.entity.Veterinarian v ? v.getLicenseNumber() : null) == null) {
+                        if (existing instanceof com.petnexus.backend.entity.Veterinarian v) v.setLicenseNumber(licenseNumber);
                         modified = true;
                     }
-                    if (specialization != null && existing.getSpecialization() == null) {
-                        existing.setSpecialization(specialization);
+                    if (specialization != null && (existing instanceof com.petnexus.backend.entity.Veterinarian v ? v.getSpecialization() : null) == null) {
+                        if (existing instanceof com.petnexus.backend.entity.Veterinarian v) v.setSpecialization(specialization);
                         modified = true;
                     }
-                    if (staffId != null && existing.getStaffId() == null) {
-                        existing.setStaffId(staffId);
+                    if (staffId != null && (existing instanceof com.petnexus.backend.entity.ClinicStaff s ? s.getStaffId() : null) == null) {
+                        if (existing instanceof com.petnexus.backend.entity.ClinicStaff s) s.setStaffId(staffId);
                         modified = true;
                     }
-                    if (managerCode != null && existing.getManagerCode() == null) {
-                        existing.setManagerCode(managerCode);
+                    if (managerCode != null && (existing instanceof com.petnexus.backend.entity.ClinicManager m ? m.getManagerCode() : null) == null) {
+                        if (existing instanceof com.petnexus.backend.entity.ClinicManager m) m.setManagerCode(managerCode);
                         modified = true;
                     }
-                    if (badgeNumber != null && existing.getBadgeNumber() == null) {
-                        existing.setBadgeNumber(badgeNumber);
+                    if (badgeNumber != null && (existing instanceof com.petnexus.backend.entity.RescueOfficer r ? r.getBadgeNumber() : null) == null) {
+                        if (existing instanceof com.petnexus.backend.entity.RescueOfficer r) r.setBadgeNumber(badgeNumber);
                         modified = true;
                     }
-                    if (serviceSpecialty != null && existing.getServiceSpecialty() == null) {
-                        existing.setServiceSpecialty(serviceSpecialty);
+                    if (serviceSpecialty != null && (existing instanceof com.petnexus.backend.entity.PetCareProvider p ? p.getServiceSpecialty() : null) == null) {
+                        if (existing instanceof com.petnexus.backend.entity.PetCareProvider p) p.setServiceSpecialty(serviceSpecialty);
                         modified = true;
                     }
                     if (!passwordEncoder.matches("password123", existing.getPasswordHash())) {
@@ -173,24 +173,31 @@ public class DataInitializer implements CommandLineRunner {
                     if (userRepository.existsByUserId(finalUserId)) {
                         finalUserId = "USR-" + (System.currentTimeMillis() % 100000);
                     }
-                    User newUser = User.builder()
-                            .userId(finalUserId)
-                            .email(email)
-                            .passwordHash(passwordEncoder.encode("password123"))
-                            .fullName(fullName)
-                            .phone(phone)
-                            .address(address)
-                            .role(role)
-                            .status(UserStatus.Active)
-                            .avatarUrl(avatarUrl)
-                            .emergencyContact(emergencyContact)
-                            .licenseNumber(licenseNumber)
-                            .specialization(specialization)
-                            .staffId(staffId)
-                            .managerCode(managerCode)
-                            .badgeNumber(badgeNumber)
-                            .serviceSpecialty(serviceSpecialty)
-                            .build();
+                    User newUser;
+                    switch (role) {
+                        case Veterinarian -> newUser = com.petnexus.backend.entity.Veterinarian.builder()
+                                .licenseNumber(licenseNumber).specialization(specialization).build();
+                        case ClinicStaff -> newUser = com.petnexus.backend.entity.ClinicStaff.builder()
+                                .staffId(staffId).build();
+                        case ClinicManager -> newUser = com.petnexus.backend.entity.ClinicManager.builder()
+                                .managerCode(managerCode).build();
+                        case RescueOfficer -> newUser = com.petnexus.backend.entity.RescueOfficer.builder()
+                                .badgeNumber(badgeNumber).build();
+                        case PetCareProvider -> newUser = com.petnexus.backend.entity.PetCareProvider.builder()
+                                .serviceSpecialty(serviceSpecialty).build();
+                        case PetOwner -> newUser = com.petnexus.backend.entity.PetOwner.builder().build();
+                        default -> newUser = new User();
+                    }
+                    newUser.setUserId(finalUserId);
+                    newUser.setEmail(email);
+                    newUser.setPasswordHash(passwordEncoder.encode("password123"));
+                    newUser.setFullName(fullName);
+                    newUser.setPhone(phone);
+                    newUser.setAddress(address);
+                    newUser.setRole(role);
+                    newUser.setStatus(UserStatus.Active);
+                    newUser.setAvatarUrl(avatarUrl);
+                    newUser.setEmergencyContact(emergencyContact);
                     User saved = userRepository.save(newUser);
                     log.info("Seeded stakeholder account: {} ({}) with role {}", finalUserId, email, role);
                     return saved;
@@ -283,6 +290,12 @@ public class DataInitializer implements CommandLineRunner {
                 "07784521695", "COlombo", UserRole.ClinicManager,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-017",
                 null, null, null, null, "MGR-PASS-002", null, null
+        );
+        seedOrUpdateUser(
+                "USR-018", "avijeeva6@gmail.com", "Avinash",
+                "0712345678", "Colombo", UserRole.RescueOfficer,
+                "https://api.dicebear.com/7.x/bottts/svg?seed=USR-018",
+                null, null, null, null, null, "RSC-018", null
         );
 
 
