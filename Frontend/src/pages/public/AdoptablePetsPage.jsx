@@ -116,16 +116,13 @@ export const AdoptablePetsPage = () => {
           }}
         >
           <div className="flex items-center gap-2 flex-wrap">
-            {['All', 'Dog', 'Cat'].map((species) => (
               <button
-                key={species}
                 type="button"
-                className={`btn btn-sm ${speciesFilter === species ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setSpeciesFilter(species)}
+                className={`btn btn-sm ${speciesFilter === 'All' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setSpeciesFilter('All')}
               >
-                {species === 'All' ? 'All Animals' : species === 'Dog' ? '🐶 Dogs' : '🐱 Cats'}
+                All Animals
               </button>
-            ))}
             {(speciesFilter !== 'All' || searchTerm) && (
               <button
                 type="button"
