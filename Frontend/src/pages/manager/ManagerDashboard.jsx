@@ -67,7 +67,7 @@ export const ManagerDashboard = () => {
             Clinic Operations & Inventory Hub
           </h1>
           <p className="text-sm" style={{ color: 'var(--text-muted)', maxWidth: '640px' }}>
-            Executive oversight of clinical pharmaceuticals, real-time inventory restock beacons, supplier purchase orders, and revenue telemetry.
+            Executive oversight of clinical pharmaceuticals, real-time inventory restock beacons, supplier purchase orders, and revenue metrics.
           </p>
         </div>
 
@@ -93,16 +93,16 @@ export const ManagerDashboard = () => {
           label="Total Inventory Items"
           value={totalInventoryCount}
           icon={Package}
-          iconBg="rgba(231, 111, 81, 0.15)"
-          iconColor="#E76F51"
+          iconBg="var(--primary-subtle)"
+          iconColor="var(--primary)"
           trend="Catalog SKUs"
         />
         <StatCard
           label="Low Stock Items"
           value={lowStockCount}
           icon={AlertTriangle}
-          iconBg="rgba(244, 162, 97, 0.15)"
-          iconColor="#F4A261"
+          iconBg="var(--status-warning-bg)"
+          iconColor="var(--status-warning)"
           trend="Needs restocking"
           trendDirection="down"
         />
@@ -130,7 +130,7 @@ export const ManagerDashboard = () => {
         <div className="apple-sparkline-card apple-liquid-glass lg:col-span-2">
           <div className="flex items-center justify-between pb-3 mb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
             <div>
-              <span className="apple-eyebrow">EXECUTIVE TELEMETRY</span>
+              <span className="apple-eyebrow">EXECUTIVE OVERVIEW</span>
               <h3 className="text-base font-bold text-main">Weekly Patient & Service Throughput</h3>
             </div>
             <div className="flex items-center gap-2">
@@ -175,7 +175,7 @@ export const ManagerDashboard = () => {
         <div className="apple-liquid-glass p-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
-              <span className="apple-eyebrow">REORDER RADAR</span>
+              <span className="apple-eyebrow">REORDER STATUS</span>
               <span
                 className="badge text-xs"
                 style={{
@@ -234,7 +234,7 @@ export const ManagerDashboard = () => {
           subtitle="Real-time stock quantities & reorder thresholds"
           icon={Package}
           actions={
-            <Link to="/manager/inventory" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/manager/inventory" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Full Inventory Management <ArrowRight size={14} />
             </Link>
           }
@@ -252,8 +252,8 @@ export const ManagerDashboard = () => {
               <tbody>
                 {inventoryItems.slice(0, 5).map((item) => (
                   <tr key={item.itemId}>
-                    <td className="font-mono text-xs font-bold" style={{ color: '#E76F51' }}>{item.sku}</td>
-                    <td className="font-bold text-xs" style={{ color: '#12304A' }}>{item.name}</td>
+                    <td className="font-mono text-xs font-bold" style={{ color: 'var(--primary)' }}>{item.sku}</td>
+                    <td className="font-bold text-xs" style={{ color: 'var(--text-main)' }}>{item.name}</td>
                     <td className="text-xs">
                       <strong>{item.currentStock}</strong> {item.unit} (Min: {item.minStockThreshold})
                     </td>
@@ -271,7 +271,7 @@ export const ManagerDashboard = () => {
           subtitle="Vendor directory & purchase order status"
           icon={Truck}
           actions={
-            <Link to="/manager/suppliers" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/manager/suppliers" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Manage Suppliers <ArrowRight size={14} />
             </Link>
           }
@@ -281,13 +281,13 @@ export const ManagerDashboard = () => {
             <div
               style={{
                 padding: '0.85rem 1rem',
-                backgroundColor: '#FFF8F3',
+                backgroundColor: 'var(--primary-subtle)',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid #FEE2E2',
+                border: '1px solid var(--border)',
               }}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-xs" style={{ color: '#12304A' }}>Active Purchase Order Pipeline</span>
+                <span className="font-bold text-xs" style={{ color: 'var(--text-main)' }}>Active Purchase Order Pipeline</span>
                 <span className="badge badge-warning text-xs">2 Orders Pending</span>
               </div>
               <p className="text-xs text-muted">
@@ -297,7 +297,7 @@ export const ManagerDashboard = () => {
 
             {/* Supplier Directory Overview */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#12304A' }}>
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-main)' }}>
                 Primary Suppliers ({suppliers.length}):
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -315,7 +315,7 @@ export const ManagerDashboard = () => {
                     }}
                   >
                     <div>
-                      <span className="font-bold" style={{ color: '#12304A' }}>{supp.companyName}</span>
+                      <span className="font-bold" style={{ color: 'var(--text-main)' }}>{supp.companyName}</span>
                       <p className="text-xs text-muted">{supp.category} • Lead Time: {supp.leadTimeDays} days</p>
                     </div>
                     <span className="badge badge-success text-xs">Verified Vendor</span>
@@ -334,7 +334,7 @@ export const ManagerDashboard = () => {
           subtitle="Wellness care plans & pricing"
           icon={Layers}
           actions={
-            <Link to="/manager/packages" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/manager/packages" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Manage <ArrowRight size={14} />
             </Link>
           }
@@ -352,7 +352,7 @@ export const ManagerDashboard = () => {
           subtitle="Customer satisfaction & reviews"
           icon={MessageSquare}
           actions={
-            <Link to="/manager/feedback" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/manager/feedback" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               View All ({feedbacks.length}) <ArrowRight size={14} />
             </Link>
           }
@@ -370,7 +370,7 @@ export const ManagerDashboard = () => {
           subtitle="Clinical & financial analytics"
           icon={BarChart3}
           actions={
-            <Link to="/manager/reports" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/manager/reports" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Reports <ArrowRight size={14} />
             </Link>
           }

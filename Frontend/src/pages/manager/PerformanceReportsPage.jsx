@@ -54,7 +54,7 @@ export const PerformanceReportsPage = () => {
           label="Adoption Conversion"
           value="96.4%"
           icon={Heart}
-          iconBg="rgba(231, 111, 81, 0.15)"
+          iconBg="var(--primary-subtle)"
           iconColor="var(--accent)"
           trend="+4.1% vs Q2"
           trendDirection="up"

@@ -40,10 +40,10 @@ export const AdoptBrowsePage = () => {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <span className="badge mb-1" style={{ backgroundColor: '#FFF8F3', color: '#E76F51', fontWeight: 700 }}>
+          <span className="badge mb-1" style={{ backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', fontWeight: 700 }}>
             RESCUE ADOPTIONS
           </span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>Adopt a Rescue Companion</h2>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>Adopt a Rescue Companion</h2>
           <p className="text-sm text-muted">
             Submit a multi-step adoption application with digital contract signing and proof of residence verification.
           </p>

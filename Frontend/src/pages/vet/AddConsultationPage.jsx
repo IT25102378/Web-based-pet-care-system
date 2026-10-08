@@ -166,7 +166,7 @@ export const AddConsultationPage = () => {
       if (patientType === 'rescue' && formData.passToProvider) {
         showToast(
           '✅ Transferred to Pet Care Provider',
-          `SOAP report saved. ${rescueCases.find(r => r.caseId === selectedPetId)?.temporaryName || selectedPetId} is now queued for the Pet Care Provider. Issue a prescription if needed.`,
+          `Medical report saved. ${rescueCases.find(r => r.caseId === selectedPetId)?.temporaryName || selectedPetId} is now queued for the Pet Care Provider. Issue a prescription if needed.`,
           'success'
         );
         // Route vet to prescriptions page for the rescue case (optional step)
@@ -174,7 +174,7 @@ export const AddConsultationPage = () => {
       } else {
         showToast(
           'Consultation Recorded',
-          `Clinical SOAP report saved (Ref: ${created?.consultationId || 'N/A'}).`,
+          `Clinical medical report saved (Ref: ${created?.consultationId || 'N/A'}).`,
           'success'
         );
         navigate(patientType === 'rescue' ? '/vet/dashboard' : '/vet/prescriptions');
@@ -190,7 +190,7 @@ export const AddConsultationPage = () => {
     <div style={{ maxWidth: '820px', margin: '0 auto' }}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <span className="badge badge-primary mb-1">SOAP CLINICAL ENTRY</span>
+          <span className="badge badge-primary mb-1">CLINICAL ASSESSMENT</span>
           <h2>New Veterinary Consultation</h2>
           <p className="text-sm text-muted">
             Record comprehensive examination vitals, subjective client observations, clinical assessment, and treatment orders.
@@ -418,7 +418,7 @@ export const AddConsultationPage = () => {
             </div>
           </div>
 
-          {/* SOAP Fields */}
+          {/* Clinical Assessment Fields */}
           <div className="form-group">
             <label className="form-label">
               <strong>S - Subjective:</strong> Client history & symptoms described

@@ -150,10 +150,10 @@ export const FeedbackSubmitPage = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <span className="badge mb-1" style={{ backgroundColor: '#FFF8F3', color: '#E76F51', fontWeight: 700 }}>
+          <span className="badge mb-1" style={{ backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', fontWeight: 700 }}>
             PATIENT ADVOCACY
           </span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>Client Feedback & Service Ratings</h2>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>Client Feedback & Service Ratings</h2>
           <p className="text-sm text-muted">
             Share your experiences regarding veterinary exams, grooming, surgical triage, or rescue adoption.
           </p>

@@ -202,7 +202,7 @@ export const ProviderDashboard = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <span className="apple-eyebrow">LIVE ATELIER TELEMETRY</span>
+            <span className="apple-eyebrow">LIVE SERVICE OVERVIEW</span>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
               Suite Occupancy & Care Progression
             </h2>

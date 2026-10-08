@@ -212,7 +212,7 @@ export const StaffInventoryPage = () => {
       key: 'sku',
       sortable: true,
       render: (row) => (
-        <span className="font-mono text-xs font-bold" style={{ color: '#E76F51' }}>
+        <span className="font-mono text-xs font-bold" style={{ color: 'var(--primary)' }}>
           {row.sku}
         </span>
       ),
@@ -223,7 +223,7 @@ export const StaffInventoryPage = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div className="font-bold text-sm" style={{ color: '#12304A' }}>
+          <div className="font-bold text-sm" style={{ color: 'var(--text-main)' }}>
             {row.name}
           </div>
           <div className="text-xs text-muted">Batch: {row.batchNumber || 'N/A'}</div>
@@ -237,7 +237,7 @@ export const StaffInventoryPage = () => {
       render: (row) => (
         <span
           className="badge"
-          style={{ backgroundColor: '#FFF8F3', color: '#E76F51', fontWeight: 600 }}
+          style={{ backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', fontWeight: 600 }}
         >
           {row.category}
         </span>
@@ -398,7 +398,7 @@ export const StaffInventoryPage = () => {
           <div className="flex items-center gap-2 mb-1">
             <span
               className="badge mb-1"
-              style={{ backgroundColor: '#FFF8F3', color: '#E76F51', fontWeight: 700 }}
+              style={{ backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', fontWeight: 700 }}
             >
               STAFF INVENTORY OPERATIONS
             </span>
@@ -409,7 +409,7 @@ export const StaffInventoryPage = () => {
               <ShieldCheck size={12} /> Full Management & Restock Access
             </span>
           </div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>
             Clinical Inventory Management
           </h2>
           <p className="text-sm text-muted">
@@ -423,7 +423,7 @@ export const StaffInventoryPage = () => {
             onClick={() => setIsAddModalOpen(true)}
             className="btn"
             style={{
-              backgroundColor: '#E76F51',
+              backgroundcolor: 'var(--primary)',
               color: '#FFFFFF',
               fontWeight: 700,
               boxShadow: '0 4px 10px rgba(231, 111, 81, 0.25)',
@@ -447,8 +447,8 @@ export const StaffInventoryPage = () => {
           label="Total Catalog Items"
           value={totalItems}
           icon={Package}
-          iconBg="rgba(231, 111, 81, 0.15)"
-          iconColor="#E76F51"
+          iconBg="var(--primary-subtle)"
+          iconColor="var(--primary)"
           trend="Active SKUs"
         />
         <StatCard
@@ -752,7 +752,7 @@ export const StaffInventoryPage = () => {
             <button
               type="submit"
               className="btn"
-              style={{ backgroundColor: '#E76F51', color: '#FFFFFF', fontWeight: 700 }}
+              style={{ backgroundcolor: 'var(--primary)', color: '#FFFFFF', fontWeight: 700 }}
             >
               Save Product
             </button>
@@ -919,7 +919,7 @@ export const StaffInventoryPage = () => {
               <button
                 type="submit"
                 className="btn"
-                style={{ backgroundColor: '#12304A', color: '#FFFFFF', fontWeight: 700 }}
+                style={{ backgroundcolor: 'var(--text-main)', color: '#FFFFFF', fontWeight: 700 }}
               >
                 Save Changes
               </button>

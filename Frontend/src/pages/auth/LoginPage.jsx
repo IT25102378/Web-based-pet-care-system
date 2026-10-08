@@ -294,7 +294,7 @@ export const LoginPage = () => {
                         cursor: 'pointer',
                         transition: 'background 0.15s ease',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FFF8F3')}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-muted)')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       <div className="flex items-center justify-between">
@@ -307,15 +307,15 @@ export const LoginPage = () => {
                             fontSize: '0.7rem',
                             backgroundColor:
                               item.role === 'Veterinarian'
-                                ? '#2A9D8F22'
+                                ? 'var(--primary-subtle)'
                                 : item.role === 'PetOwner'
-                                ? '#E76F5122'
+                                ? 'var(--primary-subtle)'
                                 : 'var(--primary-subtle)',
                             color:
                               item.role === 'Veterinarian'
-                                ? '#2A9D8F'
+                                ? 'var(--primary)'
                                 : item.role === 'PetOwner'
-                                ? '#E76F51'
+                                ? 'var(--primary)'
                                 : 'var(--primary)',
                           }}
                         >
@@ -335,7 +335,7 @@ export const LoginPage = () => {
                             alignItems: 'center',
                             gap: '0.35rem',
                             fontSize: '0.75rem',
-                            color: '#2A9D8F',
+                            color: 'var(--primary)',
                             fontWeight: 600,
                           }}
                         >

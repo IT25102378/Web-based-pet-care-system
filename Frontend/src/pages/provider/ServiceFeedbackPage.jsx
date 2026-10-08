@@ -45,7 +45,7 @@ export const ServiceFeedbackPage = () => {
       {feedbacks.length === 0 ? (
         <div className="card p-6" style={{ textAlign: 'center' }}>
           <MessageSquare size={36} style={{ margin: '0 auto 1rem', color: '#9CA3AF' }} />
-          <h3 style={{ fontSize: '1.15rem', color: '#12304A', marginBottom: '0.5rem' }}>No Service Reviews Yet</h3>
+          <h3 style={{ fontSize: '1.15rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>No Service Reviews Yet</h3>
           <p className="text-sm text-muted">Client reviews for grooming, boarding, and care services will appear here.</p>
         </div>
       ) : (

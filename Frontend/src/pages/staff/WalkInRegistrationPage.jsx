@@ -5,6 +5,7 @@ import { petApi } from '../../api/petApi';
 import { useToast } from '../../context/ToastContext';
 import { Card } from '../../components/common/Card';
 import { UserPlus, CheckCircle, Clock, AlertTriangle, ArrowRight, Stethoscope, Sparkles, PawPrint, Database } from 'lucide-react';
+import { PageHeader } from '../../components/common/PageHeader';
 
 export const WalkInRegistrationPage = () => {
   const { showToast } = useToast();
@@ -127,28 +128,23 @@ export const WalkInRegistrationPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: '740px', margin: '0 auto', color: '#1F2937' }}>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <span className="badge mb-1" style={{ backgroundColor: '#FFF8F3', color: '#E76F51', fontWeight: 700 }}>
-            FRONT DESK TRIAGE
-          </span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>Walk-In Patient Registration</h2>
-          <p className="text-sm text-muted">
-            Issue instant tokens for walk-in emergencies, non-scheduled vaccinations, and acute consultations.
-          </p>
-        </div>
-      </div>
+    <div style={{ maxWidth: '740px', margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Front Desk Triage"
+        icon={UserPlus}
+        title="Walk-In Registration"
+        subtitle="Issue instant tokens for walk-in emergencies, non-scheduled vaccinations, and acute consultations."
+      />
 
       {createdToken ? (
-        <div className="card p-8 text-center" style={{ backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-xl)', border: '2px solid #E76F51' }}>
+        <div className="card p-8 text-center" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: 'var(--radius-xl)', border: '2px solid var(--primary)' }}>
           <div
             style={{
               width: '72px',
               height: '72px',
               borderRadius: '50%',
-              backgroundColor: '#FFF8F3',
-              color: '#E76F51',
+              backgroundColor: 'var(--primary-subtle)',
+              color: 'var(--primary)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -158,13 +154,13 @@ export const WalkInRegistrationPage = () => {
             <CheckCircle size={40} />
           </div>
 
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>Walk-in Token Issued!</h2>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>Walk-in Token Issued!</h2>
           <div
             style={{
               fontSize: '3.8rem',
               fontWeight: 900,
-              color: '#E76F51',
-              fontFamily: 'monospace',
+              color: 'var(--primary)',
+              fontFamily: 'var(--font-mono)',
               margin: '0.75rem 0',
               letterSpacing: '0.05em',
             }}
@@ -204,8 +200,7 @@ export const WalkInRegistrationPage = () => {
             </button>
             <button
               type="button"
-              className="btn"
-              style={{ backgroundColor: '#E76F51', color: '#FFFFFF', fontWeight: 700 }}
+              className="btn btn-primary"
               onClick={() => navigate('/staff/queue')}
             >
               <Clock size={16} /> View in Live Queue <ArrowRight size={16} />
@@ -213,7 +208,7 @@ export const WalkInRegistrationPage = () => {
           </div>
         </div>
       ) : (
-        <div className="card p-6" style={{ borderRadius: 'var(--radius-xl)', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+        <div className="card p-6">
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
@@ -304,7 +299,7 @@ export const WalkInRegistrationPage = () => {
                           borderBottom: '1px solid var(--border-subtle)',
                           cursor: 'pointer',
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FFF8F3')}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-muted)')}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                       >
                         <div className="flex items-center justify-between">
@@ -432,8 +427,8 @@ export const WalkInRegistrationPage = () => {
 
             <button
               type="submit"
-              className="btn btn-lg"
-              style={{ backgroundColor: '#E76F51', color: '#FFFFFF', fontWeight: 800, width: '100%', marginTop: '1rem' }}
+              className="btn btn-primary btn-lg"
+              style={{ width: '100%', marginTop: '1rem' }}
               disabled={submitting}
             >
               <Stethoscope size={18} /> Issue Walk-in Token & Check-In Patient

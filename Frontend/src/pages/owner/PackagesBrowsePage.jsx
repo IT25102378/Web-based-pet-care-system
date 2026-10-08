@@ -233,7 +233,7 @@ export const PackagesBrowsePage = () => {
             fontWeight: serviceCategoryFilter === 'CARE_ONLY' ? 700 : 500,
             border: 'none',
             cursor: 'pointer',
-            backgroundColor: serviceCategoryFilter === 'CARE_ONLY' ? '#2A9D8F' : 'var(--bg-subtle)',
+            backgroundColor: serviceCategoryFilter === 'CARE_ONLY' ? 'var(--primary)' : 'var(--bg-subtle)',
             color: serviceCategoryFilter === 'CARE_ONLY' ? '#ffffff' : 'var(--text-main)',
             transition: 'all 0.15s ease-in-out',
             display: 'flex',
@@ -254,7 +254,7 @@ export const PackagesBrowsePage = () => {
             fontWeight: serviceCategoryFilter === 'MEDICAL_ONLY' ? 700 : 500,
             border: 'none',
             cursor: 'pointer',
-            backgroundColor: serviceCategoryFilter === 'MEDICAL_ONLY' ? '#E76F51' : 'var(--bg-subtle)',
+            backgroundColor: serviceCategoryFilter === 'MEDICAL_ONLY' ? 'var(--primary)' : 'var(--bg-subtle)',
             color: serviceCategoryFilter === 'MEDICAL_ONLY' ? '#ffffff' : 'var(--text-main)',
             transition: 'all 0.15s ease-in-out',
             display: 'flex',
@@ -304,7 +304,7 @@ export const PackagesBrowsePage = () => {
                   key={b.bookingId}
                   style={{
                     backgroundColor: isCare ? 'rgba(42, 157, 143, 0.08)' : isMed ? 'rgba(231, 111, 81, 0.08)' : 'var(--primary-subtle)',
-                    border: `1px solid ${isCare ? '#2A9D8F33' : isMed ? '#E76F5133' : 'var(--border)'}`,
+                    border: `1px solid ${isCare ? 'var(--primary-glow)' : isMed ? 'var(--primary-glow)' : 'var(--border)'}`,
                     padding: '1rem 1.25rem',
                     borderRadius: 'var(--radius-md)',
                     display: 'flex',
@@ -317,8 +317,8 @@ export const PackagesBrowsePage = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-main">{b.packageName}</h4>
-                      {isCare && <span className="badge" style={{ backgroundColor: '#2A9D8F', color: '#fff', fontSize: '0.72rem' }}>Care Provider Service</span>}
-                      {isMed && <span className="badge" style={{ backgroundColor: '#E76F51', color: '#fff', fontSize: '0.72rem' }}>Medical Clinical</span>}
+                      {isCare && <span className="badge" style={{ backgroundcolor: 'var(--primary)', color: '#fff', fontSize: '0.72rem' }}>Care Provider Service</span>}
+                      {isMed && <span className="badge" style={{ backgroundcolor: 'var(--primary)', color: '#fff', fontSize: '0.72rem' }}>Medical Clinical</span>}
                       <span className="badge badge-success text-xs">Active</span>
                     </div>
                     <p className="text-xs text-muted mt-1">
@@ -329,7 +329,7 @@ export const PackagesBrowsePage = () => {
                   <div className="flex items-center gap-3">
                     <div style={{ textAlign: 'right' }}>
                       <span className="text-xs text-muted">Sessions Balance:</span>
-                      <p className="text-sm font-bold" style={{ color: isCare ? '#2A9D8F' : isMed ? '#E76F51' : 'var(--primary)' }}>
+                      <p className="text-sm font-bold" style={{ color: isCare ? 'var(--primary)' : isMed ? 'var(--primary)' : 'var(--primary)' }}>
                         {b.completedSessions} used / {b.remainingSessions} left
                       </p>
                     </div>
@@ -358,19 +358,19 @@ export const PackagesBrowsePage = () => {
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 position: 'relative',
-                borderTop: isCareOnly ? '4px solid #2A9D8F' : isMedicalOnly ? '4px solid #E76F51' : '4px solid var(--primary)',
+                borderTop: isCareOnly ? '4px solid var(--primary)' : isMedicalOnly ? '4px solid var(--primary)' : '4px solid var(--primary)',
               }}
             >
               <div>
                 {/* Domain Pill */}
                 <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
                   {isCareOnly ? (
-                    <span className="badge" style={{ backgroundColor: '#E8F5F3', color: '#2A9D8F', fontWeight: 700 }}>
+                    <span className="badge" style={{ backgroundColor: 'var(--status-success-bg)', color: 'var(--primary)', fontWeight: 700 }}>
                       <Scissors size={13} style={{ display: 'inline', marginRight: '4px' }} />
                       PET CARE SERVICE ONLY
                     </span>
                   ) : isMedicalOnly ? (
-                    <span className="badge" style={{ backgroundColor: '#FFF0ED', color: '#E76F51', fontWeight: 700 }}>
+                    <span className="badge" style={{ backgroundColor: 'var(--accent-subtle)', color: 'var(--primary)', fontWeight: 700 }}>
                       <Stethoscope size={13} style={{ display: 'inline', marginRight: '4px' }} />
                       MEDICAL & CLINICAL ONLY
                     </span>
@@ -390,7 +390,7 @@ export const PackagesBrowsePage = () => {
                 <p className="text-sm text-muted mb-4">{pkg.tagline}</p>
 
                 <div className="flex items-baseline gap-2 mb-6">
-                  <span style={{ fontSize: '2rem', fontWeight: 800, color: isCareOnly ? '#2A9D8F' : isMedicalOnly ? '#E76F51' : 'var(--primary-dark)' }}>
+                  <span style={{ fontSize: '2rem', fontWeight: 800, color: isCareOnly ? 'var(--primary)' : isMedicalOnly ? 'var(--primary)' : 'var(--primary-dark)' }}>
                     Rs. {pkg.price.toLocaleString()}
                   </span>
                   {pkg.originalValue > pkg.price && (
@@ -407,13 +407,13 @@ export const PackagesBrowsePage = () => {
                 {isCareOnly && (
                   <div
                     style={{
-                      backgroundColor: '#E8F5F3',
-                      borderLeft: '3px solid #2A9D8F',
+                      backgroundColor: 'var(--status-success-bg)',
+                      borderLeft: '3px solid var(--primary)',
                       padding: '0.6rem 0.85rem',
                       borderRadius: 'var(--radius-sm)',
                       marginBottom: '1.25rem',
                       fontSize: '0.85rem',
-                      color: '#264653',
+                      color: 'var(--text-main)',
                     }}
                   >
                     <strong>Healthy Companion Friendly:</strong> Direct appointment with Pet Care Provider Dilshan Bandara. No medical consultation or vet fee required.
@@ -423,8 +423,8 @@ export const PackagesBrowsePage = () => {
                 {isMedicalOnly && (
                   <div
                     style={{
-                      backgroundColor: '#FFF0ED',
-                      borderLeft: '3px solid #E76F51',
+                      backgroundColor: 'var(--accent-subtle)',
+                      borderLeft: '3px solid var(--accent)',
                       padding: '0.6rem 0.85rem',
                       borderRadius: 'var(--radius-sm)',
                       marginBottom: '1.25rem',
@@ -441,7 +441,7 @@ export const PackagesBrowsePage = () => {
                     <div key={idx} className="flex items-start gap-2 text-sm text-main">
                       <CheckCircle
                         size={16}
-                        color={isCareOnly ? '#2A9D8F' : isMedicalOnly ? '#E76F51' : 'var(--status-success)'}
+                        color={isCareOnly ? 'var(--primary)' : isMedicalOnly ? 'var(--primary)' : 'var(--status-success)'}
                         style={{ flexShrink: 0, marginTop: '3px' }}
                       />
                       <span>{feat}</span>
@@ -456,7 +456,7 @@ export const PackagesBrowsePage = () => {
                   className="btn"
                   style={{
                     width: '100%',
-                    backgroundColor: isCareOnly ? '#2A9D8F' : isMedicalOnly ? '#E76F51' : 'var(--primary)',
+                    backgroundColor: isCareOnly ? 'var(--primary)' : isMedicalOnly ? 'var(--primary)' : 'var(--primary)',
                     color: '#ffffff',
                     fontWeight: 700,
                   }}
@@ -510,9 +510,9 @@ export const PackagesBrowsePage = () => {
                 style={{
                   backgroundColor:
                     getPackageCategory(bookingPackage) === 'CARE_ONLY'
-                      ? '#2A9D8F'
+                      ? 'var(--primary)'
                       : getPackageCategory(bookingPackage) === 'MEDICAL_ONLY'
-                      ? '#E76F51'
+                      ? 'var(--primary)'
                       : 'var(--primary)',
                   color: '#ffffff',
                   fontWeight: 700,
@@ -527,15 +527,15 @@ export const PackagesBrowsePage = () => {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {getPackageCategory(bookingPackage) === 'CARE_ONLY' && (
-              <div style={{ backgroundColor: '#E8F5F3', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #2A9D8F44' }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#264653' }}>
+              <div style={{ backgroundColor: 'var(--status-success-bg)', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary-glow)' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-main)' }}>
                   🐾 <strong>Healthy Pet Care Selection:</strong> This service provides dedicated grooming & spa care from your Care Provider without veterinary clinical interventions.
                 </p>
               </div>
             )}
 
             {getPackageCategory(bookingPackage) === 'MEDICAL_ONLY' && (
-              <div style={{ backgroundColor: '#FFF0ED', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #E76F5144' }}>
+              <div style={{ backgroundColor: 'var(--accent-subtle)', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary-glow)' }}>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: '#9C3418' }}>
                   🩺 <strong>Medical & Veterinary Selection:</strong> This service focuses exclusively on clinical examinations, diagnostics, and doctor treatments without spa salon services.
                 </p>

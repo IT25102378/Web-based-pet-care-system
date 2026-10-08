@@ -103,7 +103,7 @@ export const AppointmentQueuePage = () => {
       key: 'tokenNumber',
       sortable: true,
       render: (row) => (
-        <span className="font-bold font-mono" style={{ color: '#E76F51', fontSize: '1.1rem' }}>
+        <span className="font-bold font-mono text-primary" style={{ fontSize: '1.1rem' }}>
           {row.tokenNumber || 'A-01'}
         </span>
       ),
@@ -114,7 +114,7 @@ export const AppointmentQueuePage = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div className="font-bold text-sm" style={{ color: '#12304A' }}>{row.petName}</div>
+          <div className="font-bold text-sm text-main">{row.petName}</div>
           <div className="text-xs text-muted">
             Owner: {row.ownerName} {row.ownerPhone ? `(${row.ownerPhone})` : ''}
           </div>
@@ -129,7 +129,7 @@ export const AppointmentQueuePage = () => {
           <div className="font-semibold text-xs text-main">{row.serviceType}</div>
           <div className="text-xs text-muted mt-1">{row.reason}</div>
           {row.symptoms && (
-            <div className="text-xs mt-1 italic" style={{ color: '#E76F51' }}>Observed: {row.symptoms}</div>
+            <div className="text-xs mt-1 italic" style={{ color: 'var(--accent)' }}>Observed: {row.symptoms}</div>
           )}
         </div>
       ),
@@ -181,7 +181,7 @@ export const AppointmentQueuePage = () => {
               <button
                 type="button"
                 className="btn btn-warning btn-sm"
-                style={{ backgroundColor: '#F4A261', color: '#FFFFFF', fontWeight: 600 }}
+                style={{ backgroundColor: 'var(--status-warning)', color: '#FFFFFF', fontWeight: 600 }}
                 onClick={() => handleUpdateStatus(row.appointmentId, 'CheckedIn')}
                 title="Mark Patient Checked-In to Lobby"
               >
@@ -224,7 +224,7 @@ export const AppointmentQueuePage = () => {
             <button
               type="button"
               className="btn btn-primary btn-sm"
-              style={{ backgroundColor: '#E76F51', color: '#FFFFFF', fontWeight: 600 }}
+              style={{ backgroundcolor: 'var(--primary)', color: '#FFFFFF', fontWeight: 600 }}
               onClick={() => handleUpdateStatus(row.appointmentId, 'Completed')}
               title="Mark Consultation Complete"
             >
@@ -260,7 +260,7 @@ export const AppointmentQueuePage = () => {
             Front Desk Appointment Queue
           </h1>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Lobby check-in tokens, exam room assignments, real-time wait velocities, and patient flow triage.
+            Lobby check-in tokens, exam room assignments, real-time wait velocities, and patient flow.
           </p>
         </div>
 
@@ -313,7 +313,7 @@ export const AppointmentQueuePage = () => {
           <div className="flex items-center justify-between pb-3 mb-4" style={{ borderBottom: '1px dashed rgba(255,255,255,0.2)' }}>
             <div className="flex items-center gap-2">
               <span style={{ fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.85, fontWeight: 700 }}>
-                CLINICAL TRIAGE PASS
+                CLINIC QUEUE PASS
               </span>
               <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: '0.7rem', padding: '2px 8px' }}>
                 PRIORITY ACCESS
@@ -393,7 +393,7 @@ export const AppointmentQueuePage = () => {
         <div className="apple-liquid-glass p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-              Lobby Telemetry
+              Lobby Overview
             </span>
             <span className="badge badge-primary text-xs" style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
               LIVE

@@ -1053,86 +1053,14 @@ export const ServiceLogsPage = () => {
               )}
             </div>
 
-            <div className="form-group">
-              <label className="form-label font-bold text-sm">
-                Select Handoff Destination for Rescue Officer: <span className="required">*</span>
-              </label>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.85rem',
-                    borderRadius: 'var(--radius-md)',
-                    border:
-                      transferTargetStatus === RescueCaseStatus.READY_FOR_FOSTER || transferTargetStatus === RescueCaseStatus.IN_FOSTER
-                        ? '2px solid var(--primary)'
-                        : '1px solid var(--border)',
-                    backgroundColor:
-                      transferTargetStatus === RescueCaseStatus.READY_FOR_FOSTER || transferTargetStatus === RescueCaseStatus.IN_FOSTER
-                        ? 'rgba(14, 165, 233, 0.06)'
-                        : '#FFFFFF',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="transferStatus"
-                    value={RescueCaseStatus.READY_FOR_FOSTER}
-                    checked={transferTargetStatus === RescueCaseStatus.READY_FOR_FOSTER || transferTargetStatus === RescueCaseStatus.IN_FOSTER}
-                    onChange={() => setTransferTargetStatus(RescueCaseStatus.READY_FOR_FOSTER)}
-                    style={{ marginTop: '3px' }}
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Home size={16} color="var(--primary)" />
-                      <strong className="text-sm text-main">Ready for Foster Care Placement</strong>
-                    </div>
-                    <p className="text-xs text-muted mt-1">
-                      Companion is stabilized and returned to Rescue Officer to assign a licensed foster parent home.
-                    </p>
-                  </div>
-                </label>
-
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.85rem',
-                    borderRadius: 'var(--radius-md)',
-                    border:
-                      transferTargetStatus === RescueCaseStatus.READY_FOR_ADOPTION
-                        ? '2px solid var(--accent)'
-                        : '1px solid var(--border)',
-                    backgroundColor:
-                      transferTargetStatus === RescueCaseStatus.READY_FOR_ADOPTION
-                        ? 'rgba(231, 111, 81, 0.06)'
-                        : '#FFFFFF',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="transferStatus"
-                    value={RescueCaseStatus.READY_FOR_ADOPTION}
-                    checked={transferTargetStatus === RescueCaseStatus.READY_FOR_ADOPTION}
-                    onChange={() => setTransferTargetStatus(RescueCaseStatus.READY_FOR_ADOPTION)}
-                    style={{ marginTop: '3px' }}
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Heart size={16} color="var(--accent)" />
-                      <strong className="text-sm text-main">Ready for Public Adoption Listing</strong>
-                    </div>
-                    <p className="text-xs text-muted mt-1">
-                      Companion has finished all care, grooming, and behavioral evaluation. Cleared for public adoption gallery publishing.
-                    </p>
-                  </div>
-                </label>
+            <div className="form-group" style={{ backgroundColor: 'rgba(14, 165, 233, 0.06)', border: '1px solid var(--primary)', borderRadius: 'var(--radius-md)', padding: '1rem', marginTop: '1rem' }}>
+              <div className="flex items-center gap-2 mb-1">
+                <Home size={16} color="var(--primary)" />
+                <strong className="text-sm text-main">Handover to Rescue Officer</strong>
               </div>
+              <p className="text-xs text-muted">
+                The companion will be returned to the Rescue Officer to coordinate foster care placement or adoption listing.
+              </p>
             </div>
 
             <div className="form-group mt-4">

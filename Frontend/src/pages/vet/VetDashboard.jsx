@@ -74,21 +74,21 @@ export const VetDashboard = () => {
             </span>
             <span className="liquid-glass-pill" style={{ color: 'var(--primary)' }}>
               <span className="telemetry-pulse-dot" />
-              TELEMETRY ONLINE • CLINICAL STATION 02
+              CLINIC ONLINE • STATION 02
             </span>
           </div>
           <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.025em' }}>
             Veterinarian Consultation Hub
           </h2>
           <p className="text-sm text-muted mt-1">
-            Conduct SOAP consultations, track live patient vitals, authorize verified electronic prescriptions, and review diagnostic imaging.
+            Conduct clinical consultations, track live patient vitals, authorize verified electronic prescriptions, and review diagnostic imaging.
           </p>
         </div>
 
         {/* Rapid Clinical Dock Actions */}
         <div className="flex items-center gap-2.5 flex-wrap">
           <Link to="/vet/consultation" className="apple-pill-btn apple-pill-btn-primary">
-            <Stethoscope size={15} /> New SOAP Record
+            <Stethoscope size={15} /> New Clinical Record
           </Link>
           <Link to="/vet/prescriptions" className="apple-pill-btn apple-pill-btn-secondary">
             <Pill size={15} /> Digital Rx Generator
@@ -347,7 +347,7 @@ export const VetDashboard = () => {
                 <Search size={16} /> Patient Medical Record Search & History
               </Link>
               <Link to="/vet/consultation" className="btn btn-outline" style={{ justifyContent: 'flex-start' }}>
-                <Stethoscope size={16} /> Add Comprehensive SOAP Clinical Notes
+                <Stethoscope size={16} /> Add Comprehensive Clinical Notes
               </Link>
               <Link to="/vet/prescriptions" className="btn btn-outline" style={{ justifyContent: 'flex-start' }}>
                 <Pill size={16} /> Generate & Sign Digital Prescription (Rx)

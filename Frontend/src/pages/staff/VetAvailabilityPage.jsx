@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/common/Card';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { appointmentApi } from '../../api/appointmentApi';
+import { PageHeader } from '../../components/common/PageHeader';
 import { Calendar, Clock, Stethoscope, User, Search, Eye } from 'lucide-react';
 import { AppointmentDetailsModal } from '../../components/common/AppointmentDetailsModal';
 
@@ -51,19 +52,12 @@ export const VetAvailabilityPage = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-        <div>
-          <span className="badge mb-1" style={{ backgroundColor: '#FFF8F3', color: '#E76F51', fontWeight: 700 }}>
-            DUTY ROSTER
-          </span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>
-            Veterinarian Schedule View
-          </h2>
-          <p className="text-sm text-muted">
-            View veterinarian daily schedules, booked appointments, and available time slots.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Duty Roster"
+        icon={Calendar}
+        title="Veterinarian Schedule"
+        subtitle="View veterinarian daily schedules, booked appointments, and available time slots."
+      />
 
       <div className="card p-4 mb-6" style={{ backgroundColor: 'var(--bg-subtle)' }}>
         <div className="flex gap-4 items-center flex-wrap">
@@ -91,11 +85,11 @@ export const VetAvailabilityPage = () => {
         </div>
       </div>
 
-      <div className="card p-6" style={{ borderRadius: 'var(--radius-xl)', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
-        <h3 className="text-lg font-bold mb-4" style={{ color: '#12304A' }}>
-          Schedule for {selectedVet} on {selectedDate}
-        </h3>
-
+      <Card
+        title={`Schedule for ${selectedVet}`}
+        subtitle={`Date: ${selectedDate}`}
+        icon={Stethoscope}
+      >
         {loading ? (
           <div className="text-center p-8 text-muted">Loading schedule...</div>
         ) : (
@@ -112,14 +106,14 @@ export const VetAvailabilityPage = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0.75rem 1rem',
-                  backgroundColor: slot.isAvailable ? '#FFF8F3' : 'var(--bg-subtle)',
+                  backgroundColor: slot.isAvailable ? 'var(--status-success-bg)' : 'var(--bg-subtle)',
                   borderRadius: 'var(--radius-md)',
-                  border: slot.isAvailable ? '1px solid #FEE2E2' : '1px solid var(--border-light)',
+                  border: slot.isAvailable ? '1px solid var(--border-light)' : '1px solid var(--border-light)',
                   fontSize: '0.85rem',
                 }}
               >
                 <div className="flex-1">
-                  <span className="font-bold text-main" style={{ color: '#12304A' }}>{slot.timeSlot}</span>
+                  <span className="font-bold text-main">{slot.timeSlot}</span>
                   {slot.appointment ? (
                     <div className="mt-1">
                       <p className="text-sm font-semibold text-main">{slot.appointment.petName} <span className="text-xs font-normal text-muted">({slot.appointment.ownerName})</span></p>
@@ -152,7 +146,7 @@ export const VetAvailabilityPage = () => {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       <AppointmentDetailsModal
         appointment={selectedApptForView}

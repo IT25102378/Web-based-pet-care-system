@@ -435,10 +435,10 @@ export const BookAppointmentPage = () => {
       {/* Top Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <span className="badge mb-1" style={{ backgroundColor: '#FFF8F3', color: '#E76F51', fontWeight: 700 }}>
+          <span className="badge mb-1" style={{ backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)', fontWeight: 700 }}>
             APPOINTMENT SCHEDULER
           </span>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#12304A' }}>Book & Manage Clinic Visits</h2>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)' }}>Book & Manage Clinic Visits</h2>
           <p className="text-sm text-muted">
             Schedule routine checkups, view active queue status, reschedule consultations, or cancel upcoming visits.
           </p>
@@ -446,7 +446,7 @@ export const BookAppointmentPage = () => {
         <button
           type="button"
           className="btn"
-          style={{ backgroundColor: '#E76F51', color: '#FFFFFF', fontWeight: 700 }}
+          style={{ backgroundcolor: 'var(--primary)', color: '#FFFFFF', fontWeight: 700 }}
           onClick={() => setShowBookingForm(!showBookingForm)}
         >
           <Plus size={16} /> {showBookingForm ? 'Close Scheduler' : 'Book New Appointment'}
@@ -455,9 +455,9 @@ export const BookAppointmentPage = () => {
 
       {/* Booking Form Card */}
       {showBookingForm && (
-        <div className="card p-6 mb-8" style={{ border: '2px solid #E76F51', backgroundColor: '#FFF8F3' }}>
-          <h3 className="mb-4 flex items-center gap-2" style={{ color: '#12304A', fontSize: '1.25rem' }}>
-            <Calendar size={20} color="#E76F51" /> Schedule a Doctor Consultation
+        <div className="card p-6 mb-8" style={{ border: '2px solid var(--primary)', backgroundColor: 'var(--primary-subtle)' }}>
+          <h3 className="mb-4 flex items-center gap-2" style={{ color: 'var(--text-main)', fontSize: '1.25rem' }}>
+            <Calendar size={20} color="var(--primary)" /> Schedule a Doctor Consultation
           </h3>
 
           <form onSubmit={handleBookingSubmit}>

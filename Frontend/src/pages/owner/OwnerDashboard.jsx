@@ -136,8 +136,8 @@ export const OwnerDashboard = () => {
           label="Upcoming Visits"
           value={upcomingAppts.length}
           icon={Calendar}
-          iconBg="rgba(244, 162, 97, 0.15)"
-          iconColor="#F4A261"
+          iconBg="var(--status-warning-bg)"
+          iconColor="var(--status-warning)"
           trend={upcomingAppts.length > 0 ? 'Next visit scheduled' : 'No pending visits'}
         />
         <StatCard
@@ -152,8 +152,8 @@ export const OwnerDashboard = () => {
           label="Adoption Requests"
           value={applications.length}
           icon={Heart}
-          iconBg="rgba(231, 111, 81, 0.15)"
-          iconColor="#E76F51"
+          iconBg="var(--primary-subtle)"
+          iconColor="var(--primary)"
           trend="Rescue officer review"
         />
       </div>
@@ -294,7 +294,7 @@ export const OwnerDashboard = () => {
           subtitle="Clinic check-ins & scheduled visits"
           icon={Calendar}
           actions={
-            <Link to="/owner/appointments" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/owner/appointments" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Schedule Visit <ArrowRight size={14} />
             </Link>
           }
@@ -307,16 +307,16 @@ export const OwnerDashboard = () => {
                   style={{
                     padding: '1.15rem',
                     borderRadius: 'var(--radius-lg)',
-                    backgroundColor: '#FFF8F3',
-                    border: '1px solid #FEE2E2',
+                    backgroundColor: 'var(--primary-subtle)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-sm" style={{ color: '#12304A' }}>{appt.serviceType}</span>
+                    <span className="font-bold text-sm" style={{ color: 'var(--text-main)' }}>{appt.serviceType}</span>
                     <StatusBadge status={appt.status} />
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted mb-2">
-                    <span>Patient: <strong style={{ color: '#12304A' }}>{appt.petName}</strong></span>
+                    <span>Patient: <strong style={{ color: 'var(--text-main)' }}>{appt.petName}</strong></span>
                     <span>Queue Token: <strong className="font-mono text-primary" style={{ fontSize: '0.9rem' }}>{appt.tokenNumber}</strong></span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted pt-2 border-top" style={{ borderTop: '1px solid #FDBA74' }}>
@@ -328,15 +328,15 @@ export const OwnerDashboard = () => {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '2.5rem 1rem', backgroundColor: 'var(--bg-subtle)', borderRadius: 'var(--radius-lg)' }}>
-              <Calendar size={36} color="#F4A261" style={{ margin: '0 auto 0.75rem' }} />
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#12304A' }}>No Upcoming Visits</h4>
+              <Calendar size={36} color="var(--status-warning)" style={{ margin: '0 auto 0.75rem' }} />
+              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>No Upcoming Visits</h4>
               <p className="text-xs text-muted mt-1 max-w-xs mx-auto mb-4">
                 Keep your pet's wellness up to date by scheduling a consultation or vaccine booster.
               </p>
               <Link
                 to="/owner/appointments"
                 className="btn btn-sm"
-                style={{ backgroundColor: '#E76F51', color: '#FFFFFF', fontWeight: 700 }}
+                style={{ backgroundcolor: 'var(--primary)', color: '#FFFFFF', fontWeight: 700 }}
               >
                 Book Appointment Now
               </Link>
@@ -350,7 +350,7 @@ export const OwnerDashboard = () => {
           subtitle="Profiles, microchips & immunizations"
           icon={PawPrint}
           actions={
-            <Link to="/owner/pets" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/owner/pets" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Manage Pets ({pets.length}) <ArrowRight size={14} />
             </Link>
           }
@@ -380,7 +380,7 @@ export const OwnerDashboard = () => {
                       style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', objectFit: 'cover' }}
                     />
                     <div>
-                      <h4 className="text-sm font-bold" style={{ color: '#12304A' }}>{pet.name}</h4>
+                      <h4 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>{pet.name}</h4>
                       <p className="text-xs text-muted">{pet.breed} • {pet.ageYears} yrs ({pet.weightKg} kg)</p>
                     </div>
                   </div>
@@ -405,10 +405,10 @@ export const OwnerDashboard = () => {
         {/* Recent Medical Information & Prescriptions */}
         <Card
           title="Recent Clinical Notes & Prescriptions"
-          subtitle="SOAP examination diagnoses & active Rx"
+          subtitle="Clinical examination diagnoses & active Rx"
           icon={FileText}
           actions={
-            <Link to="/owner/medical-history" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/owner/medical-history" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Full Health History <ArrowRight size={14} />
             </Link>
           }
@@ -422,11 +422,11 @@ export const OwnerDashboard = () => {
                     padding: '0.85rem 1rem',
                     backgroundColor: 'var(--bg-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    borderLeft: '4px solid #E76F51',
+                    borderLeft: '4px solid var(--primary)',
                   }}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs" style={{ color: '#12304A' }}>{c.assessmentDiagnosis}</span>
+                    <span className="font-bold text-xs" style={{ color: 'var(--text-main)' }}>{c.assessmentDiagnosis}</span>
                     <span className="text-xs text-muted">{new Date(c.consultationDate).toLocaleDateString()}</span>
                   </div>
                   <p className="text-xs text-muted" style={{ lineHeight: '1.4' }}>
@@ -450,7 +450,7 @@ export const OwnerDashboard = () => {
           subtitle="Prepaid care plans & sessions balance"
           icon={Layers}
           actions={
-            <Link to="/owner/packages" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+            <Link to="/owner/packages" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
               Browse Packages <ArrowRight size={14} />
             </Link>
           }
@@ -462,16 +462,16 @@ export const OwnerDashboard = () => {
                   key={pkg.bookingId}
                   style={{
                     padding: '0.85rem 1rem',
-                    backgroundColor: '#FFF8F3',
+                    backgroundColor: 'var(--primary-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    border: '1px solid #FEE2E2',
+                    border: '1px solid var(--border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                   }}
                 >
                   <div>
-                    <h4 className="text-xs font-bold" style={{ color: '#12304A' }}>{pkg.packageName}</h4>
+                    <h4 className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>{pkg.packageName}</h4>
                     <p className="text-xs text-muted mt-1">Companion: <strong>{pkg.petName}</strong></p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -499,7 +499,7 @@ export const OwnerDashboard = () => {
         subtitle="Tracking shelter application status"
         icon={Heart}
         actions={
-          <Link to="/owner/adopt" className="text-xs font-bold flex items-center gap-1" style={{ color: '#E76F51' }}>
+          <Link to="/owner/adopt" className="text-xs font-bold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
             Adoptable Pets Gallery <ArrowRight size={14} />
           </Link>
         }
@@ -523,7 +523,7 @@ export const OwnerDashboard = () => {
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-sm font-bold" style={{ color: '#12304A' }}>Adoption Request: {app.petName}</h4>
+                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Adoption Request: {app.petName}</h4>
                     <StatusBadge status={app.status} />
                   </div>
                   <p className="text-xs text-muted">

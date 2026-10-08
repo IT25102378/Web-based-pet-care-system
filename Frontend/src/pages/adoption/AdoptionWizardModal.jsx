@@ -23,6 +23,7 @@ export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
     applicantEmail: currentUser?.email || '',
     applicantPhone: currentUser?.phone || '',
     applicantAddress: currentUser?.address || '',
+    applicationType: 'Adoption', // 'Adoption' or 'Foster'
     occupation: '',
     housingType: 'Own House',
     hasFencedYard: true,
@@ -113,6 +114,7 @@ export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
         dailyAloneHours: formData.dailyAloneHours,
         hasOtherPets: !!formData.otherPetsDetails,
         otherPetsDetails: formData.otherPetsDetails,
+        applicationType: formData.applicationType,
         reasonForAdoption: formData.reasonForAdoption,
         termsAccepted: true,
         signatureDataUrl: signature,
@@ -264,7 +266,36 @@ export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
 
       {/* Wizard Steps */}
       {currentStep === 1 && (
-        <Step1ApplicantDetails formData={formData} updateFormData={updateFormData} errors={errors} />
+        <div className="fade-in">
+          <div className="form-group mb-5">
+            <label className="form-label" style={{ fontSize: '1rem' }}>Are you applying to Adopt or Foster?</label>
+            <div className="flex gap-4 mt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="applicationType"
+                  value="Adoption"
+                  checked={formData.applicationType === 'Adoption'}
+                  onChange={(e) => updateFormData({ applicationType: e.target.value })}
+                  style={{ width: '18px', height: '18px' }}
+                />
+                <span className="font-semibold text-sm">Adoption (Forever Home)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="applicationType"
+                  value="Foster"
+                  checked={formData.applicationType === 'Foster'}
+                  onChange={(e) => updateFormData({ applicationType: e.target.value })}
+                  style={{ width: '18px', height: '18px' }}
+                />
+                <span className="font-semibold text-sm">Foster (Temporary Care)</span>
+              </label>
+            </div>
+          </div>
+          <Step1ApplicantDetails formData={formData} updateFormData={updateFormData} errors={errors} />
+        </div>
       )}
       {currentStep === 2 && (
         <Step2DocumentUpload documents={documents} updateDocuments={updateDocuments} errors={errors} />

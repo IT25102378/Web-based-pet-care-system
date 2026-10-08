@@ -297,7 +297,7 @@ export const OwnerProfilePage = () => {
 
             <div
               style={{
-                backgroundColor: '#FFF8F3',
+                backgroundColor: 'var(--primary-subtle)',
                 padding: '0.75rem 1.25rem',
                 borderRadius: 'var(--radius-lg)',
                 border: '1px solid rgba(231, 111, 81, 0.2)',
@@ -305,7 +305,7 @@ export const OwnerProfilePage = () => {
                 minWidth: '105px',
               }}
             >
-              <div className="flex items-center justify-center gap-1 font-bold text-lg" style={{ color: '#E76F51' }}>
+              <div className="flex items-center justify-center gap-1 font-bold text-lg" style={{ color: 'var(--primary)' }}>
                 <Calendar size={18} /> {stats.upcomingApptsCount}
               </div>
               <span className="text-xs text-muted font-semibold">Upcoming Visits</span>
@@ -465,7 +465,7 @@ export const OwnerProfilePage = () => {
                       left: '0.85rem',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      color: '#E76F51',
+                      color: 'var(--primary)',
                     }}
                   />
                 </div>
