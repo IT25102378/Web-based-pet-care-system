@@ -34,15 +34,7 @@ export const AuthProvider = ({ children }) => {
 
     const validateSession = async () => {
       if (USE_MOCK_DATA) {
-        // Mock mode: if no user in storage, default to the Pet Owner demo account
-        if (!currentUser) {
-          const defaultUser = mockStore.getItem('users', 'userId', 'USR-001');
-          if (defaultUser) {
-            setCurrentUser(defaultUser);
-            tokenStore.setUser(defaultUser);
-            tokenStore.setToken(`mock-token-${defaultUser.userId}`);
-          }
-        }
+        // Mock mode: do not auto-login. Force user to see landing page and log in manually.
         setIsLoading(false);
         return;
       }
@@ -154,6 +146,15 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
     // Pages should redirect to /login after calling this
   }, []);
+
+  // Listen for global 401 events emitted by client.js
+  useEffect(() => {
+    const onUnauthorized = () => {
+      handleUnauthorized();
+    };
+    window.addEventListener('petnexus:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('petnexus:unauthorized', onUnauthorized);
+  }, [handleUnauthorized]);
 
   // ---------------------------------------------------------------------------
   // APPROVAL LOGIN (automatic login after administrator approval)

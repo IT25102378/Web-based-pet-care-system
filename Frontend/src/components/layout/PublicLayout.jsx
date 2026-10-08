@@ -17,7 +17,7 @@ export const PublicLayout = () => {
       </main>
 
       {/* Footer */}
-      <footer style={{ backgroundColor: '#12304A', color: '#94A3B8', paddingTop: '4rem', paddingBottom: '2.5rem' }}>
+      <footer style={{ backgroundColor: 'var(--bg-dark)', color: '#94A3B8', paddingTop: '4rem', paddingBottom: '2.5rem' }}>
         <div className="container">
           <div className="grid-4 mb-8">
             <div>
@@ -65,7 +65,7 @@ export const PublicLayout = () => {
                 <li><Link to="/about-contact" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Training & Behavior Classes</Link></li>
                 <li><Link to="/about-contact" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Boarding & Daycare Suites</Link></li>
                 {canAccessAdoptions ? (
-                  <li><Link to="/adoptable-pets" style={{ color: '#F4A261', textDecoration: 'none', fontWeight: 600 }}>Rescue & Adoption Program</Link></li>
+                  <li><Link to="/adoptable-pets" style={{ color: 'var(--primary-light)', textDecoration: 'none', fontWeight: 600 }}>Rescue & Adoption Program</Link></li>
                 ) : (
                   <li><Link to="/about-contact" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Rescue & Rehoming Services</Link></li>
                 )}
@@ -77,7 +77,7 @@ export const PublicLayout = () => {
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.95rem' }}>
                 <li><Link to="/" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Home</Link></li>
                 {canAccessAdoptions && (
-                  <li><Link to="/adoptable-pets" style={{ color: '#F4A261', textDecoration: 'none', fontWeight: 600 }}>Browse Adoptable Pets</Link></li>
+                  <li><Link to="/adoptable-pets" style={{ color: 'var(--primary-light)', textDecoration: 'none', fontWeight: 600 }}>Browse Adoptable Pets</Link></li>
                 )}
                 <li><Link to="/login" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Client & Staff Portal Log In</Link></li>
                 <li><Link to="/register" style={{ color: '#CBD5E1', textDecoration: 'none' }}>Register New Account</Link></li>
@@ -89,19 +89,19 @@ export const PublicLayout = () => {
               <h4 style={{ color: '#FFFFFF', fontSize: '1.15rem', fontWeight: 750, marginBottom: '1rem' }}>Clinic Contact</h4>
               <div style={{ fontSize: '0.95rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 <div className="flex items-center gap-2">
-                  <Clock size={16} color="#F4A261" />
+                  <Clock size={16} color="var(--primary-light)" />
                   <span style={{ color: '#CBD5E1' }}>Mon – Fri: 08:00 AM – 08:00 PM</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock size={16} color="#F4A261" />
+                  <Clock size={16} color="var(--primary-light)" />
                   <span style={{ color: '#CBD5E1' }}>Sat – Sun: 09:00 AM – 05:00 PM</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <MapPin size={16} color="#E76F51" />
+                  <MapPin size={16} color="var(--primary)" />
                   <span style={{ color: '#CBD5E1' }}>No. 120, Galle Road, Colombo 03, Sri Lanka</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Mail size={16} color="#E76F51" />
+                  <Mail size={16} color="var(--primary)" />
                   <span style={{ color: '#CBD5E1' }}>care@petnexus.com</span>
                 </div>
               </div>
@@ -123,9 +123,6 @@ export const PublicLayout = () => {
             <p style={{ color: '#64748B' }}>
               &copy; 2026 Pet Nexus Veterinary Management System. All rights reserved.
             </p>
-            <div className="flex items-center gap-4">
-              <span style={{ color: '#64748B' }}>Spring Boot + SQL Server Connected</span>
-            </div>
           </div>
         </div>
       </footer>

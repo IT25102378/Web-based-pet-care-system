@@ -52,17 +52,14 @@ export const DashboardLayout = ({ allowedRoles = [] }) => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)', position: 'relative', overflow: 'hidden' }}>
-      {/* Liquid Ambient Aura Orbs (providing light refraction for liquid glass cards) */}
-      <div className="liquid-aura-orb liquid-aura-orb-1" aria-hidden="true" />
-      <div className="liquid-aura-orb liquid-aura-orb-2" aria-hidden="true" />
-      <div className="liquid-aura-orb liquid-aura-orb-3" aria-hidden="true" />
-
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
       <Navbar />
-      <div className="dashboard-layout-body" style={{ position: 'relative', zIndex: 1 }}>
+      <div className="dashboard-layout-body">
         <Sidebar />
-        <main className="dashboard-main-content">
-          <Outlet />
+        <main className="dashboard-main-content" id="main-content">
+          <div className="dashboard-main-inner">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

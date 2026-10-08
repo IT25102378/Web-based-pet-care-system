@@ -307,29 +307,4 @@ export const appointmentApi = {
       isAvailable: !bookedSlots.has(slot),
     }));
   },
-
-  async registerWalkIn(walkInData) {
-    if (!USE_MOCK_DATA) {
-      return await apiFetch('/appointments/walk-in', {
-        method: 'POST',
-        body: JSON.stringify(walkInData),
-      });
-    }
-
-    await simulateDelay(350);
-    const appointments = mockStore.getTable('appointments');
-    const newId = `APT-${1000 + appointments.length + 1}`;
-    const tokenNumber = `W-${String(100 + appointments.length + 1)}`;
-
-    const newAppointment = {
-      ...walkInData,
-      appointmentId: newId,
-      tokenNumber,
-      status: 'InRoom',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return mockStore.insertItem('appointments', newAppointment);
-  }
 };

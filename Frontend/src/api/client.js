@@ -14,28 +14,31 @@ export const simulateDelay = (ms = 200) => new Promise((resolve) => setTimeout(r
 // ---------------------------------------------------------------------------
 // Token storage keys — centralised so nothing else hardcodes these strings
 // ---------------------------------------------------------------------------
-const TOKEN_KEY   = 'petnexus_auth_token';
-const USER_KEY    = 'petnexus_current_user';
+const TOKEN_KEY   = 'pn_auth_token_session';
+const USER_KEY    = 'pn_current_user_session';
 
 export const tokenStore = {
-  getToken:   ()       => localStorage.getItem(TOKEN_KEY),
-  setToken:   (token)  => localStorage.setItem(TOKEN_KEY, token),
-  removeToken: ()      => localStorage.removeItem(TOKEN_KEY),
+  getToken:   ()       => sessionStorage.getItem(TOKEN_KEY),
+  setToken:   (token)  => sessionStorage.setItem(TOKEN_KEY, token),
+  removeToken: ()      => sessionStorage.removeItem(TOKEN_KEY),
 
   getUser:    ()       => {
     try {
-      const raw = localStorage.getItem(USER_KEY);
+      const raw = sessionStorage.getItem(USER_KEY);
       return raw ? JSON.parse(raw) : null;
     } catch (_) {
       return null;
     }
   },
-  setUser:    (user)   => localStorage.setItem(USER_KEY, JSON.stringify(user)),
-  removeUser: ()       => localStorage.removeItem(USER_KEY),
+  setUser:    (user)   => sessionStorage.setItem(USER_KEY, JSON.stringify(user)),
+  removeUser: ()       => sessionStorage.removeItem(USER_KEY),
 
   clear: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    // Cleanup any old localStorage tokens from previous sessions to be safe
+    localStorage.removeItem('petnexus_auth_token');
+    localStorage.removeItem('petnexus_current_user');
   },
 };
 
@@ -89,6 +92,9 @@ export async function apiFetch(endpoint, options = {}, skipAuth = false) {
   } catch (_) { /* empty body */ }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      window.dispatchEvent(new CustomEvent('petnexus:unauthorized'));
+    }
     const message = body?.message || `HTTP ${response.status}: ${response.statusText}`;
     throw new ApiError(message, response.status, body?.error || null);
   }
