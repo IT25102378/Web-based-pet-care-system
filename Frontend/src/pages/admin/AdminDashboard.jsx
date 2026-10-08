@@ -66,7 +66,7 @@ export const AdminDashboard = () => {
   };
 
   return (
-    <div style={{ color: '#1F2937' }}>
+    <div>
       {/* Top Banner */}
       <div
         style={{
@@ -229,13 +229,13 @@ export const AdminDashboard = () => {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {[
-              { role: 'PetOwner', label: '🐾 Pet Owners', count: rolesCount.PetOwner, color: '#2A8C82' },
-              { role: 'Veterinarian', label: '🩺 Veterinarians', count: rolesCount.Veterinarian, color: '#0EA5E9' },
-              { role: 'ClinicStaff', label: '📋 Clinic Staff', count: rolesCount.ClinicStaff, color: '#8B5CF6' },
-              { role: 'PetCareProvider', label: '✂️ Care Providers', count: rolesCount.PetCareProvider, color: '#F4A261' },
-              { role: 'RescueOfficer', label: '🦺 Rescue Officers', count: rolesCount.RescueOfficer, color: '#E76F51' },
-              { role: 'ClinicManager', label: '📊 Clinic Managers', count: rolesCount.ClinicManager, color: '#6366F1' },
-              { role: 'Admin', label: '🛡️ Administrators', count: rolesCount.Admin, color: '#1E293B' },
+              { role: 'PetOwner', label: 'Pet Owners', count: rolesCount.PetOwner, color: 'var(--primary)' },
+              { role: 'Veterinarian', label: 'Veterinarians', count: rolesCount.Veterinarian, color: '#0EA5E9' },
+              { role: 'ClinicStaff', label: 'Clinic Staff', count: rolesCount.ClinicStaff, color: '#8B5CF6' },
+              { role: 'PetCareProvider', label: 'Care Providers', count: rolesCount.PetCareProvider, color: 'var(--status-warning)' },
+              { role: 'RescueOfficer', label: 'Rescue Officers', count: rolesCount.RescueOfficer, color: 'var(--accent)' },
+              { role: 'ClinicManager', label: 'Clinic Managers', count: rolesCount.ClinicManager, color: '#6366F1' },
+              { role: 'Admin', label: 'Administrators', count: rolesCount.Admin, color: 'var(--bg-dark)' },
             ].map((item) => (
               <div key={item.role}>
                 <div className="flex items-center justify-between text-xs font-semibold mb-1">
