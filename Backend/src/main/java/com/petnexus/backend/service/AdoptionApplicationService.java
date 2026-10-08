@@ -4,6 +4,7 @@ import com.petnexus.backend.dto.AdoptionApplicationDto;
 import com.petnexus.backend.dto.CreateApplicationRequest;
 import com.petnexus.backend.dto.ReviewApplicationRequest;
 import com.petnexus.backend.entity.AdoptionApplication;
+
 import com.petnexus.backend.entity.RescueCase;
 import com.petnexus.backend.entity.User;
 import com.petnexus.backend.enums.AdoptionApplicationStatus;
@@ -13,6 +14,7 @@ import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.AdoptionApplicationRepository;
 import com.petnexus.backend.repository.RescueCaseRepository;
 import com.petnexus.backend.repository.UserRepository;
+
 import com.petnexus.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class AdoptionApplicationService {
     private final UserRepository userRepository;
     private final com.petnexus.backend.repository.AdoptionListingRepository adoptionListingRepository;
     private final com.petnexus.backend.repository.AdoptionApplicationDocumentRepository documentRepository;
+
 
     @Transactional(readOnly = true)
     public List<AdoptionApplicationDto> getApplications(String caseId, String applicantId) {
@@ -78,8 +81,8 @@ public class AdoptionApplicationService {
         RescueCase rescueCase = rescueCaseRepository.findByCaseId(request.getCaseId().trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Rescue case not found: " + request.getCaseId()));
 
-        if (!"ReadyForAdoption".equals(rescueCase.getStatus())) {
-            throw new BadRequestException("Rescue case is not ready for adoption.");
+        if (!"ReadyForAdoption".equals(rescueCase.getStatus()) && !"ReadyForFoster".equals(rescueCase.getStatus()) && !"InFoster".equals(rescueCase.getStatus())) {
+            throw new BadRequestException("Rescue case is not ready for adoption or foster.");
         }
 
         User current = SecurityUtils.getCurrentUser();
@@ -111,6 +114,7 @@ public class AdoptionApplicationService {
         application.setPetName(petName);
         application.setApplicantName(applicantName);
         application.setApplicantPhone(applicantPhone);
+        application.setApplicationType(request.getApplicationType() != null ? request.getApplicationType() : "Adoption");
         application.setStatus(AdoptionApplicationStatus.SUBMITTED);
         application.setCreatedAt(LocalDateTime.now());
 
@@ -165,10 +169,20 @@ public class AdoptionApplicationService {
         if (status == AdoptionApplicationStatus.APPROVED) {
             RescueCase rc = app.getRescueCase();
             if (rc != null) {
-                rc.setStatus("Adopted");
-                rc.setIsPublishedForAdoption(false);
+                if ("Foster".equalsIgnoreCase(app.getApplicationType())) {
+                    rc.setStatus("InFoster");
+                    rc.setIsPublishedForAdoption(false);
+
+                    // No longer creating a global FosterRecord, just update the RescueCase
+                    rc.setFosterParentId(app.getApplicant() != null ? app.getApplicant().getUserId() : null);
+                    rc.setFosterParentName(app.getApplicantName());
+
+                } else {
+                    rc.setStatus("Adopted");
+                    rc.setIsPublishedForAdoption(false);
+                }
                 rescueCaseRepository.save(rc);
-                log.info("Rescue case {} marked Adopted following approval of application {}", rc.getCaseId(), applicationId);
+                log.info("Rescue case {} marked {} following approval of application {}", rc.getCaseId(), rc.getStatus(), applicationId);
 
                 // Unpublish corresponding adoption listing in database
                 adoptionListingRepository.findByRescueCase_CaseId(rc.getCaseId())
@@ -190,6 +204,7 @@ public class AdoptionApplicationService {
                 app.getApplicationId(),
                 app.getRescueCase() != null ? app.getRescueCase().getCaseId() : null,
                 app.getApplicant() != null ? app.getApplicant().getUserId() : null,
+                app.getApplicationType(),
                 app.getPetName(),
                 app.getApplicantName(),
                 app.getApplicantPhone(),

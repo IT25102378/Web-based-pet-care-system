@@ -20,11 +20,17 @@ import java.time.LocalDateTime;
     }
 )
 @Inheritance(strategy = InheritanceType.JOINED)
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE [USER] SET is_deleted = 1 WHERE user_id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = 0")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
 public class User {
+
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "bit default 0")
+    @Builder.Default
+    private boolean isDeleted = false;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

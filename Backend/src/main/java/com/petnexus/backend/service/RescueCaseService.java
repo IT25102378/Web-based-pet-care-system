@@ -387,6 +387,7 @@ public class RescueCaseService {
             }
         }
 
+        String oldStatus = rescueCase.getStatus();
         // Apply updates (null-safe partial patch)
         if (request.getTemporaryName()       != null) rescueCase.setTemporaryName(request.getTemporaryName());
         if (request.getSpecies()             != null) rescueCase.setSpecies(request.getSpecies());
@@ -435,6 +436,26 @@ public class RescueCaseService {
         }
 
         rescueCaseRepository.save(rescueCase);
+        
+        // Notify Rescue Officers if transferred by Pet Care Provider (i.e. status changed to ReadyForFoster/Adoption)
+        if (request.getStatus() != null && !request.getStatus().equals(oldStatus) 
+                && ("ReadyForFoster".equals(request.getStatus()) || "ReadyForAdoption".equals(request.getStatus()))) {
+            try {
+                List<com.petnexus.backend.entity.User> rescueOfficers =
+                        userRepository.findByRole(com.petnexus.backend.enums.UserRole.RescueOfficer);
+                for (com.petnexus.backend.entity.User officer : rescueOfficers) {
+                    notificationService.createNotification(
+                            officer.getUserId(),
+                            com.petnexus.backend.enums.NotificationType.Rescue,
+                            "Rescue Companion Transferred from Care Provider",
+                            rescueCase.getTemporaryName() + " care completed and transferred to Rescue Officer with status " + request.getStatus() + ".",
+                            "/rescue/cases/" + rescueCase.getCaseId()
+                    );
+                }
+            } catch (Exception e) {
+                log.warn("Failed to notify rescue officers about transfer: {}", e.getMessage());
+            }
+        }
         log.info("Updated rescue case {}", caseId);
         return getRescueCaseById(caseId);
     }

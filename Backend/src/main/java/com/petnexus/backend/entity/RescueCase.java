@@ -119,15 +119,6 @@ public class RescueCase {
     private String fosterParentName;
 
     // -----------------------------------------------------------------------
-    // Optional link to Rescue Officer (User)
-    // -----------------------------------------------------------------------
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "rescue_officer_fk_id", nullable = true,
-                foreignKey = @ForeignKey(name = "fk_rescue_cases_officer"))
-    private User rescueOfficer;
-
-    // -----------------------------------------------------------------------
     // Reported By (Pet Owner Community Rescue Reports)
     // -----------------------------------------------------------------------
 

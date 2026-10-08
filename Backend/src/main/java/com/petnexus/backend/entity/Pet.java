@@ -26,13 +26,22 @@ import java.util.List;
     name = "pets",
     uniqueConstraints = {
         @UniqueConstraint(name = "uk_pets_pet_id", columnNames = "petId")
+    },
+    indexes = {
+        @Index(name = "idx_pets_owner", columnList = "owner_id")
     }
 )
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE pets SET is_deleted = 1 WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_deleted = 0")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Pet {
+
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "bit default 0")
+    @Builder.Default
+    private boolean isDeleted = false;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

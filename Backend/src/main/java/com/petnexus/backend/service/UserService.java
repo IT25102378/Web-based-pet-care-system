@@ -140,6 +140,10 @@ public class UserService {
         }
 
         switch (status) {
+            case PendingEmailVerification ->
+                throw new BadRequestException(
+                    "Please verify your email address to proceed with your application."
+                );
             case PendingApproval ->
                 throw new BadRequestException(
                     "Your account is awaiting admin approval. You will receive an email once reviewed."

@@ -19,6 +19,7 @@ CREATE TABLE [USER] (
     password_hash VARCHAR(255),
     role VARCHAR(30),
     status VARCHAR(40),
+    is_deleted BIT DEFAULT 0,
     avatar_url VARCHAR(MAX),
     created_at DATETIME2,
     street VARCHAR(100),
@@ -26,18 +27,12 @@ CREATE TABLE [USER] (
 );
 GO
 
-CREATE TABLE USER_PHONE (
-    user_id INT,
-    phone_number VARCHAR(20),
-    PRIMARY KEY (user_id, phone_number),
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
-);
 GO
 
 CREATE TABLE PET_OWNER (
     user_id INT PRIMARY KEY,
     owner_id VARCHAR(20) UNIQUE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES [USER](user_id) 
 );
 GO
 
@@ -49,7 +44,8 @@ CREATE TABLE PET (
     emergency_contact VARCHAR(20),
     owner_user_id INT,
     species VARCHAR(50) NOT NULL,
-    FOREIGN KEY (owner_user_id) REFERENCES PET_OWNER(user_id) ON DELETE CASCADE
+    is_deleted BIT DEFAULT 0,
+    FOREIGN KEY (owner_user_id) REFERENCES PET_OWNER(user_id) 
 );
 GO
 
@@ -59,7 +55,7 @@ CREATE TABLE NOTIFICATION (
     date_sent DATE NOT NULL,
     is_read BIT DEFAULT 0,
     user_id INT,
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES [USER](user_id) 
 );
 GO
 
@@ -146,13 +142,11 @@ GO
 -- Part 1: EER Diagram & Database Design
 -- ISA Mapping: USER (Superclass) -> RESCUE_OFFICER (Subclass)
 -- Primary Keys: case_id, application_id, foster_id
--- Foreign Keys: officer_user_id in RESCUE_CASE references RESCUE_OFFICER(user_id)
-
 -- Part 2: Table Creation (DDL)
 CREATE TABLE RESCUE_OFFICER (
     user_id INT PRIMARY KEY,
     badge_number VARCHAR(20) UNIQUE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES [USER](user_id) 
 );
 GO
 
@@ -163,9 +157,7 @@ CREATE TABLE RESCUE_CASE (
     status VARCHAR(50) DEFAULT 'Reported',
     animal_condition VARCHAR(100),
     owner_user_id INT,
-    officer_user_id INT,
-    FOREIGN KEY (owner_user_id) REFERENCES PET_OWNER(user_id),
-    FOREIGN KEY (officer_user_id) REFERENCES RESCUE_OFFICER(user_id)
+    FOREIGN KEY (owner_user_id) REFERENCES PET_OWNER(user_id)
 );
 GO
 
@@ -177,15 +169,6 @@ CREATE TABLE FOSTER_CARE (
 );
 GO
 
-CREATE TABLE RESCUED_PET (
-    case_id INT,
-    rescued_pet_no INT,
-    rescue_status VARCHAR(50),
-    foster_id INT,
-    PRIMARY KEY (case_id, rescued_pet_no),
-    FOREIGN KEY (case_id) REFERENCES RESCUE_CASE(case_id) ON DELETE CASCADE,
-    FOREIGN KEY (foster_id) REFERENCES FOSTER_CARE(foster_id)
-);
 GO
 
 CREATE TABLE ADOPTION_APPLICATION (
@@ -210,8 +193,8 @@ INSERT INTO [USER] (user_id, nic_no, full_name, email) VALUES (3, '891234567V', 
 INSERT INTO RESCUE_OFFICER (user_id, badge_number) VALUES (3, 'BADGE-999');
 GO
 
-INSERT INTO RESCUE_CASE (case_id, location, date, status, animal_condition, officer_user_id) VALUES
-(201, 'Central Park', '2023-10-15', 'Resolved', 'Injured leg', 3);
+INSERT INTO RESCUE_CASE (case_id, location, date, status, animal_condition) VALUES
+(201, 'Central Park', '2023-10-15', 'Resolved', 'Injured leg');
 GO
 
 INSERT INTO FOSTER_CARE (foster_id, foster_name, officer_user_id) VALUES
@@ -247,7 +230,7 @@ HAVING COUNT(*) > 0;
 
 -- 5. Subquery
 SELECT badge_number FROM RESCUE_OFFICER
-WHERE user_id = (SELECT TOP 1 officer_user_id FROM RESCUE_CASE WHERE case_id = 201);
+WHERE user_id = 3;
 GO
 
 -- Part 5: Stored Procedure
@@ -288,22 +271,16 @@ GO
 CREATE TABLE VETERINARIAN (
     user_id INT PRIMARY KEY,
     license_number VARCHAR(50) UNIQUE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES [USER](user_id) 
 );
 GO
 
-CREATE TABLE VETERINARIAN_SPECIALIZATION (
-    user_id INT,
-    specialization VARCHAR(100),
-    PRIMARY KEY (user_id, specialization),
-    FOREIGN KEY (user_id) REFERENCES VETERINARIAN(user_id) ON DELETE CASCADE
-);
 GO
 
 CREATE TABLE PET_CARE_PROVIDER (
     user_id INT PRIMARY KEY,
     provider_id VARCHAR(20) UNIQUE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES [USER](user_id) 
 );
 GO
 
@@ -324,7 +301,7 @@ CREATE TABLE PRESCRIPTION (
     prescription_id INT,
     notes VARCHAR(MAX),
     PRIMARY KEY (record_id, prescription_id),
-    FOREIGN KEY (record_id) REFERENCES MEDICAL_RECORD(record_id) ON DELETE CASCADE
+    FOREIGN KEY (record_id) REFERENCES MEDICAL_RECORD(record_id) 
 );
 GO
 
@@ -333,7 +310,7 @@ CREATE TABLE PRESCRIPTION_MEDICATION (
     prescription_id INT,
     medication VARCHAR(100),
     PRIMARY KEY (record_id, prescription_id, medication),
-    FOREIGN KEY (record_id, prescription_id) REFERENCES PRESCRIPTION(record_id, prescription_id) ON DELETE CASCADE
+    FOREIGN KEY (record_id, prescription_id) REFERENCES PRESCRIPTION(record_id, prescription_id) 
 );
 GO
 
@@ -343,7 +320,7 @@ CREATE TABLE VACCINATION (
     vaccine_name VARCHAR(100) NOT NULL,
     next_due_date DATE,
     PRIMARY KEY (pet_id, vaccination_no),
-    FOREIGN KEY (pet_id) REFERENCES PET(pet_id) ON DELETE CASCADE
+    FOREIGN KEY (pet_id) REFERENCES PET(pet_id) 
 );
 GO
 
@@ -441,7 +418,7 @@ GO
 CREATE TABLE CLINIC_MANAGER (
     user_id INT PRIMARY KEY,
     manager_code VARCHAR(50) UNIQUE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES [USER](user_id) 
 );
 GO
 
@@ -449,7 +426,7 @@ CREATE TABLE CLINIC_STAFF (
     user_id INT PRIMARY KEY,
     staff_id VARCHAR(50) UNIQUE NOT NULL,
     role VARCHAR(50),
-    FOREIGN KEY (user_id) REFERENCES [USER](user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES [USER](user_id) 
 );
 GO
 
@@ -674,7 +651,7 @@ CREATE TABLE FEEDBACK (
     rating INT CHECK (rating BETWEEN 1 AND 5),
     comments VARCHAR(MAX),
     owner_user_id INT,
-    FOREIGN KEY (owner_user_id) REFERENCES PET_OWNER(user_id) ON DELETE CASCADE
+    FOREIGN KEY (owner_user_id) REFERENCES PET_OWNER(user_id) 
 );
 GO
 
@@ -688,25 +665,8 @@ CREATE TABLE SERVICE_PACKAGE (
 );
 GO
 
-CREATE TABLE INCLUDED_IN (
-    service_id INT,
-    package_id INT,
-    PRIMARY KEY (service_id, package_id),
-    FOREIGN KEY (service_id) REFERENCES SERVICE(service_id) ON DELETE CASCADE,
-    FOREIGN KEY (package_id) REFERENCES SERVICE_PACKAGE(package_id) ON DELETE CASCADE
-);
 GO
 
-CREATE TABLE COMPLAINT (
-    complaint_id INT PRIMARY KEY,
-    date_filed DATE NOT NULL,
-    status VARCHAR(50) DEFAULT 'Pending',
-    details VARCHAR(MAX),
-    manager_user_id INT,
-    owner_user_id INT,
-    FOREIGN KEY (manager_user_id) REFERENCES CLINIC_MANAGER(user_id),
-    FOREIGN KEY (owner_user_id) REFERENCES PET_OWNER(user_id)
-);
 GO
 
 -- Part 3: Sample Data
@@ -773,3 +733,1563 @@ END;
 GO
 
 
+
+    create table [USER] (
+        is_deleted bit default 0 not null,
+        created_at datetime2(7) not null,
+        updated_at datetime2(7),
+        user_id bigint identity not null,
+        nic_no varchar(20) not null,
+        phone varchar(30),
+        role varchar(30) not null check ((role in ('PetOwner','Veterinarian','ClinicStaff','PetCareProvider','ClinicManager','RescueOfficer','Admin'))),
+        status varchar(40) not null check ((status in ('PendingApproval','Active','Rejected','Suspended'))),
+        approval_token varchar(100),
+        password_reset_token varchar(100),
+        full_name varchar(150) not null,
+        emergency_contact varchar(200),
+        address varchar(300),
+        rejection_reason varchar(500),
+        suspension_reason varchar(500),
+        avatar_url VARCHAR(MAX),
+        email varchar(255) not null,
+        password_hash varchar(255) not null,
+        constraint uk_users_user_id primary key (user_id)
+    );
+
+    create table adoption_application_documents (
+        id bigint identity not null,
+        uploaded_at datetime2(7) not null,
+        application_id varchar(255) not null,
+        document_type varchar(255) not null,
+        file_name varchar(255) not null,
+        file_size varchar(255),
+        file_url varchar(255) not null,
+        status varchar(255),
+        primary key (id)
+    );
+
+    create table adoption_applications (
+        applicant_id bigint not null,
+        case_id bigint not null,
+        created_at datetime2(7) not null,
+        reviewed_at datetime2(7),
+        reviewed_by bigint,
+        applicant_name varchar(255) not null,
+        applicant_phone varchar(255) not null,
+        application_id varchar(255) not null,
+        pet_name varchar(255) not null,
+        review_notes varchar(255),
+        status varchar(255) not null check ((status in ('SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED','CANCELLED'))),
+        primary key (application_id)
+    );
+
+    create table adoption_listings (
+        is_published_for_adoption bit not null,
+        case_id bigint not null,
+        created_at datetime2(7) not null,
+        updated_at datetime2(7) not null,
+        listing_id varchar(255) not null,
+        primary key (listing_id)
+    );
+
+    create table appointments (
+        appointment_date date not null,
+        rescheduled_from_date date,
+        cancelled_at datetime2(7),
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        owner_fk_id bigint,
+        pet_fk_id bigint,
+        updated_at datetime2(7),
+        vet_fk_id bigint,
+        appointment_id varchar(20) not null,
+        owner_id varchar(20),
+        pet_id varchar(20),
+        token_number varchar(20),
+        vet_id varchar(20),
+        rescheduled_from_time_slot varchar(30),
+        status varchar(30) not null check ((status in ('Scheduled','Pending','Confirmed','CheckedIn','InRoom','Completed','Cancelled','NoShow'))),
+        time_slot varchar(30) not null,
+        owner_phone varchar(50),
+        species varchar(50),
+        breed varchar(100),
+        pet_name varchar(100) not null,
+        service_type varchar(100) not null,
+        owner_name varchar(150) not null,
+        rescheduled_from_vet_name varchar(150),
+        vet_name varchar(150) not null,
+        cancellation_reason varchar(500),
+        reschedule_reason varchar(500),
+        reason varchar(1000),
+        symptoms varchar(1000),
+        notes varchar(2000),
+        primary key (id)
+    );
+
+    create table approval_history (
+        id bigint identity not null,
+        timestamp datetime2(7) not null,
+        admin_id varchar(20) not null,
+        user_id varchar(20) not null,
+        history_id varchar(30) not null,
+        action varchar(50) not null,
+        user_full_name varchar(150) not null,
+        reason varchar(500),
+        primary key (id)
+    );
+
+    create table care_providers (
+        active bit not null,
+        id bigint identity not null,
+        user_id bigint not null,
+        contact_phone varchar(20),
+        provider_id varchar(20) not null,
+        contact_email varchar(100),
+        provider_name varchar(100) not null,
+        primary key (id)
+    );
+
+    create table care_service_logs (
+        created_at date not null,
+        return_to_rescue bit not null,
+        service_date date not null,
+        id bigint identity not null,
+        case_id varchar(20),
+        owner_id varchar(20),
+        pet_id varchar(20),
+        provider_id varchar(20),
+        service_log_id varchar(20) not null,
+        status varchar(30) not null check ((status in ('SCHEDULED','CHECKED_IN','IN_PROGRESS','READY_FOR_PICKUP','COMPLETED'))),
+        owner_name varchar(100),
+        pet_name varchar(100),
+        provider_name varchar(100),
+        service_type varchar(100) not null,
+        intake_condition varchar(500),
+        notes varchar(1000),
+        services_performed varchar(1000),
+        primary key (id)
+    );
+
+    create table care_services (
+        discount_percent int,
+        duration_minutes int not null,
+        original_value numeric(10,2),
+        price numeric(10,2) not null,
+        created_by_user_id bigint not null,
+        id bigint identity not null,
+        service_id varchar(20) not null,
+        status varchar(30) not null check ((status in ('SCHEDULED','CHECKED_IN','IN_PROGRESS','READY_FOR_PICKUP','COMPLETED'))),
+        badge varchar(50),
+        name varchar(100) not null,
+        recommended_for varchar(100),
+        tagline varchar(300),
+        description varchar(2000),
+        primary key (id)
+    );
+
+    create table clinic_manager (
+        [user_id] bigint not null,
+        manager_code varchar(30),
+        primary key ([user_id])
+    );
+
+    create table clinic_staff (
+        [user_id] bigint not null,
+        staff_id varchar(30),
+        primary key ([user_id])
+    );
+
+    create table consultations (
+        follow_up_date date,
+        heart_rate_bpm int,
+        pass_to_provider bit,
+        respiratory_rate_bpm int,
+        temperaturec numeric(4,1),
+        weight_kg numeric(5,2),
+        appointment_fk_id bigint,
+        consultation_date datetime2(7) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        pet_fk_id bigint,
+        updated_at datetime2(7),
+        vet_fk_id bigint,
+        appointment_id varchar(20),
+        pet_id varchar(20),
+        vet_id varchar(20),
+        case_id varchar(30),
+        consultation_id varchar(30) not null,
+        status varchar(30),
+        pet_name varchar(100) not null,
+        vet_name varchar(150) not null,
+        assessment_diagnosis varchar(2000) not null,
+        objective_findings varchar(2000),
+        rescue_medical_summary varchar(2000),
+        subjective_notes varchar(2000),
+        treatment_plan varchar(2000) not null,
+        primary key (id)
+    );
+
+    create table feedbacks (
+        rating int not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        manager_responded_at datetime2(7),
+        updated_at datetime2(7),
+        user_id bigint not null,
+        feedback_id varchar(30) not null,
+        service_category varchar(100) not null,
+        staff_mentioned varchar(150),
+        user_name varchar(150) not null,
+        title varchar(200) not null,
+        comments varchar(2000) not null,
+        manager_response varchar(2000),
+        primary key (id)
+    );
+
+    create table foster_records (
+        active_placements int,
+        max_capacity int,
+        rating numeric(3,1),
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        status varchar(20),
+        foster_id varchar(30) not null,
+        phone varchar(30),
+        email varchar(150),
+        full_name varchar(150) not null,
+        home_type varchar(200),
+        address varchar(300),
+        primary key (id)
+    );
+
+    create table inventory_items (
+        current_stock int not null,
+        expiry_date date,
+        min_stock_threshold int not null,
+        selling_price numeric(10,2) not null,
+        unit_price numeric(10,2) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        supplier_fk_id bigint,
+        updated_at datetime2(7),
+        item_id varchar(20) not null,
+        status varchar(30) not null check ((status in ('IN_STOCK','LOW_STOCK','OUT_OF_STOCK','EXPIRED'))),
+        batch_number varchar(50),
+        sku varchar(50) not null,
+        unit varchar(50) not null,
+        category varchar(100) not null,
+        name varchar(150) not null,
+        supplier_name varchar(150),
+        primary key (id)
+    );
+
+    create table notifications (
+        is_read bit not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        user_id bigint not null,
+        type varchar(30) not null check ((type in ('Appointment','Rescue','Adoption','Approval','Inventory','Health','System'))),
+        notification_id varchar(40) not null,
+        title varchar(200) not null,
+        link varchar(300),
+        message varchar(1000) not null,
+        primary key (id)
+    );
+
+    create table pet_care_provider (
+        [user_id] bigint not null,
+        service_specialty varchar(150),
+        primary key ([user_id])
+    );
+
+    create table pet_documents (
+        id bigint identity not null,
+        pet_id bigint not null,
+        uploaded_at datetime2(7) not null,
+        document_id varchar(20) not null,
+        owner_id varchar(20) not null,
+        file_size varchar(50),
+        document_type varchar(100) not null,
+        pet_name varchar(100),
+        file_url varchar(1000),
+        notes varchar(2000),
+        file_name varchar(255) not null,
+        primary key (id)
+    );
+
+    create table pet_owner (
+        [user_id] bigint not null,
+        primary key ([user_id])
+    );
+
+    create table pets (
+        age_months int,
+        age_years int,
+        date_of_birth date,
+        is_deleted bit default 0 not null,
+        weight_kg numeric(5,2),
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        owner_id bigint not null,
+        updated_at datetime2(7),
+        microchip_id varchar(20),
+        pet_id varchar(20) not null,
+        gender varchar(30),
+        species varchar(50) not null,
+        breed varchar(100) not null,
+        name varchar(100) not null,
+        emergency_contact varchar(300),
+        allergies varchar(500),
+        image_url varchar(500),
+        medical_notes varchar(2000),
+        primary key (id)
+    );
+
+    create table prescription_items (
+        duration_days int,
+        quantity_prescribed int,
+        refills_allowed int,
+        id bigint identity not null,
+        prescription_fk_id bigint not null,
+        prescription_id varchar(30),
+        item_id varchar(50) not null,
+        dosage varchar(100),
+        frequency varchar(100),
+        medication_name varchar(200) not null,
+        primary key (id)
+    );
+
+    create table prescriptions (
+        issue_date date not null,
+        valid_until date,
+        consultation_fk_id bigint,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        pet_fk_id bigint,
+        updated_at datetime2(7),
+        vet_fk_id bigint,
+        pet_id varchar(20),
+        vet_id varchar(20),
+        consultation_id varchar(30),
+        prescription_id varchar(30) not null,
+        status varchar(30) not null,
+        vet_license varchar(50),
+        pet_name varchar(100) not null,
+        owner_name varchar(150),
+        vet_name varchar(150) not null,
+        digital_signature varchar(300),
+        instructions varchar(1000),
+        primary key (id)
+    );
+
+    create table purchase_orders (
+        total_amount numeric(12,2) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        supplier_id varchar(20),
+        order_id varchar(30) not null,
+        status varchar(30) not null,
+        supplier_name varchar(150) not null,
+        notes varchar(500),
+        items_description varchar(1000),
+        primary key (id)
+    );
+
+    create table rescue_cases (
+        intake_date date not null,
+        is_published_for_adoption bit not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        case_number varchar(20),
+        gender varchar(20),
+        case_id varchar(30) not null,
+        foster_parent_id varchar(30),
+        status varchar(30) not null,
+        condition_severity varchar(50),
+        estimated_age varchar(50),
+        microchip_id varchar(50),
+        reported_by_user_id varchar(50),
+        reported_by_user_phone varchar(50),
+        species varchar(50),
+        breed varchar(100),
+        temporary_name varchar(100) not null,
+        foster_parent_name varchar(150),
+        intake_officer varchar(150),
+        reported_by_user_name varchar(150),
+        rescue_location varchar(500) not null,
+        description varchar(2000),
+        medical_summary varchar(2000),
+        cover_photo_url NVARCHAR(MAX),
+        primary key (id)
+    );
+
+    create table rescue_officer (
+        [user_id] bigint not null,
+        badge_number varchar(30),
+        primary key ([user_id])
+    );
+
+    create table rescue_photos (
+        id bigint identity not null,
+        rescue_case_fk_id bigint not null,
+        uploaded_at datetime2(7),
+        case_id varchar(30) not null,
+        photo_id varchar(30) not null,
+        tag varchar(50),
+        caption varchar(300),
+        photo_url NVARCHAR(MAX) not null,
+        primary key (id)
+    );
+
+    create table rescue_progress_logs (
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        log_date datetime2(7) not null,
+        rescue_case_fk_id bigint not null,
+        case_id varchar(30) not null,
+        log_id varchar(30) not null,
+        log_type varchar(30),
+        logged_by varchar(150) not null,
+        title varchar(200) not null,
+        notes varchar(2000),
+        primary key (id)
+    );
+
+    create table service_package_bookings (
+        completed_sessions int not null,
+        created_at date not null,
+        expiry_date date not null,
+        purchase_date date not null,
+        remaining_sessions int not null,
+        total_sessions int not null,
+        id bigint identity not null,
+        booking_id varchar(20) not null,
+        owner_id varchar(20) not null,
+        pet_id varchar(20),
+        status varchar(30) not null,
+        package_id varchar(50),
+        owner_name varchar(100),
+        package_name varchar(100) not null,
+        pet_name varchar(100),
+        primary key (id)
+    );
+
+    create table suppliers (
+        active bit not null,
+        lead_time_days int not null,
+        rating numeric(3,1) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        supplier_id varchar(20) not null,
+        phone varchar(30),
+        category varchar(100),
+        contact_person varchar(100),
+        email varchar(100) not null,
+        company_name varchar(150) not null,
+        address varchar(300),
+        primary key (id)
+    );
+
+    create table vaccinations (
+        administered_date date,
+        next_due_date date,
+        id bigint identity not null,
+        pet_id bigint not null,
+        vaccine_id varchar(20) not null,
+        status varchar(30),
+        batch_number varchar(50),
+        pet_name varchar(100),
+        administered_by varchar(150),
+        vaccine_name varchar(200) not null,
+        primary key (id)
+    );
+
+    create table veterinarian (
+        [user_id] bigint not null,
+        license_number varchar(50),
+        specialization varchar(150),
+        primary key ([user_id])
+    );
+
+    alter table [USER] 
+       add constraint uk_users_email unique (email);
+
+    alter table adoption_listings 
+       add constraint UKs3837mck1g3sg5akv9orth206 unique (case_id);
+
+    create index idx_appointments_date_slot 
+       on appointments (appointment_date, time_slot);
+
+    create index idx_appointments_vet_date 
+       on appointments (vet_id, appointment_date);
+
+    create index idx_appointments_owner 
+       on appointments (owner_id);
+
+    create index idx_appointments_pet 
+       on appointments (pet_id);
+
+    alter table appointments 
+       add constraint uk_appointments_appointment_id unique (appointment_id);
+
+    create index idx_approval_history_user_id 
+       on approval_history (user_id);
+
+    alter table care_providers 
+       add constraint uk_care_provider_user unique (user_id);
+
+    alter table care_service_logs 
+       add constraint uk_care_service_log_id unique (service_log_id);
+
+    alter table care_services 
+       add constraint uk_care_service_name unique (name);
+
+    create index idx_consultations_pet_id 
+       on consultations (pet_id);
+
+    create index idx_consultations_case_id 
+       on consultations (case_id);
+
+    create index idx_consultations_vet_id 
+       on consultations (vet_id);
+
+    create index idx_consultations_appointment_id 
+       on consultations (appointment_id);
+
+    alter table consultations 
+       add constraint uk_consultations_consultation_id unique (consultation_id);
+
+    create index idx_feedback_user 
+       on feedbacks (user_id);
+
+    create index idx_feedback_category 
+       on feedbacks (service_category);
+
+    alter table feedbacks 
+       add constraint uk_feedback_feedback_id unique (feedback_id);
+
+    alter table foster_records 
+       add constraint uk_foster_records_foster_id unique (foster_id);
+
+    create index idx_inventory_items_category 
+       on inventory_items (category);
+
+    create index idx_inventory_items_status 
+       on inventory_items (status);
+
+    alter table inventory_items 
+       add constraint uk_inventory_items_item_id unique (item_id);
+
+    alter table inventory_items 
+       add constraint uk_inventory_items_sku unique (sku);
+
+    create index idx_notifications_user 
+       on notifications (user_id);
+
+    create index idx_notifications_is_read 
+       on notifications (is_read);
+
+    alter table notifications 
+       add constraint uk_notifications_notification_id unique (notification_id);
+
+    alter table pet_documents 
+       add constraint uk_pet_documents_document_id unique (document_id);
+
+    create index idx_pets_owner 
+       on pets (owner_id);
+
+    alter table pets 
+       add constraint uk_pets_pet_id unique (pet_id);
+
+    create index idx_prescription_items_rx_id 
+       on prescription_items (prescription_id);
+
+    alter table prescription_items 
+       add constraint uk_prescription_items_item_id unique (item_id);
+
+    create index idx_prescriptions_pet_id 
+       on prescriptions (pet_id);
+
+    create index idx_prescriptions_vet_id 
+       on prescriptions (vet_id);
+
+    create index idx_prescriptions_consultation_id 
+       on prescriptions (consultation_id);
+
+    alter table prescriptions 
+       add constraint uk_prescriptions_rx_id unique (prescription_id);
+
+    alter table purchase_orders 
+       add constraint uk_purchase_orders_order_id unique (order_id);
+
+    create index idx_rescue_cases_status 
+       on rescue_cases (status);
+
+    create index idx_rescue_cases_published 
+       on rescue_cases (is_published_for_adoption);
+
+    alter table rescue_cases 
+       add constraint uk_rescue_cases_case_id unique (case_id);
+
+    create index idx_rescue_photos_case_id 
+       on rescue_photos (case_id);
+
+    alter table rescue_photos 
+       add constraint uk_rescue_photos_photo_id unique (photo_id);
+
+    create index idx_rescue_logs_case_id 
+       on rescue_progress_logs (case_id);
+
+    create index idx_rescue_logs_log_date 
+       on rescue_progress_logs (log_date);
+
+    alter table rescue_progress_logs 
+       add constraint uk_rescue_progress_logs_log_id unique (log_id);
+
+    alter table service_package_bookings 
+       add constraint uk_service_package_booking_id unique (booking_id);
+
+    alter table suppliers 
+       add constraint uk_suppliers_supplier_id unique (supplier_id);
+
+    alter table vaccinations 
+       add constraint uk_vaccinations_vaccine_id unique (vaccine_id);
+
+    alter table adoption_application_documents 
+       add constraint FK3jo8h5ahulhqt4d6x5ixcn5i3 
+       foreign key (application_id) 
+       references adoption_applications;
+
+    alter table adoption_applications 
+       add constraint FKb5etb1yh4xuroa6vjxcf74gcy 
+       foreign key (applicant_id) 
+       references [USER];
+
+    alter table adoption_applications 
+       add constraint FKpssmak6donrlh7l463qtlkxx4 
+       foreign key (case_id) 
+       references rescue_cases;
+
+    alter table adoption_applications 
+       add constraint FKcnot1ki3bb5ctfyqdkj0193j 
+       foreign key (reviewed_by) 
+       references [USER];
+
+    alter table adoption_listings 
+       add constraint FKcdr2kc9eruujmg8y53jjuub2g 
+       foreign key (case_id) 
+       references rescue_cases;
+
+    alter table appointments 
+       add constraint fk_appointments_owner 
+       foreign key (owner_fk_id) 
+       references [USER];
+
+    alter table appointments 
+       add constraint fk_appointments_pet 
+       foreign key (pet_fk_id) 
+       references pets;
+
+    alter table appointments 
+       add constraint fk_appointments_vet 
+       foreign key (vet_fk_id) 
+       references [USER];
+
+    alter table care_providers 
+       add constraint fk_care_provider_user 
+       foreign key (user_id) 
+       references [USER];
+
+    alter table care_services 
+       add constraint fk_care_service_user 
+       foreign key (created_by_user_id) 
+       references [USER];
+
+    alter table clinic_manager 
+       add constraint FKl58g8y53c6g2epjlwt8myg0py 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table clinic_staff 
+       add constraint FKjfj0whfl4fiaigow2v9d8ytag 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table consultations 
+       add constraint fk_consultations_appointment 
+       foreign key (appointment_fk_id) 
+       references appointments;
+
+    alter table consultations 
+       add constraint fk_consultations_pet 
+       foreign key (pet_fk_id) 
+       references pets;
+
+    alter table consultations 
+       add constraint fk_consultations_vet 
+       foreign key (vet_fk_id) 
+       references [USER];
+
+    alter table feedbacks 
+       add constraint fk_feedback_user 
+       foreign key (user_id) 
+       references [USER];
+
+    alter table inventory_items 
+       add constraint fk_inventory_items_supplier 
+       foreign key (supplier_fk_id) 
+       references suppliers;
+
+    alter table notifications 
+       add constraint fk_notifications_user 
+       foreign key (user_id) 
+       references [USER];
+
+    alter table pet_care_provider 
+       add constraint FKgjgihcuus0ff732cogsl3qxmn 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table pet_documents 
+       add constraint fk_pet_documents_pet 
+       foreign key (pet_id) 
+       references pets;
+
+    alter table pet_owner 
+       add constraint FKnkltcsoswsbtcj6bxvrqthera 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table pets 
+       add constraint fk_pets_owner 
+       foreign key (owner_id) 
+       references [USER];
+
+    alter table prescription_items 
+       add constraint fk_rx_items_prescription 
+       foreign key (prescription_fk_id) 
+       references prescriptions;
+
+    alter table prescriptions 
+       add constraint fk_prescriptions_consultation 
+       foreign key (consultation_fk_id) 
+       references consultations;
+
+    alter table prescriptions 
+       add constraint fk_prescriptions_pet 
+       foreign key (pet_fk_id) 
+       references pets;
+
+    alter table prescriptions 
+       add constraint fk_prescriptions_vet 
+       foreign key (vet_fk_id) 
+       references [USER];
+
+    alter table rescue_officer 
+       add constraint FKlxgd2xvqhjbmy46pg99dbnxh2 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table rescue_photos 
+       add constraint fk_rescue_photos_case 
+       foreign key (rescue_case_fk_id) 
+       references rescue_cases;
+
+    alter table rescue_progress_logs 
+       add constraint fk_rescue_logs_case 
+       foreign key (rescue_case_fk_id) 
+       references rescue_cases;
+
+    alter table vaccinations 
+       add constraint fk_vaccinations_pet 
+       foreign key (pet_id) 
+       references pets;
+
+    alter table veterinarian 
+       add constraint FKraaddf3y5vfvqd8xr2g899omb 
+       foreign key ([user_id]) 
+       references [USER];
+
+    create table [USER] (
+        is_deleted bit default 0 not null,
+        created_at datetime2(7) not null,
+        updated_at datetime2(7),
+        user_id bigint identity not null,
+        nic_no varchar(20) not null,
+        phone varchar(30),
+        role varchar(30) not null check ((role in ('PetOwner','Veterinarian','ClinicStaff','PetCareProvider','ClinicManager','RescueOfficer','Admin'))),
+        status varchar(40) not null check ((status in ('PendingApproval','Active','Rejected','Suspended'))),
+        approval_token varchar(100),
+        password_reset_token varchar(100),
+        full_name varchar(150) not null,
+        emergency_contact varchar(200),
+        address varchar(300),
+        rejection_reason varchar(500),
+        suspension_reason varchar(500),
+        avatar_url VARCHAR(MAX),
+        email varchar(255) not null,
+        password_hash varchar(255) not null,
+        constraint uk_users_user_id primary key (user_id)
+    );
+
+    create table adoption_application_documents (
+        id bigint identity not null,
+        uploaded_at datetime2(7) not null,
+        application_id varchar(255) not null,
+        document_type varchar(255) not null,
+        file_name varchar(255) not null,
+        file_size varchar(255),
+        file_url varchar(255) not null,
+        status varchar(255),
+        primary key (id)
+    );
+
+    create table adoption_applications (
+        applicant_id bigint not null,
+        case_id bigint not null,
+        created_at datetime2(7) not null,
+        reviewed_at datetime2(7),
+        reviewed_by bigint,
+        applicant_name varchar(255) not null,
+        applicant_phone varchar(255) not null,
+        application_id varchar(255) not null,
+        pet_name varchar(255) not null,
+        review_notes varchar(255),
+        status varchar(255) not null check ((status in ('SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED','CANCELLED'))),
+        primary key (application_id)
+    );
+
+    create table adoption_listings (
+        is_published_for_adoption bit not null,
+        case_id bigint not null,
+        created_at datetime2(7) not null,
+        updated_at datetime2(7) not null,
+        listing_id varchar(255) not null,
+        primary key (listing_id)
+    );
+
+    create table appointments (
+        appointment_date date not null,
+        rescheduled_from_date date,
+        cancelled_at datetime2(7),
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        owner_fk_id bigint,
+        pet_fk_id bigint,
+        updated_at datetime2(7),
+        vet_fk_id bigint,
+        appointment_id varchar(20) not null,
+        owner_id varchar(20),
+        pet_id varchar(20),
+        token_number varchar(20),
+        vet_id varchar(20),
+        rescheduled_from_time_slot varchar(30),
+        status varchar(30) not null check ((status in ('Scheduled','Pending','Confirmed','CheckedIn','InRoom','Completed','Cancelled','NoShow'))),
+        time_slot varchar(30) not null,
+        owner_phone varchar(50),
+        species varchar(50),
+        breed varchar(100),
+        pet_name varchar(100) not null,
+        service_type varchar(100) not null,
+        owner_name varchar(150) not null,
+        rescheduled_from_vet_name varchar(150),
+        vet_name varchar(150) not null,
+        cancellation_reason varchar(500),
+        reschedule_reason varchar(500),
+        reason varchar(1000),
+        symptoms varchar(1000),
+        notes varchar(2000),
+        primary key (id)
+    );
+
+    create table approval_history (
+        id bigint identity not null,
+        timestamp datetime2(7) not null,
+        admin_id varchar(20) not null,
+        user_id varchar(20) not null,
+        history_id varchar(30) not null,
+        action varchar(50) not null,
+        user_full_name varchar(150) not null,
+        reason varchar(500),
+        primary key (id)
+    );
+
+    create table care_providers (
+        active bit not null,
+        id bigint identity not null,
+        user_id bigint not null,
+        contact_phone varchar(20),
+        provider_id varchar(20) not null,
+        contact_email varchar(100),
+        provider_name varchar(100) not null,
+        primary key (id)
+    );
+
+    create table care_service_logs (
+        created_at date not null,
+        return_to_rescue bit not null,
+        service_date date not null,
+        id bigint identity not null,
+        case_id varchar(20),
+        owner_id varchar(20),
+        pet_id varchar(20),
+        provider_id varchar(20),
+        service_log_id varchar(20) not null,
+        status varchar(30) not null check ((status in ('SCHEDULED','CHECKED_IN','IN_PROGRESS','READY_FOR_PICKUP','COMPLETED'))),
+        owner_name varchar(100),
+        pet_name varchar(100),
+        provider_name varchar(100),
+        service_type varchar(100) not null,
+        intake_condition varchar(500),
+        notes varchar(1000),
+        services_performed varchar(1000),
+        primary key (id)
+    );
+
+    create table care_services (
+        discount_percent int,
+        duration_minutes int not null,
+        original_value numeric(10,2),
+        price numeric(10,2) not null,
+        created_by_user_id bigint not null,
+        id bigint identity not null,
+        service_id varchar(20) not null,
+        status varchar(30) not null check ((status in ('SCHEDULED','CHECKED_IN','IN_PROGRESS','READY_FOR_PICKUP','COMPLETED'))),
+        badge varchar(50),
+        name varchar(100) not null,
+        recommended_for varchar(100),
+        tagline varchar(300),
+        description varchar(2000),
+        primary key (id)
+    );
+
+    create table clinic_manager (
+        [user_id] bigint not null,
+        manager_code varchar(30),
+        primary key ([user_id])
+    );
+
+    create table clinic_staff (
+        [user_id] bigint not null,
+        staff_id varchar(30),
+        primary key ([user_id])
+    );
+
+    create table consultations (
+        follow_up_date date,
+        heart_rate_bpm int,
+        pass_to_provider bit,
+        respiratory_rate_bpm int,
+        temperaturec numeric(4,1),
+        weight_kg numeric(5,2),
+        appointment_fk_id bigint,
+        consultation_date datetime2(7) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        pet_fk_id bigint,
+        updated_at datetime2(7),
+        vet_fk_id bigint,
+        appointment_id varchar(20),
+        pet_id varchar(20),
+        vet_id varchar(20),
+        case_id varchar(30),
+        consultation_id varchar(30) not null,
+        status varchar(30),
+        pet_name varchar(100) not null,
+        vet_name varchar(150) not null,
+        assessment_diagnosis varchar(2000) not null,
+        objective_findings varchar(2000),
+        rescue_medical_summary varchar(2000),
+        subjective_notes varchar(2000),
+        treatment_plan varchar(2000) not null,
+        primary key (id)
+    );
+
+    create table feedbacks (
+        rating int not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        manager_responded_at datetime2(7),
+        updated_at datetime2(7),
+        user_id bigint not null,
+        feedback_id varchar(30) not null,
+        service_category varchar(100) not null,
+        staff_mentioned varchar(150),
+        user_name varchar(150) not null,
+        title varchar(200) not null,
+        comments varchar(2000) not null,
+        manager_response varchar(2000),
+        primary key (id)
+    );
+
+    create table foster_records (
+        active_placements int,
+        max_capacity int,
+        rating numeric(3,1),
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        status varchar(20),
+        foster_id varchar(30) not null,
+        phone varchar(30),
+        email varchar(150),
+        full_name varchar(150) not null,
+        home_type varchar(200),
+        address varchar(300),
+        primary key (id)
+    );
+
+    create table inventory_items (
+        current_stock int not null,
+        expiry_date date,
+        min_stock_threshold int not null,
+        selling_price numeric(10,2) not null,
+        unit_price numeric(10,2) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        supplier_fk_id bigint,
+        updated_at datetime2(7),
+        item_id varchar(20) not null,
+        status varchar(30) not null check ((status in ('IN_STOCK','LOW_STOCK','OUT_OF_STOCK','EXPIRED'))),
+        batch_number varchar(50),
+        sku varchar(50) not null,
+        unit varchar(50) not null,
+        category varchar(100) not null,
+        name varchar(150) not null,
+        supplier_name varchar(150),
+        primary key (id)
+    );
+
+    create table notifications (
+        is_read bit not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        user_id bigint not null,
+        type varchar(30) not null check ((type in ('Appointment','Rescue','Adoption','Approval','Inventory','Health','System'))),
+        notification_id varchar(40) not null,
+        title varchar(200) not null,
+        link varchar(300),
+        message varchar(1000) not null,
+        primary key (id)
+    );
+
+    create table pet_care_provider (
+        [user_id] bigint not null,
+        service_specialty varchar(150),
+        primary key ([user_id])
+    );
+
+    create table pet_documents (
+        id bigint identity not null,
+        pet_id bigint not null,
+        uploaded_at datetime2(7) not null,
+        document_id varchar(20) not null,
+        owner_id varchar(20) not null,
+        file_size varchar(50),
+        document_type varchar(100) not null,
+        pet_name varchar(100),
+        file_url varchar(1000),
+        notes varchar(2000),
+        file_name varchar(255) not null,
+        primary key (id)
+    );
+
+    create table pet_owner (
+        [user_id] bigint not null,
+        primary key ([user_id])
+    );
+
+    create table pets (
+        age_months int,
+        age_years int,
+        date_of_birth date,
+        is_deleted bit default 0 not null,
+        weight_kg numeric(5,2),
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        owner_id bigint not null,
+        updated_at datetime2(7),
+        microchip_id varchar(20),
+        pet_id varchar(20) not null,
+        gender varchar(30),
+        species varchar(50) not null,
+        breed varchar(100) not null,
+        name varchar(100) not null,
+        emergency_contact varchar(300),
+        allergies varchar(500),
+        image_url varchar(500),
+        medical_notes varchar(2000),
+        primary key (id)
+    );
+
+    create table prescription_items (
+        duration_days int,
+        quantity_prescribed int,
+        refills_allowed int,
+        id bigint identity not null,
+        prescription_fk_id bigint not null,
+        prescription_id varchar(30),
+        item_id varchar(50) not null,
+        dosage varchar(100),
+        frequency varchar(100),
+        medication_name varchar(200) not null,
+        primary key (id)
+    );
+
+    create table prescriptions (
+        issue_date date not null,
+        valid_until date,
+        consultation_fk_id bigint,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        pet_fk_id bigint,
+        updated_at datetime2(7),
+        vet_fk_id bigint,
+        pet_id varchar(20),
+        vet_id varchar(20),
+        consultation_id varchar(30),
+        prescription_id varchar(30) not null,
+        status varchar(30) not null,
+        vet_license varchar(50),
+        pet_name varchar(100) not null,
+        owner_name varchar(150),
+        vet_name varchar(150) not null,
+        digital_signature varchar(300),
+        instructions varchar(1000),
+        primary key (id)
+    );
+
+    create table purchase_orders (
+        total_amount numeric(12,2) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        supplier_id varchar(20),
+        order_id varchar(30) not null,
+        status varchar(30) not null,
+        supplier_name varchar(150) not null,
+        notes varchar(500),
+        items_description varchar(1000),
+        primary key (id)
+    );
+
+    create table rescue_cases (
+        intake_date date not null,
+        is_published_for_adoption bit not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        case_number varchar(20),
+        gender varchar(20),
+        case_id varchar(30) not null,
+        foster_parent_id varchar(30),
+        status varchar(30) not null,
+        condition_severity varchar(50),
+        estimated_age varchar(50),
+        microchip_id varchar(50),
+        reported_by_user_id varchar(50),
+        reported_by_user_phone varchar(50),
+        species varchar(50),
+        breed varchar(100),
+        temporary_name varchar(100) not null,
+        foster_parent_name varchar(150),
+        intake_officer varchar(150),
+        reported_by_user_name varchar(150),
+        rescue_location varchar(500) not null,
+        description varchar(2000),
+        medical_summary varchar(2000),
+        cover_photo_url NVARCHAR(MAX),
+        primary key (id)
+    );
+
+    create table rescue_officer (
+        [user_id] bigint not null,
+        badge_number varchar(30),
+        primary key ([user_id])
+    );
+
+    create table rescue_photos (
+        id bigint identity not null,
+        rescue_case_fk_id bigint not null,
+        uploaded_at datetime2(7),
+        case_id varchar(30) not null,
+        photo_id varchar(30) not null,
+        tag varchar(50),
+        caption varchar(300),
+        photo_url NVARCHAR(MAX) not null,
+        primary key (id)
+    );
+
+    create table rescue_progress_logs (
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        log_date datetime2(7) not null,
+        rescue_case_fk_id bigint not null,
+        case_id varchar(30) not null,
+        log_id varchar(30) not null,
+        log_type varchar(30),
+        logged_by varchar(150) not null,
+        title varchar(200) not null,
+        notes varchar(2000),
+        primary key (id)
+    );
+
+    create table service_package_bookings (
+        completed_sessions int not null,
+        created_at date not null,
+        expiry_date date not null,
+        purchase_date date not null,
+        remaining_sessions int not null,
+        total_sessions int not null,
+        id bigint identity not null,
+        booking_id varchar(20) not null,
+        owner_id varchar(20) not null,
+        pet_id varchar(20),
+        status varchar(30) not null,
+        package_id varchar(50),
+        owner_name varchar(100),
+        package_name varchar(100) not null,
+        pet_name varchar(100),
+        primary key (id)
+    );
+
+    create table suppliers (
+        active bit not null,
+        lead_time_days int not null,
+        rating numeric(3,1) not null,
+        created_at datetime2(7) not null,
+        id bigint identity not null,
+        updated_at datetime2(7),
+        supplier_id varchar(20) not null,
+        phone varchar(30),
+        category varchar(100),
+        contact_person varchar(100),
+        email varchar(100) not null,
+        company_name varchar(150) not null,
+        address varchar(300),
+        primary key (id)
+    );
+
+    create table vaccinations (
+        administered_date date,
+        next_due_date date,
+        id bigint identity not null,
+        pet_id bigint not null,
+        vaccine_id varchar(20) not null,
+        status varchar(30),
+        batch_number varchar(50),
+        pet_name varchar(100),
+        administered_by varchar(150),
+        vaccine_name varchar(200) not null,
+        primary key (id)
+    );
+
+    create table veterinarian (
+        [user_id] bigint not null,
+        license_number varchar(50),
+        specialization varchar(150),
+        primary key ([user_id])
+    );
+
+    alter table [USER] 
+       add constraint uk_users_email unique (email);
+
+    alter table adoption_listings 
+       add constraint UKs3837mck1g3sg5akv9orth206 unique (case_id);
+
+    create index idx_appointments_date_slot 
+       on appointments (appointment_date, time_slot);
+
+    create index idx_appointments_vet_date 
+       on appointments (vet_id, appointment_date);
+
+    create index idx_appointments_owner 
+       on appointments (owner_id);
+
+    create index idx_appointments_pet 
+       on appointments (pet_id);
+
+    alter table appointments 
+       add constraint uk_appointments_appointment_id unique (appointment_id);
+
+    create index idx_approval_history_user_id 
+       on approval_history (user_id);
+
+    alter table care_providers 
+       add constraint uk_care_provider_user unique (user_id);
+
+    alter table care_service_logs 
+       add constraint uk_care_service_log_id unique (service_log_id);
+
+    alter table care_services 
+       add constraint uk_care_service_name unique (name);
+
+    create index idx_consultations_pet_id 
+       on consultations (pet_id);
+
+    create index idx_consultations_case_id 
+       on consultations (case_id);
+
+    create index idx_consultations_vet_id 
+       on consultations (vet_id);
+
+    create index idx_consultations_appointment_id 
+       on consultations (appointment_id);
+
+    alter table consultations 
+       add constraint uk_consultations_consultation_id unique (consultation_id);
+
+    create index idx_feedback_user 
+       on feedbacks (user_id);
+
+    create index idx_feedback_category 
+       on feedbacks (service_category);
+
+    alter table feedbacks 
+       add constraint uk_feedback_feedback_id unique (feedback_id);
+
+    alter table foster_records 
+       add constraint uk_foster_records_foster_id unique (foster_id);
+
+    create index idx_inventory_items_category 
+       on inventory_items (category);
+
+    create index idx_inventory_items_status 
+       on inventory_items (status);
+
+    alter table inventory_items 
+       add constraint uk_inventory_items_item_id unique (item_id);
+
+    alter table inventory_items 
+       add constraint uk_inventory_items_sku unique (sku);
+
+    create index idx_notifications_user 
+       on notifications (user_id);
+
+    create index idx_notifications_is_read 
+       on notifications (is_read);
+
+    alter table notifications 
+       add constraint uk_notifications_notification_id unique (notification_id);
+
+    alter table pet_documents 
+       add constraint uk_pet_documents_document_id unique (document_id);
+
+    create index idx_pets_owner 
+       on pets (owner_id);
+
+    alter table pets 
+       add constraint uk_pets_pet_id unique (pet_id);
+
+    create index idx_prescription_items_rx_id 
+       on prescription_items (prescription_id);
+
+    alter table prescription_items 
+       add constraint uk_prescription_items_item_id unique (item_id);
+
+    create index idx_prescriptions_pet_id 
+       on prescriptions (pet_id);
+
+    create index idx_prescriptions_vet_id 
+       on prescriptions (vet_id);
+
+    create index idx_prescriptions_consultation_id 
+       on prescriptions (consultation_id);
+
+    alter table prescriptions 
+       add constraint uk_prescriptions_rx_id unique (prescription_id);
+
+    alter table purchase_orders 
+       add constraint uk_purchase_orders_order_id unique (order_id);
+
+    create index idx_rescue_cases_status 
+       on rescue_cases (status);
+
+    create index idx_rescue_cases_published 
+       on rescue_cases (is_published_for_adoption);
+
+    alter table rescue_cases 
+       add constraint uk_rescue_cases_case_id unique (case_id);
+
+    create index idx_rescue_photos_case_id 
+       on rescue_photos (case_id);
+
+    alter table rescue_photos 
+       add constraint uk_rescue_photos_photo_id unique (photo_id);
+
+    create index idx_rescue_logs_case_id 
+       on rescue_progress_logs (case_id);
+
+    create index idx_rescue_logs_log_date 
+       on rescue_progress_logs (log_date);
+
+    alter table rescue_progress_logs 
+       add constraint uk_rescue_progress_logs_log_id unique (log_id);
+
+    alter table service_package_bookings 
+       add constraint uk_service_package_booking_id unique (booking_id);
+
+    alter table suppliers 
+       add constraint uk_suppliers_supplier_id unique (supplier_id);
+
+    alter table vaccinations 
+       add constraint uk_vaccinations_vaccine_id unique (vaccine_id);
+
+    alter table adoption_application_documents 
+       add constraint FK3jo8h5ahulhqt4d6x5ixcn5i3 
+       foreign key (application_id) 
+       references adoption_applications;
+
+    alter table adoption_applications 
+       add constraint FKb5etb1yh4xuroa6vjxcf74gcy 
+       foreign key (applicant_id) 
+       references [USER];
+
+    alter table adoption_applications 
+       add constraint FKpssmak6donrlh7l463qtlkxx4 
+       foreign key (case_id) 
+       references rescue_cases;
+
+    alter table adoption_applications 
+       add constraint FKcnot1ki3bb5ctfyqdkj0193j 
+       foreign key (reviewed_by) 
+       references [USER];
+
+    alter table adoption_listings 
+       add constraint FKcdr2kc9eruujmg8y53jjuub2g 
+       foreign key (case_id) 
+       references rescue_cases;
+
+    alter table appointments 
+       add constraint fk_appointments_owner 
+       foreign key (owner_fk_id) 
+       references [USER];
+
+    alter table appointments 
+       add constraint fk_appointments_pet 
+       foreign key (pet_fk_id) 
+       references pets;
+
+    alter table appointments 
+       add constraint fk_appointments_vet 
+       foreign key (vet_fk_id) 
+       references [USER];
+
+    alter table care_providers 
+       add constraint fk_care_provider_user 
+       foreign key (user_id) 
+       references [USER];
+
+    alter table care_services 
+       add constraint fk_care_service_user 
+       foreign key (created_by_user_id) 
+       references [USER];
+
+    alter table clinic_manager 
+       add constraint FKl58g8y53c6g2epjlwt8myg0py 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table clinic_staff 
+       add constraint FKjfj0whfl4fiaigow2v9d8ytag 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table consultations 
+       add constraint fk_consultations_appointment 
+       foreign key (appointment_fk_id) 
+       references appointments;
+
+    alter table consultations 
+       add constraint fk_consultations_pet 
+       foreign key (pet_fk_id) 
+       references pets;
+
+    alter table consultations 
+       add constraint fk_consultations_vet 
+       foreign key (vet_fk_id) 
+       references [USER];
+
+    alter table feedbacks 
+       add constraint fk_feedback_user 
+       foreign key (user_id) 
+       references [USER];
+
+    alter table inventory_items 
+       add constraint fk_inventory_items_supplier 
+       foreign key (supplier_fk_id) 
+       references suppliers;
+
+    alter table notifications 
+       add constraint fk_notifications_user 
+       foreign key (user_id) 
+       references [USER];
+
+    alter table pet_care_provider 
+       add constraint FKgjgihcuus0ff732cogsl3qxmn 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table pet_documents 
+       add constraint fk_pet_documents_pet 
+       foreign key (pet_id) 
+       references pets;
+
+    alter table pet_owner 
+       add constraint FKnkltcsoswsbtcj6bxvrqthera 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table pets 
+       add constraint fk_pets_owner 
+       foreign key (owner_id) 
+       references [USER];
+
+    alter table prescription_items 
+       add constraint fk_rx_items_prescription 
+       foreign key (prescription_fk_id) 
+       references prescriptions;
+
+    alter table prescriptions 
+       add constraint fk_prescriptions_consultation 
+       foreign key (consultation_fk_id) 
+       references consultations;
+
+    alter table prescriptions 
+       add constraint fk_prescriptions_pet 
+       foreign key (pet_fk_id) 
+       references pets;
+
+    alter table prescriptions 
+       add constraint fk_prescriptions_vet 
+       foreign key (vet_fk_id) 
+       references [USER];
+
+    alter table rescue_officer 
+       add constraint FKlxgd2xvqhjbmy46pg99dbnxh2 
+       foreign key ([user_id]) 
+       references [USER];
+
+    alter table rescue_photos 
+       add constraint fk_rescue_photos_case 
+       foreign key (rescue_case_fk_id) 
+       references rescue_cases;
+
+    alter table rescue_progress_logs 
+       add constraint fk_rescue_logs_case 
+       foreign key (rescue_case_fk_id) 
+       references rescue_cases;
+
+    alter table vaccinations 
+       add constraint fk_vaccinations_pet 
+       foreign key (pet_id) 
+       references pets;
+
+    alter table veterinarian 
+       add constraint FKraaddf3y5vfvqd8xr2g899omb 
+       foreign key ([user_id]) 
+       references [USER];

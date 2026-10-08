@@ -40,6 +40,10 @@ public class AdoptionApplication {
     @Column(name = "status", nullable = false)
     private AdoptionApplicationStatus status;
 
+    @Builder.Default
+    @Column(name = "application_type", nullable = false)
+    private String applicationType = "Adoption"; // "Adoption" or "Foster"
+
     @Column(name = "review_notes")
     private String reviewNotes;
 
