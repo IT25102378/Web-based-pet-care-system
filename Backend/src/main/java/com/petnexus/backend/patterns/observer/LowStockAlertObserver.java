@@ -35,7 +35,7 @@ public class LowStockAlertObserver implements InventoryObserver {
     }
 
     @Override
-    public void onStockUpdated(InventoryItem item, int previousStock, int newStock) {
+    public void update(InventoryItem item, int previousStock, int newStock) {
         if (newStock <= item.getMinStockThreshold()) {
             log.warn("[OBSERVER ALERT] Inventory item '{}' (SKU: {}) breached safety threshold! Current: {}, Threshold: {}",
                     item.getName(), item.getSku(), newStock, item.getMinStockThreshold());

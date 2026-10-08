@@ -12,6 +12,7 @@ public class AdoptionApplicationDto {
     private String applicationId;
     private String caseId;
     private String applicantId;
+    private String applicationType;
     private String petName;
     private String applicantName;
     private String applicantPhone;

@@ -40,5 +40,5 @@ public interface InventoryObserver {
      * @param previousStock Previous quantity before update
      * @param newStock      Current quantity after update
      */
-    void onStockUpdated(InventoryItem item, int previousStock, int newStock);
+    void update(InventoryItem item, int previousStock, int newStock);
 }

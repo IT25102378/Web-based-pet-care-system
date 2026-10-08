@@ -8,7 +8,7 @@ import com.petnexus.backend.entity.InventoryItem;
  */
 public interface InventorySubject {
 
-    void registerObserver(InventoryObserver observer);
+    void addObserver(InventoryObserver observer);
 
     void removeObserver(InventoryObserver observer);
 

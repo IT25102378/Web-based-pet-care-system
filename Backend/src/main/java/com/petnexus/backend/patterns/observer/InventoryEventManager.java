@@ -23,7 +23,7 @@ public class InventoryEventManager implements InventorySubject {
     }
 
     @Override
-    public synchronized void registerObserver(InventoryObserver observer) {
+    public synchronized void addObserver(InventoryObserver observer) {
         if (observer != null && !observers.contains(observer)) {
             observers.add(observer);
         }
@@ -38,7 +38,7 @@ public class InventoryEventManager implements InventorySubject {
     public void notifyObservers(InventoryItem item, int previousStock, int newStock) {
         for (InventoryObserver observer : observers) {
             try {
-                observer.onStockUpdated(item, previousStock, newStock);
+                observer.update(item, previousStock, newStock);
             } catch (Exception ignored) {
                 // Individual observer failure should not break stock transaction
             }

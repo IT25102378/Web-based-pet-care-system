@@ -15,6 +15,7 @@ package com.petnexus.backend.enums;
  * Approval only grants access — it does not escalate privileges.
  */
 public enum UserStatus {
+    PendingEmailVerification,
     PendingApproval,
     Active,
     Rejected,

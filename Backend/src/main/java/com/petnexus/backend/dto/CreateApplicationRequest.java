@@ -14,6 +14,7 @@ import java.util.Map;
 public class CreateApplicationRequest {
     private String caseId;
     private String applicantId;
+    private String applicationType;
     private String petName;
     private String applicantName;
     private String applicantPhone;
@@ -43,6 +44,7 @@ public class CreateApplicationRequest {
         if (data != null) {
             if (this.caseId == null && data.get("caseId") != null) this.caseId = String.valueOf(data.get("caseId"));
             if (this.applicantId == null && data.get("applicantId") != null) this.applicantId = String.valueOf(data.get("applicantId"));
+            if (this.applicationType == null && data.get("applicationType") != null) this.applicationType = String.valueOf(data.get("applicationType"));
             if (this.petName == null && data.get("petName") != null) this.petName = String.valueOf(data.get("petName"));
             if (this.applicantName == null && data.get("applicantName") != null) this.applicantName = String.valueOf(data.get("applicantName"));
             if (this.applicantPhone == null && data.get("applicantPhone") != null) this.applicantPhone = String.valueOf(data.get("applicantPhone"));
