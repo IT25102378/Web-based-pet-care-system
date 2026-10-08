@@ -14,7 +14,7 @@ export const RegisterRescuePage = () => {
 
   const [formData, setFormData] = useState({
     temporaryName: '',
-    species: 'Dog',
+    species: '',
     breed: '',
     estimatedAge: '1 year',
     gender: 'Female',
@@ -33,8 +33,8 @@ export const RegisterRescuePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.temporaryName || !formData.rescueLocation || !formData.breed) {
-      showToast('Validation Error', 'Pet name, breed, and rescue location are required.', 'error');
+    if (!formData.temporaryName || !formData.rescueLocation || !formData.breed || !formData.species) {
+      showToast('Validation Error', 'Pet name, species, breed, and rescue location are required.', 'error');
       return;
     }
 
@@ -83,16 +83,14 @@ export const RegisterRescuePage = () => {
 
             <div className="form-group">
               <label className="form-label">Species <span className="required">*</span></label>
-              <select
-                className="form-select"
+              <input
+                type="text"
+                className="form-control"
                 value={formData.species}
                 onChange={(e) => setFormData({ ...formData, species: e.target.value })}
-              >
-                <option value="Dog">Dog (Canine)</option>
-                <option value="Cat">Cat (Feline)</option>
-                <option value="Rabbit">Rabbit</option>
-                <option value="Wildlife / Exotic">Wildlife / Exotic</option>
-              </select>
+                placeholder="e.g. Dog, Cat, Turtle"
+                required
+              />
             </div>
           </div>
 

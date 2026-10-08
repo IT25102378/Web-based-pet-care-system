@@ -36,7 +36,7 @@ export const RescueCaseListPage = () => {
   const [editingCase, setEditingCase] = useState(null);
   const [editFormData, setEditFormData] = useState({
     temporaryName: '',
-    species: 'Dog',
+    species: '',
     breed: '',
     rescueLocation: '',
     conditionSeverity: 'Moderate',
@@ -90,7 +90,7 @@ export const RescueCaseListPage = () => {
     setEditingCase(row);
     setEditFormData({
       temporaryName: row.temporaryName || '',
-      species: row.species || 'Dog',
+      species: row.species || '',
       breed: row.breed || '',
       rescueLocation: row.rescueLocation || '',
       conditionSeverity: row.conditionSeverity || 'Moderate',
@@ -417,17 +417,15 @@ export const RescueCaseListPage = () => {
             </div>
             <div className="grid-2">
               <div className="form-group">
-                <label className="form-label">Species</label>
-                <select
-                  className="form-select"
+                <label className="form-label">Species <span className="required">*</span></label>
+                <input
+                  type="text"
+                  className="form-control"
                   value={editFormData.species}
                   onChange={(e) => setEditFormData({ ...editFormData, species: e.target.value })}
-                >
-                  <option value="Dog">Dog</option>
-                  <option value="Cat">Cat</option>
-                  <option value="Bird">Bird</option>
-                  <option value="Other">Other</option>
-                </select>
+                  placeholder="e.g. Dog, Cat"
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Breed / Mix</label>

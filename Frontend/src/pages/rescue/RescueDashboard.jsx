@@ -31,23 +31,24 @@ export const RescueDashboard = () => {
   const [selectedCaseForListing, setSelectedCaseForListing] = useState(null);
   const [isListingModalOpen, setIsListingModalOpen] = useState(false);
 
+  const loadData = async () => {
+    try {
+      const [caseRes, appRes, fosterRes] = await Promise.allSettled([
+        rescueApi.getRescueCases(),
+        adoptionApi.getAdoptionApplications(),
+        rescueApi.getFosterRecords(),
+      ]);
+      if (caseRes.status === 'fulfilled' && caseRes.value) setCases(caseRes.value);
+      if (appRes.status === 'fulfilled' && appRes.value) setApplications(appRes.value);
+      if (fosterRes.status === 'fulfilled' && fosterRes.value) setFosters(fosterRes.value);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [caseRes, appRes, fosterRes] = await Promise.allSettled([
-          rescueApi.getRescueCases(),
-          adoptionApi.getAdoptionApplications(),
-          rescueApi.getFosterRecords(),
-        ]);
-        if (caseRes.status === 'fulfilled' && caseRes.value) setCases(caseRes.value);
-        if (appRes.status === 'fulfilled' && appRes.value) setApplications(appRes.value);
-        if (fosterRes.status === 'fulfilled' && fosterRes.value) setFosters(fosterRes.value);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
 
@@ -58,26 +59,27 @@ export const RescueDashboard = () => {
   const pendingReviewApps = (applications || []).filter(
     (a) => a.status === 'Submitted' || a.status === 'UnderReview'
   ).length;
+  const readyForFosterCases = (cases || []).filter((c) => c.status === 'ReadyForFoster');
   const awaitingAdoptionListing = (cases || []).filter(
     (c) => (c.status === 'ReadyForAdoption' || c.status === 'InFoster') && !c.isPublishedForAdoption
   );
 
   return (
     <div>
-      {/* Apple Liquid Glass Header Banner */}
+      {/* Header Banner */}
       <div className="apple-liquid-glass p-6 mb-8 flex items-center justify-between gap-4" style={{ flexWrap: 'wrap', animation: 'fadeIn 0.6s ease-out' }}>
         <div>
-          <span className="apple-eyebrow mb-1">WILDLIFE & RESCUE TELEMETRY</span>
+          <span className="apple-eyebrow mb-1">Rescue Operations</span>
           <h1 style={{ fontSize: '2.1rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.025em', margin: '4px 0' }}>
-            Rescue Operations & Dispatch
+            Rescue Dashboard
           </h1>
           <p className="text-sm" style={{ color: 'var(--text-muted)', maxWidth: '640px' }}>
-            Emergency intake sweeps, medical rehabilitation pipeline, foster sanctuary capacity, and adoption reviews.
+            Manage rescue cases, medical treatments, foster homes, and adoptions.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Link to="/rescue/register-case" className="apple-pill-btn apple-pill-btn-primary" style={{ background: '#E76F51' }}>
+          <Link to="/rescue/register-case" className="apple-pill-btn apple-pill-btn-primary" style={{ background: 'var(--primary)' }}>
             <PlusCircle size={16} /> Register Intake
           </Link>
           <Link to="/rescue/applications" className="apple-pill-btn apple-pill-btn-secondary">
@@ -115,21 +117,21 @@ export const RescueDashboard = () => {
           label="Ready For Adoption"
           value={readyAdoptionCount}
           icon={Heart}
-          iconBg="rgba(231, 111, 81, 0.15)"
+          iconBg="var(--primary-subtle)"
           iconColor="var(--accent)"
           trend="Published to gallery"
         />
       </div>
 
-      {/* Signature Apple Element: Rescue Incident Dispatch Radar & Foster Capacity Beacon */}
-      <div className="grid-3 mb-8" style={{ animation: 'fadeIn 0.8s ease-out' }}>
-        {/* Real-time Field Dispatch Radar (2 cols) */}
-        <div className="apple-radar-beacon apple-liquid-glass-dark" style={{ gridColumn: 'span 2' }}>
+      {/* Rescue Incident Status */}
+      <div className="mb-8" style={{ animation: 'fadeIn 0.8s ease-out' }}>
+        {/* Active Rescue Overview */}
+        <div className="apple-radar-beacon apple-liquid-glass-dark">
           <div className="flex items-center justify-between mb-4" style={{ paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="flex items-center gap-2">
               <span className="sos-beacon-dot"></span>
               <span style={{ fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#F87171', fontWeight: 800 }}>
-                ACTIVE RESCUE RADAR • REAL-TIME DISPATCH
+                ACTIVE RESCUE CASES
               </span>
             </div>
             <div className="text-xs opacity-75 text-inverse" style={{ fontFamily: 'monospace' }}>
@@ -162,65 +164,49 @@ export const RescueDashboard = () => {
               <Link
                 to="/rescue/cases"
                 className="apple-pill-btn apple-pill-btn-primary justify-center text-xs"
-                style={{ background: '#E76F51', color: '#FFFFFF', width: '100%', padding: '0.75rem 0' }}
+                style={{ background: 'var(--primary)', color: '#FFFFFF', width: '100%', padding: '0.75rem 0' }}
               >
-                Launch Dispatch Sweep <ArrowRight size={14} />
+                View Cases <ArrowRight size={14} />
               </Link>
             </div>
           </div>
         </div>
-
-        {/* Foster Sanctuary Capacity Barometer */}
-        <div className="apple-liquid-glass p-6 flex-col justify-between" style={{ display: 'flex' }}>
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="apple-eyebrow">SANCTUARY CAPACITY</span>
-              <span className="badge badge-primary text-xs" style={{ background: 'rgba(14, 131, 118, 0.1)', color: 'var(--primary)' }}>
-                {fosters.length} HOMES ACTIVE
-              </span>
-            </div>
-
-            <h3 className="text-lg font-bold text-main mb-1">Foster Parent Barometer</h3>
-            <p className="text-xs text-muted mb-4">
-              Current network occupancy across registered foster caregivers.
-            </p>
-
-            {/* Capacity meter */}
-            <div className="mb-2">
-              <div className="flex justify-between text-xs font-semibold mb-1">
-                <span className="text-muted">Occupancy ({inFosterCount} of 15 slots)</span>
-                <span className="text-primary font-bold">{Math.round((inFosterCount / 15) * 100)}%</span>
-              </div>
-              <div style={{ height: '8px', background: '#F5F5F7', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${Math.min(100, Math.round((inFosterCount / 15) * 100))}%`,
-                    background: 'linear-gradient(90deg, #0E8376, #10B981)',
-                    borderRadius: 'var(--radius-full)',
-                    transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4" style={{ paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-            <Link
-              to="/rescue/foster"
-              className="text-xs font-semibold text-primary flex items-center justify-between"
-              style={{ transition: 'transform 0.2s' }}
-              onMouseOver={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
-              onMouseOut={(e) => e.currentTarget.style.transform = 'translateX(0)'}
-            >
-              <span>Manage Foster Parent Network</span>
-              <ArrowRight size={14} />
-            </Link>
-          </div>
-        </div>
       </div>
 
-      {/* Incoming Community Rescue Reports Queue (Pet Owner -> Rescue Officer Triage) */}
+      {/* Transferred Pets from Provider (Ready for Foster) */}
+      {readyForFosterCases.length > 0 && (
+        <div
+          style={{
+            backgroundColor: 'rgba(14, 165, 233, 0.1)',
+            border: '2px solid rgba(14, 165, 233, 0.45)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '1.5rem',
+            marginBottom: '2rem',
+            boxShadow: 'var(--shadow-sm)',
+            animation: 'fadeIn 1s ease-out',
+            transition: 'transform 0.3s ease',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.01)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <div className="flex items-center justify-between mb-2 gap-2" style={{ flexWrap: 'wrap' }}>
+            <div className="flex items-center gap-2">
+              <CheckCircle size={22} color="#0EA5E9" />
+              <h3 className="font-bold" style={{ color: '#0E8376', fontSize: '1.25rem' }}>
+                Provider Handoffs: Ready for Placement ({readyForFosterCases.length})
+              </h3>
+            </div>
+            <Link to="/rescue/cases" className="btn btn-primary btn-sm">
+              Review & Assign Placement <ArrowRight size={14} />
+            </Link>
+          </div>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            These companions have finished grooming and rehabilitation with the Pet Care Provider and have been transferred back to you for foster care assignment or adoption listing.
+          </p>
+        </div>
+      )}
+
+      {/* Incoming Rescue Reports */}
       {reportedPendingCases.length > 0 && (
         <div
           style={{
@@ -240,7 +226,7 @@ export const RescueDashboard = () => {
             <div className="flex items-center gap-2">
               <AlertTriangle size={22} color="var(--accent)" />
               <h3 className="font-bold" style={{ color: 'var(--accent)', fontSize: '1.25rem' }}>
-                🚨 Incoming Pet Owner Rescue Reports ({reportedPendingCases.length})
+                🚨 Incoming Rescue Reports ({reportedPendingCases.length})
               </h3>
             </div>
             <Link to="/rescue/cases" className="btn btn-accent btn-sm">
@@ -248,7 +234,7 @@ export const RescueDashboard = () => {
             </Link>
           </div>
           <p className="text-sm text-muted mb-4">
-            Pet owners have reported animals needing urgent rescue. Click <strong>"Accept & Add to Rescued List"</strong> to admit them into the clinical intake assessment roster and notify the pet owner.
+            Pet owners have reported animals needing urgent rescue. Click <strong>"Accept & Add to List"</strong> to admit them into the system.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
@@ -324,7 +310,7 @@ export const RescueDashboard = () => {
         </div>
       )}
 
-      {/* Ready for Adoption Listing Queue — received from Pet Care Provider / In Foster */}
+      {/* Ready for Adoption Listing Queue */}
       {awaitingAdoptionListing.length > 0 && (
         <div
           style={{
@@ -340,7 +326,7 @@ export const RescueDashboard = () => {
             <div className="flex items-center gap-2">
               <Sparkles size={20} color="var(--accent)" />
               <h3 className="font-bold" style={{ color: 'var(--accent)' }}>
-                Companions Ready for Public Adoption Listing ({awaitingAdoptionListing.length})
+                Companions Ready for Adoption ({awaitingAdoptionListing.length})
               </h3>
             </div>
             <Link to="/rescue/listings" className="text-xs text-primary font-semibold flex items-center gap-1">
@@ -348,7 +334,7 @@ export const RescueDashboard = () => {
             </Link>
           </div>
           <p className="text-xs text-muted mb-4">
-            These companions have received full veterinary clearance and pet care provider rehabilitation. Publish their adoption listings to activate public visibility in the Adoptable Pets Gallery.
+            These companions have received full veterinary clearance. Publish their listings to make them available for adoption.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>

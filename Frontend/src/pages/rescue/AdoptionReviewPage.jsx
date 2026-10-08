@@ -53,7 +53,7 @@ export const AdoptionReviewPage = () => {
       });
 
       showToast(
-        status === 'Approved' ? 'Adoption Approved!' : 'Application Declined',
+        status === 'Approved' ? 'Application Approved!' : 'Application Declined',
         `Decision recorded for ${selectedApp.applicantName} (${selectedApp.petName}).`,
         status === 'Approved' ? 'success' : 'warning'
       );
@@ -83,6 +83,16 @@ export const AdoptionReviewPage = () => {
         <div className="flex items-center gap-2 font-bold text-sm text-main">
           <Heart size={14} className="text-accent" /> {row.petName}
         </div>
+      ),
+    },
+    {
+      header: 'Type',
+      key: 'applicationType',
+      sortable: true,
+      render: (row) => (
+        <span className={`badge ${row.applicationType === 'Foster' ? 'badge-primary' : 'badge-accent'}`}>
+          {row.applicationType || 'Adoption'}
+        </span>
       ),
     },
     {
@@ -140,9 +150,9 @@ export const AdoptionReviewPage = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <span className="badge badge-warning mb-1">APPLICANT SCREENING</span>
-          <h2>Adoption Applications Review Hub</h2>
+          <h2>Adoption & Foster Applications Hub</h2>
           <p className="text-sm text-muted">
-            Inspect applicant living situation, examine uploaded identity/residence documents, verify signed adoption agreements, and submit decisions.
+            Inspect applicant living situation, examine uploaded identity/residence documents, verify agreements, and submit decisions for Adoptions and Foster Care.
           </p>
         </div>
       </div>
