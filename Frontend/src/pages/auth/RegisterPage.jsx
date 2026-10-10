@@ -43,6 +43,7 @@ export const RegisterPage = () => {
     if (!formData.email.trim()) errs.email = 'Valid email is required';
     if (!formData.password || formData.password.length < 6) errs.password = 'Password must be at least 6 characters';
     if (formData.password !== formData.confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) errs.phone = 'Phone number must be exactly 10 digits';
 
     if (role === UserRole.VETERINARIAN && !formData.licenseNumber.trim()) {
       errs.licenseNumber = 'Veterinary Medical License number is required';
@@ -173,6 +174,7 @@ export const RegisterPage = () => {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+94 77 123 4567"
                 />
+                {errors.phone && <span className="form-error">{errors.phone}</span>}
               </div>
 
               <div className="form-group">
