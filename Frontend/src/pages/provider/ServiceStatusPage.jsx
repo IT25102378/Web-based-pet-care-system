@@ -454,14 +454,7 @@ export const ServiceStatusPage = () => {
                   </button>
                 </div>
 
-                {log.caseId && (log.transferredToRescue || log.handedOverToRescue || log.notes?.includes('Transferred to Rescue Officer') || log.notes?.includes('Rehabilitation care')) ? (
-                  <div
-                    className="badge badge-success text-xs flex items-center justify-center gap-1"
-                    style={{ width: '100%', marginTop: '0.75rem', padding: '0.45rem', fontSize: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.3)' }}
-                  >
-                    <CheckCircle2 size={13} /> Transferred to Rescue Officer
-                  </div>
-                ) : log.caseId && (
+                {log.caseId && (log.transferredToRescue || log.handedOverToRescue || log.notes?.includes('Transferred to Rescue Officer') || log.notes?.includes('Rehabilitation care')) ? null : log.caseId && (
                   <button
                     type="button"
                     className={`btn btn-sm ${log.status === ServiceStatus.COMPLETED ? 'btn-warning' : 'btn-secondary'}`}
