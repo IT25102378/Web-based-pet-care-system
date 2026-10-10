@@ -149,8 +149,12 @@ export const MyPetsPage = () => {
 
   const handleSavePet = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.breed) {
+    if (!formData.name.trim() || !formData.breed.trim()) {
       showToast('Validation Error', 'Pet name and breed are required.', 'error');
+      return;
+    }
+    if (!formData.emergencyContact.trim()) {
+      showToast('Validation Error', 'Emergency contact information is required.', 'error');
       return;
     }
 
