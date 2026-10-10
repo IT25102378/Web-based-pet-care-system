@@ -79,8 +79,6 @@ public class User {
     @Column(length = 100)
     private String passwordResetToken;
 
-    @Column(length = 100)
-    private String approvalToken;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

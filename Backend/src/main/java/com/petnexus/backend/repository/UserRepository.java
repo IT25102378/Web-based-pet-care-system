@@ -18,8 +18,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByPasswordResetToken(String token);
 
-    Optional<User> findByApprovalToken(String token);
-
     List<User> findByStatus(UserStatus status);
 
     List<User> findByStatusIn(List<UserStatus> statuses);

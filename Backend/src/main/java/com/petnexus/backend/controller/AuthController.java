@@ -77,27 +77,6 @@ public class AuthController {
     }
 
     /**
-     * GET /api/auth/approval-status?token=...
-     * Public endpoint allowing newly registered browser to safely poll approval status.
-     */
-    @GetMapping("/approval-status")
-    public ResponseEntity<UserService.ApprovalStatusResponse> getApprovalStatus(
-            @RequestParam("token") String token) {
-        return ResponseEntity.ok(userService.getApprovalStatus(token));
-    }
-
-    /**
-     * POST /api/auth/approval-login
-     * Securely exchanges an approval token for an authenticated JWT ONLY if the account is Active.
-     */
-    @PostMapping("/approval-login")
-    public ResponseEntity<LoginResponse> approvalLogin(
-            @RequestBody Map<String, String> body) {
-        String token = body.get("approvalToken");
-        return ResponseEntity.ok(userService.approvalLogin(token));
-    }
-
-    /**
      * GET /api/auth/suggest-accounts?query=...
      * Public helper endpoint for live database account lookup & credentials autofill as user types.
      */

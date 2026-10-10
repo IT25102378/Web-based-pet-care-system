@@ -64,9 +64,6 @@ public class UserService {
         // Generate unique userId in USR-xxx format
         String userId = generateUserId();
 
-        // Generate cryptographically secure approval token for browser polling & automatic login
-        String approvalToken = UUID.randomUUID().toString();
-
         // Build user entity — BCrypt hash the password
         
         User user;
@@ -102,7 +99,6 @@ public class UserService {
         user.setStatus(UserStatus.PendingApproval);
         user.setAvatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl()
                 : "https://api.dicebear.com/7.x/initials/svg?seed=" + request.getFullName().replaceAll("\s+", ""));
-        user.setApprovalToken(approvalToken);
 
 
         userRepository.save(user);
@@ -112,8 +108,7 @@ public class UserService {
         return new RegisterResponse(
                 "Registration submitted successfully! Your account is now pending admin approval.",
                 userId,
-                user.getEmail(),
-                approvalToken
+                user.getEmail()
         );
     }
 
@@ -442,60 +437,6 @@ public class UserService {
         return candidate;
     }
 
-    // =========================================================================
-    // Approval Status & Automatic Login (Post-Approval Authentication)
-    // =========================================================================
-
-    /**
-     * Public method to check approval status using the cryptographically secure approval token.
-     * Never returns passwords, password hashes, or sensitive tokens.
-     */
-    @Transactional(readOnly = true)
-    public ApprovalStatusResponse getApprovalStatus(String token) {
-        if (token == null || token.isBlank()) {
-            throw new BadRequestException("Approval token is required.");
-        }
-        User user = userRepository.findByApprovalToken(token)
-                .orElseThrow(() -> new BadRequestException("Invalid or expired approval token."));
-
-        return new ApprovalStatusResponse(
-                user.getUserId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRole(),
-                user.getStatus(),
-                UserStatus.Active.equals(user.getStatus()),
-                user.getRejectionReason()
-        );
-    }
-
-    /**
-     * Exchange a valid approval token for a real signed JWT upon account approval.
-     * ONLY succeeds if the user's status is Active.
-     * Invalidates the approval token upon successful JWT issuance.
-     */
-    @Transactional
-    public LoginResponse approvalLogin(String token) {
-        if (token == null || token.isBlank()) {
-            throw new BadRequestException("Approval token is required.");
-        }
-        User user = userRepository.findByApprovalToken(token)
-                .orElseThrow(() -> new BadRequestException("Invalid or expired approval token."));
-
-        if (!UserStatus.Active.equals(user.getStatus())) {
-            throw new BadRequestException("Account is not active yet. Current status: " + user.getStatus());
-        }
-
-        // Generate authenticated JWT
-        String jwt = jwtService.generateToken(user);
-        log.info("Approval login successful with JWT for user: {} ({})", user.getUserId(), user.getRole());
-
-        // Invalidate the approval token upon successful authentication exchange
-        user.setApprovalToken(null);
-        userRepository.save(user);
-
-        return new LoginResponse(UserResponse.from(user), jwt);
-    }
 
     /**
      * Search database accounts matching query for quick autofill with associated pet information.
@@ -562,23 +503,7 @@ public class UserService {
     // Inner Response Record Classes
     // =========================================================================
 
-    public record RegisterResponse(String message, String userId, String email, String approvalToken) {
-        public RegisterResponse(String message, String userId, String email) {
-            this(message, userId, email, null);
-        }
-    }
+    public record RegisterResponse(String message, String userId, String email) {}
 
 
-
-    public record ApprovalStatusResponse(
-            String userId,
-            String fullName,
-            String email,
-            UserRole role,
-            UserStatus status,
-            boolean approved,
-            String rejectionReason
-    ) {}
-
-    public record ApprovalLoginRequest(String approvalToken) {}
 }
