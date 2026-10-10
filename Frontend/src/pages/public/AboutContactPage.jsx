@@ -31,6 +31,10 @@ export const AboutContactPage = () => {
       showToast('Validation Error', 'Please complete all required fields.', 'error');
       return;
     }
+    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
+      showToast('Validation Error', 'Phone number must be exactly 10 digits.', 'error');
+      return;
+    }
     setIsSent(true);
     showToast('Message Sent', 'Thank you! Our clinic desk will respond within 24 hours.', 'success');
   };
