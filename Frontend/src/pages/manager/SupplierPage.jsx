@@ -48,28 +48,28 @@ export const SupplierPage = () => {
 
   const validateSupplier = (data) => {
     if (!data.companyName || !data.companyName.trim()) {
-      showToast('Validation Error', 'Company name is required.', 'error');
+      showToast('Action Required', 'Company name is required.', 'error');
       return false;
     }
     if (!data.email || !data.email.trim()) {
-      showToast('Validation Error', 'Email address is required.', 'error');
+      showToast('Action Required', 'Email address is required.', 'error');
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email.trim())) {
-      showToast('Validation Error', 'Please provide a valid email address.', 'error');
+      showToast('Action Required', 'Please provide a valid email address.', 'error');
       return false;
     }
     if (data.phone && !/^\d{10}$/.test(data.phone.replace(/\D/g, ''))) {
-      showToast('Validation Error', 'Phone number must be exactly 10 digits.', 'error');
+      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
       return false;
     }
     if (data.leadTimeDays !== undefined && (isNaN(data.leadTimeDays) || Number(data.leadTimeDays) < 0)) {
-      showToast('Validation Error', 'Lead time must be a positive number of days (0 or greater).', 'error');
+      showToast('Action Required', 'Lead time must be a positive number of days (0 or greater).', 'error');
       return false;
     }
     if (data.rating !== undefined && (isNaN(data.rating) || Number(data.rating) < 0 || Number(data.rating) > 5)) {
-      showToast('Validation Error', 'Rating must be between 0.0 and 5.0.', 'error');
+      showToast('Action Required', 'Rating must be between 0.0 and 5.0.', 'error');
       return false;
     }
     return true;

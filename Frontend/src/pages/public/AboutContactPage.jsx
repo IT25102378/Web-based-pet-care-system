@@ -28,11 +28,11 @@ export const AboutContactPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) {
-      showToast('Validation Error', 'Please complete all required fields.', 'error');
+      showToast('Action Required', 'Please complete all required fields.', 'error');
       return;
     }
     if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-      showToast('Validation Error', 'Phone number must be exactly 10 digits.', 'error');
+      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
       return;
     }
     setIsSent(true);

@@ -66,7 +66,7 @@ export const OwnerRescueReportPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.rescueLocation.trim()) {
-      showToast('Validation Error', 'Please specify the location where the animal was sighted.', 'error');
+      showToast('Action Required', 'Please specify the location where the animal was sighted.', 'error');
       return;
     }
 

@@ -62,12 +62,12 @@ export const VaccinationUpdatePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedPetId || !vaccineName.trim() || !batchNumber.trim()) {
-      showToast('Validation Error', 'All vaccine fields are required.', 'error');
+      showToast('Action Required', 'All vaccine fields are required.', 'error');
       return;
     }
 
     if (new Date(nextDueDate) <= new Date(administeredDate)) {
-      showToast('Validation Error', 'Next due date must be after administered date.', 'error');
+      showToast('Action Required', 'Next due date must be after administered date.', 'error');
       return;
     }
 
@@ -108,12 +108,12 @@ export const VaccinationUpdatePage = () => {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editFormData.vaccineName.trim() || !editFormData.batchNumber.trim()) {
-      showToast('Validation Error', 'Vaccine name and batch number are required.', 'error');
+      showToast('Action Required', 'Vaccine name and batch number are required.', 'error');
       return;
     }
 
     if (new Date(editFormData.nextDueDate) <= new Date(editFormData.administeredDate)) {
-      showToast('Validation Error', 'Next due date must be after administered date.', 'error');
+      showToast('Action Required', 'Next due date must be after administered date.', 'error');
       return;
     }
 

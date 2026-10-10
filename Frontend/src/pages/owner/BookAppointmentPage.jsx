@@ -149,7 +149,7 @@ export const BookAppointmentPage = () => {
     }
     const today = new Date().toISOString().split('T')[0];
     if (appointmentDate < today) {
-      showToast('Validation Error', 'Cannot book an appointment for a past date.', 'error');
+      showToast('Action Required', 'Cannot book an appointment for a past date.', 'error');
       return;
     }
 
@@ -237,13 +237,13 @@ export const BookAppointmentPage = () => {
   const handleProceedToRescheduleConfirm = (e) => {
     e.preventDefault();
     if (!rescheduleData.newDate || !rescheduleData.newTimeSlot) {
-      showToast('Validation Error', 'Please select a new date and time slot.', 'error');
+      showToast('Action Required', 'Please select a new date and time slot.', 'error');
       return;
     }
 
     const today = new Date().toISOString().split('T')[0];
     if (rescheduleData.newDate < today) {
-      showToast('Validation Error', 'Cannot reschedule to a past date.', 'error');
+      showToast('Action Required', 'Cannot reschedule to a past date.', 'error');
       return;
     }
 

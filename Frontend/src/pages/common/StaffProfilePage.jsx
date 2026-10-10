@@ -79,7 +79,7 @@ export const StaffProfilePage = () => {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (profileForm.phone && !/^\d{10}$/.test(profileForm.phone.replace(/\D/g, ''))) {
-      showToast('Validation Error', 'Phone number must be exactly 10 digits.', 'error');
+      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
       return;
     }
     setIsSavingProfile(true);
@@ -113,7 +113,7 @@ export const StaffProfilePage = () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
 
     if (!currentPassword || !newPassword || newPassword !== confirmPassword) {
-      showToast('Validation Error', 'Please check your passwords and try again.', 'error');
+      showToast('Action Required', 'Please check your passwords and try again.', 'error');
       return;
     }
 

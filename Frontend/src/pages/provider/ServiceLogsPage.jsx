@@ -380,19 +380,19 @@ export const ServiceLogsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (patientType !== 'walkin' && !selectedPetId) {
-      showToast('Validation Error', 'Please select a patient companion or rescue animal.', 'error');
+      showToast('Action Required', 'Please select a patient companion or rescue animal.', 'error');
       return;
     }
     if (patientType === 'walkin' && !walkinPetName.trim()) {
-      showToast('Validation Error', 'Please enter the patient companion name.', 'error');
+      showToast('Action Required', 'Please enter the patient companion name.', 'error');
       return;
     }
     if (!formData.serviceType.trim()) {
-      showToast('Validation Error', 'Please specify the service rendered.', 'error');
+      showToast('Action Required', 'Please specify the service rendered.', 'error');
       return;
     }
     if (!formData.intakeCondition.trim() || !formData.servicesPerformed.trim() || !formData.notes.trim()) {
-      showToast('Validation Error', 'Please fill in all service details (Intake Condition, Services Performed, and Notes).', 'error');
+      showToast('Action Required', 'Please fill in all service details (Intake Condition, Services Performed, and Notes).', 'error');
       return;
     }
 
@@ -525,7 +525,7 @@ export const ServiceLogsPage = () => {
     e.preventDefault();
     if (!editingLog) return;
     if (!editFormData.serviceType.trim()) {
-      showToast('Validation Error', 'Please specify the service type.', 'error');
+      showToast('Action Required', 'Please specify the service type.', 'error');
       return;
     }
 

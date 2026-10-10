@@ -160,7 +160,7 @@ export const RescueCaseDetailPage = () => {
   const handleSaveLog = async (e) => {
     e.preventDefault();
     if (!logFormData.title || !logFormData.notes) {
-      showToast('Validation Error', 'Title and notes are required.', 'error');
+      showToast('Action Required', 'Title and notes are required.', 'error');
       return;
     }
     try {

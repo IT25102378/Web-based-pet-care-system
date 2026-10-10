@@ -19,11 +19,11 @@ export const ResetPasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password.length < 6) {
-      showToast('Validation Error', 'Password must be at least 6 characters.', 'error');
+      showToast('Action Required', 'Password must be at least 6 characters.', 'error');
       return;
     }
     if (password !== confirmPassword) {
-      showToast('Validation Error', 'Passwords do not match.', 'error');
+      showToast('Action Required', 'Passwords do not match.', 'error');
       return;
     }
 

@@ -135,7 +135,7 @@ export const InventoryPage = () => {
   const handleAddItemSubmit = async (e) => {
     e.preventDefault();
     if (!newItemData.name || !newItemData.sku || !newItemData.unit) {
-      showToast('Validation Error', 'Item name, SKU, and unit are required.', 'error');
+      showToast('Action Required', 'Item name, SKU, and unit are required.', 'error');
       return;
     }
 
@@ -181,7 +181,7 @@ export const InventoryPage = () => {
   const handleEditItemSubmit = async (e) => {
     e.preventDefault();
     if (!editItem.name || !editItem.sku || !editItem.unit) {
-      showToast('Validation Error', 'Item name, SKU, and unit are required.', 'error');
+      showToast('Action Required', 'Item name, SKU, and unit are required.', 'error');
       return;
     }
 

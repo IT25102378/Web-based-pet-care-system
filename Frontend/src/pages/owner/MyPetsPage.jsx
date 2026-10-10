@@ -150,11 +150,11 @@ export const MyPetsPage = () => {
   const handleSavePet = async (e) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.breed.trim()) {
-      showToast('Validation Error', 'Pet name and breed are required.', 'error');
+      showToast('Action Required', 'Pet name and breed are required.', 'error');
       return;
     }
     if (!formData.emergencyContact.trim()) {
-      showToast('Validation Error', 'Emergency contact information is required.', 'error');
+      showToast('Action Required', 'Emergency contact information is required.', 'error');
       return;
     }
 
@@ -214,7 +214,7 @@ export const MyPetsPage = () => {
       return;
     }
     if (!docFormData.uploadedFile) {
-      showToast('Validation Error', 'Please select or upload a document file.', 'error');
+      showToast('Action Required', 'Please select or upload a document file.', 'error');
       return;
     }
 

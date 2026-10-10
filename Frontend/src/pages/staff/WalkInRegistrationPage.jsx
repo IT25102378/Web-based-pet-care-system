@@ -90,7 +90,7 @@ export const WalkInRegistrationPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.ownerName || !formData.petName || !formData.reason || !formData.species) {
-      showToast('Validation Error', 'Client name, pet name, species, and visit reason are required.', 'error');
+      showToast('Action Required', 'Client name, pet name, species, and visit reason are required.', 'error');
       return;
     }
 

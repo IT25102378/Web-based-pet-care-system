@@ -72,7 +72,7 @@ export const PackageManagementPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price) {
-      showToast('Validation Error', 'Package name and price are required.', 'error');
+      showToast('Action Required', 'Package name and price are required.', 'error');
       return;
     }
 

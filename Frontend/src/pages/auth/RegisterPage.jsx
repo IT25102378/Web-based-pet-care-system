@@ -60,7 +60,7 @@ export const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
-      showToast('Validation Error', 'Please correct the highlighted fields.', 'error');
+      showToast('Action Required', 'Please correct the highlighted fields.', 'error');
       return;
     }
 

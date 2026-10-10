@@ -101,7 +101,7 @@ export const RescueCaseListPage = () => {
   const handleSaveQuickEdit = async (e) => {
     e.preventDefault();
     if (!editFormData.temporaryName.trim() || !editFormData.rescueLocation.trim()) {
-      showToast('Validation Error', 'Temporary name and rescue location are required.', 'error');
+      showToast('Action Required', 'Temporary name and rescue location are required.', 'error');
       return;
     }
     try {

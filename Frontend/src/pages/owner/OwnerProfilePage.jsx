@@ -137,15 +137,15 @@ export const OwnerProfilePage = () => {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!profileForm.fullName.trim()) {
-      showToast('Validation Error', 'Full name is required.', 'error');
+      showToast('Action Required', 'Full name is required.', 'error');
       return;
     }
     if (!profileForm.email.trim()) {
-      showToast('Validation Error', 'Email address is required.', 'error');
+      showToast('Action Required', 'Email address is required.', 'error');
       return;
     }
     if (profileForm.phone && !/^\d{10}$/.test(profileForm.phone.replace(/\D/g, ''))) {
-      showToast('Validation Error', 'Phone number must be exactly 10 digits.', 'error');
+      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
       return;
     }
 
@@ -175,15 +175,15 @@ export const OwnerProfilePage = () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
 
     if (!currentPassword) {
-      showToast('Validation Error', 'Please enter your current password.', 'error');
+      showToast('Action Required', 'Please enter your current password.', 'error');
       return;
     }
     if (!newPassword || newPassword.length < 6) {
-      showToast('Validation Error', 'New password must be at least 6 characters long.', 'error');
+      showToast('Action Required', 'New password must be at least 6 characters long.', 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
-      showToast('Validation Error', 'New password and confirmation do not match.', 'error');
+      showToast('Action Required', 'New password and confirmation do not match.', 'error');
       return;
     }
 

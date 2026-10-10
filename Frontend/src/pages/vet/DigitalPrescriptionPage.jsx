@@ -74,7 +74,7 @@ export const DigitalPrescriptionPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedPetId || items.length === 0 || !items[0].medicationName) {
-      showToast('Validation Error', 'Please select a pet and specify at least one medication.', 'error');
+      showToast('Action Required', 'Please select a pet and specify at least one medication.', 'error');
       return;
     }
 
@@ -112,7 +112,7 @@ export const DigitalPrescriptionPage = () => {
   const handleSaveInstructions = async (e) => {
     e.preventDefault();
     if (!editInstructionsText.trim()) {
-      showToast('Validation Error', 'Instructions cannot be empty.', 'error');
+      showToast('Action Required', 'Instructions cannot be empty.', 'error');
       return;
     }
     try {

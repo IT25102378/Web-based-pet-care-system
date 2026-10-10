@@ -44,7 +44,7 @@ export const AdoptionReviewPage = () => {
   const handleDecision = async (status) => {
     if (!selectedApp) return;
     if (!reviewNotes.trim() && status === 'Rejected') {
-      showToast('Validation Error', 'Please provide a reason/notes for rejecting the application.', 'error');
+      showToast('Action Required', 'Please provide a reason/notes for rejecting the application.', 'error');
       return;
     }
 

@@ -106,11 +106,11 @@ export const FeedbackSubmitPage = () => {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editFormData.title.trim() || editFormData.title.trim().length < 5) {
-      showToast('Validation Error', 'Title must be at least 5 characters.', 'error');
+      showToast('Action Required', 'Title must be at least 5 characters.', 'error');
       return;
     }
     if (!editFormData.comments.trim() || editFormData.comments.trim().length < 10) {
-      showToast('Validation Error', 'Comments must be at least 10 characters for clinical review.', 'error');
+      showToast('Action Required', 'Comments must be at least 10 characters for clinical review.', 'error');
       return;
     }
 

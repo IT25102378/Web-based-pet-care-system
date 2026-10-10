@@ -44,7 +44,7 @@ export const PublishListingModal = ({ isOpen, onClose, rescueCase, onSuccess }) 
   const handleSubmit = async (e) => {
     e?.preventDefault();
     if (!description.trim()) {
-      showToast('Validation Error', 'Please enter an adoption story/bio for the public listing.', 'error');
+      showToast('Action Required', 'Please enter an adoption story/bio for the public listing.', 'error');
       return;
     }
 

@@ -89,7 +89,7 @@ export const AddConsultationPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedPetId || !formData.assessmentDiagnosis || !formData.treatmentPlan) {
-      showToast('Validation Error', 'Diagnosis and treatment plan are required.', 'error');
+      showToast('Action Required', 'Diagnosis and treatment plan are required.', 'error');
       return;
     }
 
