@@ -37,6 +37,10 @@ export const RegisterRescuePage = () => {
       showToast('Validation Error', 'Pet name, species, breed, and rescue location are required.', 'error');
       return;
     }
+    if (!coverPhoto) {
+      showToast('Validation Error', 'A cover photo of the rescued animal is mandatory for tracking.', 'error');
+      return;
+    }
 
     setSubmitting(true);
     try {
