@@ -391,6 +391,10 @@ export const ServiceLogsPage = () => {
       showToast('Validation Error', 'Please specify the service rendered.', 'error');
       return;
     }
+    if (!formData.intakeCondition.trim() || !formData.servicesPerformed.trim() || !formData.notes.trim()) {
+      showToast('Validation Error', 'Please fill in all service details (Intake Condition, Services Performed, and Notes).', 'error');
+      return;
+    }
 
     try {
       if (patientType === 'rescue') {
@@ -662,15 +666,7 @@ export const ServiceLogsPage = () => {
             <Trash2 size={13} />
           </button>
 
-          {row.caseId && (row.transferredToRescue || row.handedOverToRescue || row.notes?.includes('Transferred to Rescue Officer')) ? (
-            <span
-              className="badge badge-success text-xs flex items-center gap-1"
-              style={{ fontSize: '0.72rem', padding: '0.25rem 0.5rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.3)' }}
-              title="Successfully handed off to Rescue Officer"
-            >
-              <Check size={12} /> Handed Off
-            </span>
-          ) : row.caseId && (
+          {row.caseId && (row.transferredToRescue || row.handedOverToRescue || row.notes?.includes('Transferred to Rescue Officer')) ? null : row.caseId && (
             <button
               type="button"
               className={`btn btn-sm ${
