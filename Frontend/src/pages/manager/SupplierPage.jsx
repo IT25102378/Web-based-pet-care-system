@@ -60,6 +60,10 @@ export const SupplierPage = () => {
       showToast('Validation Error', 'Please provide a valid email address.', 'error');
       return false;
     }
+    if (data.phone && !/^\d{10}$/.test(data.phone.replace(/\D/g, ''))) {
+      showToast('Validation Error', 'Phone number must be exactly 10 digits.', 'error');
+      return false;
+    }
     if (data.leadTimeDays !== undefined && (isNaN(data.leadTimeDays) || Number(data.leadTimeDays) < 0)) {
       showToast('Validation Error', 'Lead time must be a positive number of days (0 or greater).', 'error');
       return false;
