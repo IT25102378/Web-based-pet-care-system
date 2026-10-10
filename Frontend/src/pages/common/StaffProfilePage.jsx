@@ -78,6 +78,10 @@ export const StaffProfilePage = () => {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if (profileForm.phone && !/^\d{10}$/.test(profileForm.phone.replace(/\D/g, ''))) {
+      showToast('Validation Error', 'Phone number must be exactly 10 digits.', 'error');
+      return;
+    }
     setIsSavingProfile(true);
     try {
       await userApi.updateUserProfile(currentUser.userId, {
