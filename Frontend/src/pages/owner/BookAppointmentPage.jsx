@@ -147,6 +147,11 @@ export const BookAppointmentPage = () => {
       showToast('Form Incomplete', 'Please select a pet and state the visit reason.', 'error');
       return;
     }
+    const today = new Date().toISOString().split('T')[0];
+    if (appointmentDate < today) {
+      showToast('Validation Error', 'Cannot book an appointment for a past date.', 'error');
+      return;
+    }
 
     const petObj = pets.find((p) => p.petId === selectedPetId);
     setIsSubmittingBooking(true);
