@@ -67,6 +67,7 @@ export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
       if (!formData.applicantName?.trim()) errs.applicantName = 'Full name is required';
       if (!formData.applicantEmail?.trim()) errs.applicantEmail = 'Email is required';
       if (!formData.applicantPhone?.trim()) errs.applicantPhone = 'Phone number is required';
+      else if (!/^\d{10}$/.test(formData.applicantPhone.replace(/\D/g, ''))) errs.applicantPhone = 'Phone number must be exactly 10 digits';
       if (!formData.applicantAddress?.trim()) errs.applicantAddress = 'Address is required';
       if (!formData.occupation?.trim()) errs.occupation = 'Occupation is required';
       if (!formData.reasonForAdoption?.trim()) errs.reasonForAdoption = 'Please tell us why you wish to adopt';
