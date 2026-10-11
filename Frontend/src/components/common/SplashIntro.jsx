@@ -10,7 +10,10 @@ export const SplashIntro = ({ onComplete }) => {
   const [phase, setPhase] = useState('enter');
 
   useEffect(() => {
-    const hasPlayed = sessionStorage.getItem('pn_splash_done');
+    let hasPlayed = false;
+    try {
+      hasPlayed = sessionStorage.getItem('pn_splash_done');
+    } catch (_) {}
     if (hasPlayed) {
       setPhase('done');
       onComplete?.();
@@ -21,7 +24,9 @@ export const SplashIntro = ({ onComplete }) => {
     const t2 = setTimeout(() => setPhase('exit'), 2200);
     const t3 = setTimeout(() => {
       setPhase('done');
-      sessionStorage.setItem('pn_splash_done', '1');
+      try {
+        sessionStorage.setItem('pn_splash_done', '1');
+      } catch (_) {}
       onComplete?.();
     }, 2800);
 

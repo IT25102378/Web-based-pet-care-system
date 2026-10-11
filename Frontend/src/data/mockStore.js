@@ -56,48 +56,62 @@ const SEED_MAP = {
 
 // Initialize tables in localStorage if not already present, and merge any new seed records
 export const initializeMockStore = (forceReset = false) => {
-  Object.keys(SEED_MAP).forEach((table) => {
-    const key = STORAGE_PREFIX + table;
-    const raw = localStorage.getItem(key);
-    if (forceReset || !raw) {
-      localStorage.setItem(key, JSON.stringify(SEED_MAP[table]));
-      return;
-    }
+  try {
+    Object.keys(SEED_MAP).forEach((table) => {
+      const key = STORAGE_PREFIX + table;
+      let raw = null;
+      try {
+        raw = localStorage.getItem(key);
+      } catch (_) {
+        return;
+      }
+      if (forceReset || !raw) {
+        try {
+          localStorage.setItem(key, JSON.stringify(SEED_MAP[table]));
+        } catch (_) {}
+        return;
+      }
 
-    // Merge missing seed items into existing localStorage table
-    try {
-      const existing = JSON.parse(raw);
-      if (Array.isArray(existing) && Array.isArray(SEED_MAP[table])) {
-        let updated = false;
-        SEED_MAP[table].forEach((seedItem) => {
-          const exists = existing.some((item) => {
-            if (table === 'users') {
-              return (
-                (item.email && seedItem.email && item.email.toLowerCase() === seedItem.email.toLowerCase()) ||
-                (item.userId && seedItem.userId && String(item.userId) === String(seedItem.userId))
-              );
+      // Merge missing seed items into existing localStorage table
+      try {
+        const existing = JSON.parse(raw);
+        if (Array.isArray(existing) && Array.isArray(SEED_MAP[table])) {
+          let updated = false;
+          SEED_MAP[table].forEach((seedItem) => {
+            const exists = existing.some((item) => {
+              if (!item) return false;
+              if (table === 'users') {
+                return (
+                  (item.email && seedItem.email && item.email.toLowerCase() === seedItem.email.toLowerCase()) ||
+                  (item.userId && seedItem.userId && String(item.userId) === String(seedItem.userId))
+                );
+              }
+              if (table === 'pets') {
+                return item.petId && seedItem.petId && String(item.petId) === String(seedItem.petId);
+              }
+              if (item.id && seedItem.id) return String(item.id) === String(seedItem.id);
+              return false;
+            });
+
+            if (!exists) {
+              existing.push(seedItem);
+              updated = true;
             }
-            if (table === 'pets') {
-              return item.petId && seedItem.petId && String(item.petId) === String(seedItem.petId);
-            }
-            if (item.id && seedItem.id) return String(item.id) === String(seedItem.id);
-            return false;
           });
 
-          if (!exists) {
-            existing.push(seedItem);
-            updated = true;
+          if (updated) {
+            try {
+              localStorage.setItem(key, JSON.stringify(existing));
+            } catch (_) {}
           }
-        });
-
-        if (updated) {
-          localStorage.setItem(key, JSON.stringify(existing));
         }
+      } catch (e) {
+        console.error(`Error merging seed for ${table}:`, e);
       }
-    } catch (e) {
-      console.error(`Error merging seed for ${table}:`, e);
-    }
-  });
+    });
+  } catch (err) {
+    console.warn('LocalStorage unavailable in current browser environment:', err);
+  }
 };
 
 // Initialize immediately upon import
@@ -106,10 +120,17 @@ initializeMockStore(false);
 export const mockStore = {
   getTable(tableName) {
     const key = STORAGE_PREFIX + tableName;
-    const raw = localStorage.getItem(key);
+    let raw = null;
+    try {
+      raw = localStorage.getItem(key);
+    } catch (_) {
+      return SEED_MAP[tableName] ? [...SEED_MAP[tableName]] : [];
+    }
     if (!raw) {
       if (SEED_MAP[tableName]) {
-        localStorage.setItem(key, JSON.stringify(SEED_MAP[tableName]));
+        try {
+          localStorage.setItem(key, JSON.stringify(SEED_MAP[tableName]));
+        } catch (_) {}
         return [...SEED_MAP[tableName]];
       }
       return [];
@@ -122,8 +143,8 @@ export const mockStore = {
         SEED_MAP.users.forEach((seedUser) => {
           const found = items.some(
             (u) =>
-              (u.email && seedUser.email && u.email.toLowerCase() === seedUser.email.toLowerCase()) ||
-              (u.userId && seedUser.userId && String(u.userId) === String(seedUser.userId))
+              (u && u.email && seedUser.email && u.email.toLowerCase() === seedUser.email.toLowerCase()) ||
+              (u && u.userId && seedUser.userId && String(u.userId) === String(seedUser.userId))
           );
           if (!found) {
             items.push(seedUser);
@@ -131,19 +152,23 @@ export const mockStore = {
           }
         });
         if (changed) {
-          localStorage.setItem(key, JSON.stringify(items));
+          try {
+            localStorage.setItem(key, JSON.stringify(items));
+          } catch (_) {}
         }
       }
       return items;
     } catch (e) {
       console.error(`Error parsing table ${tableName}:`, e);
-      return [];
+      return SEED_MAP[tableName] ? [...SEED_MAP[tableName]] : [];
     }
   },
 
   setTable(tableName, items) {
     const key = STORAGE_PREFIX + tableName;
-    localStorage.setItem(key, JSON.stringify(items));
+    try {
+      localStorage.setItem(key, JSON.stringify(items));
+    } catch (_) {}
     return items;
   },
 

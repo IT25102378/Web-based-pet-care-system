@@ -18,28 +18,55 @@ export const simulateDelay = (ms = 200) => new Promise((resolve) => setTimeout(r
 const TOKEN_KEY   = 'pn_auth_token_session';
 const USER_KEY    = 'pn_current_user_session';
 
+const memoryStore = new Map();
+
+const safeStorage = {
+  getItem: (key) => {
+    try {
+      return sessionStorage.getItem(key);
+    } catch (_) {
+      return memoryStore.get(key) || null;
+    }
+  },
+  setItem: (key, val) => {
+    try {
+      sessionStorage.setItem(key, val);
+    } catch (_) {
+      memoryStore.set(key, val);
+    }
+  },
+  removeItem: (key) => {
+    try {
+      sessionStorage.removeItem(key);
+    } catch (_) {
+      memoryStore.delete(key);
+    }
+  },
+};
+
 export const tokenStore = {
-  getToken:   ()       => sessionStorage.getItem(TOKEN_KEY),
-  setToken:   (token)  => sessionStorage.setItem(TOKEN_KEY, token),
-  removeToken: ()      => sessionStorage.removeItem(TOKEN_KEY),
+  getToken:   ()       => safeStorage.getItem(TOKEN_KEY),
+  setToken:   (token)  => safeStorage.setItem(TOKEN_KEY, token),
+  removeToken: ()      => safeStorage.removeItem(TOKEN_KEY),
 
   getUser:    ()       => {
     try {
-      const raw = sessionStorage.getItem(USER_KEY);
+      const raw = safeStorage.getItem(USER_KEY);
       return raw ? JSON.parse(raw) : null;
     } catch (_) {
       return null;
     }
   },
-  setUser:    (user)   => sessionStorage.setItem(USER_KEY, JSON.stringify(user)),
-  removeUser: ()       => sessionStorage.removeItem(USER_KEY),
+  setUser:    (user)   => safeStorage.setItem(USER_KEY, JSON.stringify(user)),
+  removeUser: ()       => safeStorage.removeItem(USER_KEY),
 
   clear: () => {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(USER_KEY);
-    // Cleanup any old localStorage tokens from previous sessions to be safe
-    localStorage.removeItem('petnexus_auth_token');
-    localStorage.removeItem('petnexus_current_user');
+    safeStorage.removeItem(TOKEN_KEY);
+    safeStorage.removeItem(USER_KEY);
+    try {
+      localStorage.removeItem('petnexus_auth_token');
+      localStorage.removeItem('petnexus_current_user');
+    } catch (_) {}
   },
 };
 
