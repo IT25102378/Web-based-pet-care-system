@@ -33,7 +33,7 @@ public class AdoptionApplicationController {
         return ResponseEntity.ok(applicationService.getApplicationById(applicationId));
     }
 
-    @PreAuthorize("hasRole('PetOwner')")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<AdoptionApplicationDto> submitApplication(@RequestBody CreateApplicationRequest request) {
         AdoptionApplicationDto response = applicationService.submitApplication(request);

@@ -42,7 +42,7 @@ public class AdoptionApplicationService {
         User current = SecurityUtils.getCurrentUser();
         String effectiveApplicantId = applicantId;
 
-        if (current != null && current.getRole() == UserRole.PetOwner) {
+        if (current != null && current.getRole() != UserRole.Admin && current.getRole() != UserRole.RescueOfficer) {
             effectiveApplicantId = current.getUserId();
         } else if (effectiveApplicantId != null && !effectiveApplicantId.isBlank()) {
             SecurityUtils.enforceOwnershipOrRole(effectiveApplicantId, UserRole.Admin, UserRole.RescueOfficer);
@@ -86,9 +86,15 @@ public class AdoptionApplicationService {
         }
 
         User current = SecurityUtils.getCurrentUser();
-        String applicantId = (current != null && current.getRole() == UserRole.PetOwner)
-                ? current.getUserId()
-                : (request.getApplicantId() != null ? request.getApplicantId().trim() : null);
+        String applicantId;
+        if (current != null) {
+            applicantId = ((current.getRole() == UserRole.Admin || current.getRole() == UserRole.RescueOfficer)
+                    && request.getApplicantId() != null && !request.getApplicantId().isBlank())
+                    ? request.getApplicantId().trim()
+                    : current.getUserId();
+        } else {
+            applicantId = (request.getApplicantId() != null ? request.getApplicantId().trim() : null);
+        }
 
         if (applicantId == null || applicantId.isBlank()) {
             throw new BadRequestException("Applicant ID is required.");

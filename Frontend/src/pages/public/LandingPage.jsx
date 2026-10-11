@@ -24,7 +24,7 @@ import {
 
 export const LandingPage = () => {
   const { isAuthenticated, role } = useAuth();
-  const canAccessAdoptions = isAuthenticated && (role === 'PetOwner' || role === 'RescueOfficer');
+  const canAccessAdoptions = isAuthenticated;
   const navigate = useNavigate();
   const [featuredPets, setFeaturedPets] = useState([]);
   const [packages, setPackages] = useState([]);

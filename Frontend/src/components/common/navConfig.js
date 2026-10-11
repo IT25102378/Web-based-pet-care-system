@@ -64,6 +64,9 @@ export const getNavSections = (role) => {
         { title: 'Operations', items: [
           { label: 'Inventory', path: '/staff/inventory', icon: Package },
         ]},
+        { title: 'Adoption & Welfare', items: [
+          { label: 'Adoptable Pets', path: '/staff/adoptable-pets', icon: Heart },
+        ]},
         { title: 'Account', items: [
           { label: 'My Profile', path: '/staff/profile', icon: User },
         ]},
@@ -99,6 +102,9 @@ export const getNavSections = (role) => {
           { label: 'Prescriptions', path: '/vet/prescriptions', icon: Pill },
           { label: 'Vaccinations', path: '/vet/vaccinations', icon: Syringe },
         ]},
+        { title: 'Adoption & Welfare', items: [
+          { label: 'Adoptable Pets', path: '/vet/adoptable-pets', icon: Heart },
+        ]},
         { title: 'Account', items: [
           { label: 'My Profile', path: '/vet/profile', icon: User },
         ]},
@@ -114,6 +120,9 @@ export const getNavSections = (role) => {
           { label: 'Service Status', path: '/provider/status', icon: Scissors },
           { label: 'Assigned Packages', path: '/provider/packages', icon: Layers },
           { label: 'Feedback', path: '/provider/feedback', icon: Star },
+        ]},
+        { title: 'Adoption & Welfare', items: [
+          { label: 'Adoptable Pets', path: '/provider/adoptable-pets', icon: Heart },
         ]},
         { title: 'Account', items: [
           { label: 'My Profile', path: '/provider/profile', icon: User },
@@ -132,6 +141,9 @@ export const getNavSections = (role) => {
           { label: 'Packages & Promotions', path: '/manager/packages', icon: Layers },
           { label: 'Feedback & Complaints', path: '/manager/feedback', icon: MessageSquare },
         ]},
+        { title: 'Adoption & Welfare', items: [
+          { label: 'Adoptable Pets', path: '/manager/adoptable-pets', icon: Heart },
+        ]},
         { title: 'Account', items: [
           { label: 'My Profile', path: '/manager/profile', icon: User },
         ]},
@@ -146,6 +158,9 @@ export const getNavSections = (role) => {
           { label: 'Account Approvals', path: '/admin/approvals', icon: ShieldCheck },
           { label: 'User Accounts', path: '/admin/users', icon: Users },
           { label: 'Approval History', path: '/admin/approval-history', icon: History },
+        ]},
+        { title: 'Adoption & Welfare', items: [
+          { label: 'Adoptable Pets', path: '/admin/adoptable-pets', icon: Heart },
         ]},
       ];
 

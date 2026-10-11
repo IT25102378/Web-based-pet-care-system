@@ -31,7 +31,7 @@ export const Navbar = () => {
 
   const isCurrentActive = (path) => location.pathname === path;
   const linkClass = (path) => `topnav-link${isCurrentActive(path) ? ' active' : ''}`;
-  const showAdoptable = isAuthenticated && (role === 'PetOwner' || role === 'RescueOfficer');
+  const showAdoptable = isAuthenticated;
 
   return (
     <nav className="topbar" aria-label="Primary">
@@ -48,7 +48,6 @@ export const Navbar = () => {
           {/* Desktop navigation */}
           <div className="navbar-desktop-links">
             <Link to="/" className={linkClass('/')}>Home</Link>
-            {/* Adoptable Pets is strictly visible ONLY for Pet Owner and Rescue Officer */}
             {showAdoptable && (
               <Link to="/adoptable-pets" className={linkClass('/adoptable-pets')}>Adoptable Pets</Link>
             )}
@@ -122,7 +121,6 @@ export const Navbar = () => {
           <Link to="/" onClick={() => setMobileMenuOpen(false)} className={linkClass('/')}>
             Home
           </Link>
-          {/* Adoptable Pets is strictly visible ONLY for Pet Owner and Rescue Officer */}
           {showAdoptable && (
             <Link to="/adoptable-pets" onClick={() => setMobileMenuOpen(false)} className={linkClass('/adoptable-pets')}>
               Adoptable Pets

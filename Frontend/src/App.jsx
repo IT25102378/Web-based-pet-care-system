@@ -108,6 +108,7 @@ export function App() {
           <Route path="medical-history" element={<MedicalHistoryPage />} />
           <Route path="report-rescue" element={<OwnerRescueReportPage />} />
           <Route path="adopt" element={<AdoptBrowsePage />} />
+          <Route path="adoptable-pets" element={<AdoptablePetsPage />} />
           <Route path="packages" element={<PackagesBrowsePage />} />
           <Route path="feedback" element={<FeedbackSubmitPage />} />
           <Route path="profile" element={<OwnerProfilePage />} />
@@ -121,6 +122,7 @@ export function App() {
           <Route path="walk-in" element={<WalkInRegistrationPage />} />
           <Route path="history" element={<AppointmentHistoryPage />} />
           <Route path="inventory" element={<StaffInventoryPage />} />
+          <Route path="adoptable-pets" element={<AdoptablePetsPage />} />
           <Route path="profile" element={<StaffProfilePage />} />
         </Route>
 
@@ -148,6 +150,7 @@ export function App() {
           <Route path="consultation" element={<AddConsultationPage />} />
           <Route path="prescriptions" element={<DigitalPrescriptionPage />} />
           <Route path="vaccinations" element={<VaccinationUpdatePage />} />
+          <Route path="adoptable-pets" element={<AdoptablePetsPage />} />
           <Route path="profile" element={<StaffProfilePage />} />
         </Route>
 
@@ -159,6 +162,7 @@ export function App() {
           <Route path="status" element={<ServiceStatusPage />} />
           <Route path="packages" element={<AssignedPackagesPage />} />
           <Route path="feedback" element={<ServiceFeedbackPage />} />
+          <Route path="adoptable-pets" element={<AdoptablePetsPage />} />
           <Route path="profile" element={<StaffProfilePage />} />
         </Route>
 
@@ -171,6 +175,7 @@ export function App() {
           <Route path="packages" element={<PackageManagementPage />} />
           <Route path="feedback" element={<FeedbackReviewPage />} />
           <Route path="reports" element={<PerformanceReportsPage />} />
+          <Route path="adoptable-pets" element={<AdoptablePetsPage />} />
           <Route path="profile" element={<StaffProfilePage />} />
         </Route>
 
@@ -181,6 +186,7 @@ export function App() {
           <Route path="approvals" element={<AdminApprovalQueue />} />
           <Route path="users" element={<UserAccountsPage />} />
           <Route path="approval-history" element={<ApprovalHistoryPage />} />
+          <Route path="adoptable-pets" element={<AdoptablePetsPage />} />
         </Route>
 
         {/* Fallback */}

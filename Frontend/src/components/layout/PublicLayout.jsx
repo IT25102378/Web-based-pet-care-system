@@ -5,8 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { PawPrint, Phone, Mail, MapPin, Clock } from 'lucide-react';
 
 export const PublicLayout = () => {
-  const { isAuthenticated, role } = useAuth();
-  const canAccessAdoptions = isAuthenticated && (role === 'PetOwner' || role === 'RescueOfficer');
+  const { isAuthenticated } = useAuth();
+  const canAccessAdoptions = isAuthenticated;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

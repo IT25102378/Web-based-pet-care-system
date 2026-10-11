@@ -17,30 +17,15 @@ export const AdoptablePetsPage = () => {
   const [selectedPetForAdoption, setSelectedPetForAdoption] = useState(null);
   const [viewDetailPet, setViewDetailPet] = useState(null);
 
-  // Helper to determine the user's home dashboard route
-  const getOwnDashboardRoute = (userRole) => {
-    switch (userRole) {
-      case 'PetOwner':        return '/owner/overview';
-      case 'ClinicStaff':     return '/staff/queue';
-      case 'RescueOfficer':   return '/rescue/dashboard';
-      case 'Veterinarian':    return '/vet/schedule';
-      case 'PetCareProvider': return '/provider/dashboard';
-      case 'ClinicManager':   return '/manager/dashboard';
-      case 'Admin':           return '/admin/dashboard';
-      default:                return '/login';
-    }
-  };
 
-  // Strictly enforce that the adoptable pets page is ONLY accessible to PetOwner and RescueOfficer
+  // Allow all authenticated stakeholders to view the adoptable pets gallery
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
         navigate('/login?redirect=adoptable-pets', { replace: true });
-      } else if (role !== 'PetOwner' && role !== 'RescueOfficer') {
-        navigate(getOwnDashboardRoute(role), { replace: true });
       }
     }
-  }, [isAuthenticated, role, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -62,7 +47,7 @@ export const AdoptablePetsPage = () => {
     );
   }
 
-  if (!isAuthenticated || (role !== 'PetOwner' && role !== 'RescueOfficer')) {
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -223,30 +208,29 @@ export const AdoptablePetsPage = () => {
                     <strong>Medical Status:</strong> {pet.medicalSummary}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {role === 'RescueOfficer' ? (
+                  <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
+                    {role === 'RescueOfficer' && (
                       <button
                         type="button"
                         className="btn btn-primary btn-sm"
-                        style={{ flex: 1, fontSize: '0.95rem' }}
+                        style={{ flex: 1, minWidth: '110px', fontSize: '0.92rem' }}
                         onClick={() => navigate(`/rescue/cases/${pet.caseId}`)}
                       >
-                        <ShieldCheck size={17} /> Manage Case
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn btn-accent btn-sm"
-                        style={{ flex: 1, fontSize: '0.95rem' }}
-                        onClick={() => handleApplyClick(pet)}
-                      >
-                        <Heart size={17} /> Apply to Adopt
+                        <ShieldCheck size={16} /> Manage Case
                       </button>
                     )}
                     <button
                       type="button"
+                      className="btn btn-accent btn-sm"
+                      style={{ flex: 1, minWidth: '120px', fontSize: '0.92rem' }}
+                      onClick={() => handleApplyClick(pet)}
+                    >
+                      <Heart size={16} /> Apply to Adopt
+                    </button>
+                    <button
+                      type="button"
                       className="btn btn-secondary btn-sm"
-                      style={{ fontSize: '0.95rem' }}
+                      style={{ fontSize: '0.92rem' }}
                       onClick={() => setViewDetailPet(pet)}
                     >
                       View Profile
@@ -285,23 +269,24 @@ export const AdoptablePetsPage = () => {
           subtitle={`Case Number: ${viewDetailPet.caseNumber}`}
           size="lg"
           footer={
-            <div className="flex items-center justify-between" style={{ width: '100%' }}>
+            <div className="flex items-center justify-between" style={{ width: '100%', flexWrap: 'wrap', gap: '0.5rem' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setViewDetailPet(null)}>
                 Close
               </button>
-              {role === 'RescueOfficer' ? (
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => {
-                    const cid = viewDetailPet.caseId;
-                    setViewDetailPet(null);
-                    navigate(`/rescue/cases/${cid}`);
-                  }}
-                >
-                  <ShieldCheck size={18} /> Open Rescue Case
-                </button>
-              ) : (
+              <div className="flex items-center gap-2">
+                {role === 'RescueOfficer' && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      const cid = viewDetailPet.caseId;
+                      setViewDetailPet(null);
+                      navigate(`/rescue/cases/${cid}`);
+                    }}
+                  >
+                    <ShieldCheck size={18} /> Open Rescue Case
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn btn-accent"
@@ -313,7 +298,7 @@ export const AdoptablePetsPage = () => {
                 >
                   <Heart size={18} /> Proceed to Application
                 </button>
-              )}
+              </div>
             </div>
           }
         >
