@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { careServiceApi } from '../../api/careServiceApi';
 import { petApi } from '../../api/petApi';
 import { rescueApi } from '../../api/rescueApi';
+import { userApi } from '../../api/userApi';
 import { RescueCaseStatus, ServiceStatus } from '../../types';
 import { USE_MOCK_DATA } from '../../api/client';
 import { mockStore } from '../../data/mockStore';
@@ -68,6 +69,38 @@ export const ServiceLogsPage = () => {
   const [selectedPetId, setSelectedPetId] = useState('');
   const [walkinPetName, setWalkinPetName] = useState('');
   const [walkinOwnerName, setWalkinOwnerName] = useState('');
+
+  // Rescue Officers for handoff
+  const [officers, setOfficers] = useState([]);
+  const [selectedOfficerId, setSelectedOfficerId] = useState('');
+
+  useEffect(() => {
+    const fetchOfficers = async () => {
+      try {
+        const list = await userApi.getUsers({ role: 'RescueOfficer' });
+        const activeOfficers = (list || []).filter((u) => u.status === 'Active');
+        if (activeOfficers.length > 0) {
+          setOfficers(activeOfficers);
+          setSelectedOfficerId(activeOfficers[0].userId);
+        } else {
+          const fallbacks = [
+            { userId: 'USR-006', fullName: 'David Thorne (Senior Rescue Officer)' },
+            { userId: 'USR-018', fullName: 'Rescue Operations Lead' },
+          ];
+          setOfficers(fallbacks);
+          setSelectedOfficerId(fallbacks[0].userId);
+        }
+      } catch (e) {
+        const fallbacks = [
+          { userId: 'USR-006', fullName: 'David Thorne (Senior Rescue Officer)' },
+          { userId: 'USR-018', fullName: 'Rescue Operations Lead' },
+        ];
+        setOfficers(fallbacks);
+        setSelectedOfficerId(fallbacks[0].userId);
+      }
+    };
+    fetchOfficers();
+  }, []);
 
   // Edit log modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -321,9 +354,16 @@ export const ServiceLogsPage = () => {
         } catch (ignored) {}
       }
 
-      // 2. Update Rescue Case status to ReadyForFoster or ReadyForAdoption
+      const chosenOfficer = officers.find((o) => o.userId === selectedOfficerId) || {
+        userId: selectedOfficerId || 'USR-006',
+        fullName: 'Rescue Officer',
+      };
+
+      // 2. Update Rescue Case status to ReadyForFoster or ReadyForAdoption & assigned rescue officer
       await rescueApi.updateRescueCase(transferTarget.caseId, {
         status: transferTargetStatus,
+        assignedOfficerId: chosenOfficer.userId,
+        assignedOfficerName: chosenOfficer.fullName,
       });
 
       const destinationLabel =
@@ -333,7 +373,7 @@ export const ServiceLogsPage = () => {
 
       // 3. Add timeline entry
       await rescueApi.addProgressLog(transferTarget.caseId, {
-        title: `Care Completed: Transferred to Rescue Officer (${destinationLabel})`,
+        title: `Care Completed: Transferred to Rescue Officer ${chosenOfficer.fullName} (${destinationLabel})`,
         logType: 'Behavioral',
         notes: transferNotes,
         loggedBy: `${currentUser?.fullName || 'Dilshan Bandara'} (Pet Care Provider)`,
@@ -343,10 +383,10 @@ export const ServiceLogsPage = () => {
       if (USE_MOCK_DATA) {
         mockStore.insertItem('notifications', {
           notificationId: `NTF-${Date.now()}`,
-          userId: 'USR-006',
+          userId: chosenOfficer.userId,
           type: 'Rescue',
           title: 'Rescue Companion Transferred from Care Provider',
-          message: `${transferTarget.petName} care completed and transferred to Rescue Officer with status ${destinationLabel}.`,
+          message: `${transferTarget.petName} care completed and transferred to you by ${currentUser?.fullName || 'Pet Care Provider'} with status ${destinationLabel}.`,
           isRead: false,
           link: `/rescue/cases/${transferTarget.caseId}`,
           createdAt: new Date().toISOString(),
@@ -355,7 +395,7 @@ export const ServiceLogsPage = () => {
 
       showToast(
         'Transferred to Rescue Officer',
-        `${transferTarget.petName} has been transferred to the Rescue Officer (${destinationLabel}).`,
+        `${transferTarget.petName} has been transferred to ${chosenOfficer.fullName} (${destinationLabel}).`,
         'success'
       );
 
@@ -1074,6 +1114,27 @@ export const ServiceLogsPage = () => {
               <p className="text-xs text-muted">
                 The companion will be returned to the Rescue Officer to coordinate foster care placement or adoption listing.
               </p>
+            </div>
+
+            <div className="form-group mt-3">
+              <label className="form-label" style={{ fontWeight: 600 }}>
+                Select Rescue Officer <span className="required">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={selectedOfficerId}
+                onChange={(e) => setSelectedOfficerId(e.target.value)}
+                required
+              >
+                {officers.map((o) => (
+                  <option key={o.userId} value={o.userId}>
+                    {o.fullName || o.name} ({o.userId})
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-muted mt-1 block">
+                The selected rescue officer will take charge of this case and receive an alert.
+              </span>
             </div>
 
             <div className="form-group mt-4">

@@ -34,6 +34,12 @@ public class RescueCaseRequest {
     private String coverPhotoUrl;
     private String fosterParentId;
     private String fosterParentName;
+    private String assignedVetId;
+    private String assignedVetName;
+    private String assignedProviderId;
+    private String assignedProviderName;
+    private String assignedOfficerId;
+    private String assignedOfficerName;
     private String reportedByUserId;
     private String reportedByUserName;
     private String reportedByUserPhone;

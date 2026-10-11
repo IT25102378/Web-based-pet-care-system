@@ -3,10 +3,19 @@ import { mockStore } from '../data/mockStore';
 import { UserStatus } from '../types';
 
 export const userApi = {
-  async getUsers() {
-    if (!USE_MOCK_DATA) return await apiFetch('/users');
+  async getUsers(params = {}) {
+    if (!USE_MOCK_DATA) {
+      const q = typeof params === 'object' && Object.keys(params).length > 0
+        ? `?${new URLSearchParams(params).toString()}`
+        : '';
+      return await apiFetch(`/users${q}`);
+    }
     await simulateDelay();
-    return mockStore.getTable('users');
+    let users = mockStore.getTable('users');
+    if (params?.role) {
+      users = users.filter((u) => u.role === params.role && u.status === UserStatus.ACTIVE);
+    }
+    return users;
   },
 
   async getUserById(userId) {

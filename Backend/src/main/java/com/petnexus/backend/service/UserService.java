@@ -217,6 +217,22 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public List<UserResponse> getUsersByRole(String roleStr) {
+        if (roleStr == null || roleStr.isBlank()) {
+            return getAllUsers();
+        }
+        try {
+            UserRole role = UserRole.valueOf(roleStr.trim());
+            return userRepository.findByRole(role).stream()
+                    .filter(u -> UserStatus.Active.equals(u.getStatus()))
+                    .map(UserResponse::from)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    @Transactional(readOnly = true)
     public UserResponse getUserById(String userId) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));

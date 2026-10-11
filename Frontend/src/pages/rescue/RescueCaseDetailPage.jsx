@@ -28,6 +28,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { PublishListingModal } from '../../components/common/PublishListingModal';
+import { userApi } from '../../api/userApi';
 
 export const RescueCaseDetailPage = () => {
   const { id } = useParams();
@@ -41,6 +42,13 @@ export const RescueCaseDetailPage = () => {
   const [consultations, setConsultations] = useState([]);
   const [careLogs, setCareLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Veterinarian Assignment
+  const [isVetAssignModalOpen, setIsVetAssignModalOpen] = useState(false);
+  const [vets, setVets] = useState([]);
+  const [selectedVetId, setSelectedVetId] = useState('');
+  const [vetNotes, setVetNotes] = useState('');
+  const [isAssigningVet, setIsAssigningVet] = useState(false);
 
   // Modals
   const [isListingModalOpen, setIsListingModalOpen] = useState(false);
@@ -86,6 +94,75 @@ export const RescueCaseDetailPage = () => {
     loadCase();
   }, [id]);
 
+  // Load available active veterinarians
+  useEffect(() => {
+    const fetchVets = async () => {
+      try {
+        const list = await userApi.getUsers({ role: 'Veterinarian' });
+        const activeVets = (list || []).filter((u) => u.status === 'Active');
+        if (activeVets.length > 0) {
+          setVets(activeVets);
+          setSelectedVetId(activeVets[0].userId);
+        } else {
+          const fallbackVets = [
+            { userId: 'USR-002', fullName: 'Dr. Sachini Wijesinghe, BVSc', specialization: 'Small Animal Surgery & Internal Medicine' },
+            { userId: 'USR-014', fullName: 'Dr. Oshada', specialization: 'Clinical Veterinarian' },
+          ];
+          setVets(fallbackVets);
+          setSelectedVetId(fallbackVets[0].userId);
+        }
+      } catch (err) {
+        console.warn('Could not load veterinarians:', err);
+        const fallbackVets = [
+          { userId: 'USR-002', fullName: 'Dr. Sachini Wijesinghe, BVSc', specialization: 'Small Animal Surgery & Internal Medicine' },
+          { userId: 'USR-014', fullName: 'Dr. Oshada', specialization: 'Clinical Veterinarian' },
+        ];
+        setVets(fallbackVets);
+        setSelectedVetId(fallbackVets[0].userId);
+      }
+    };
+    fetchVets();
+  }, []);
+
+  const openVetAssignModal = () => {
+    setVetNotes(`Animal transferred from intake for initial clinical evaluation, medical screening, and health clearance.`);
+    setIsVetAssignModalOpen(true);
+  };
+
+  const handleConfirmVetAssign = async (e) => {
+    e?.preventDefault();
+    if (!selectedVetId || isAssigningVet) return;
+    setIsAssigningVet(true);
+    try {
+      const chosenVet = vets.find((v) => v.userId === selectedVetId) || {
+        userId: selectedVetId,
+        fullName: 'Veterinarian',
+      };
+
+      await rescueApi.updateRescueCase(rescueCase.caseId, {
+        status: RescueCaseStatus.IN_TREATMENT,
+        isPublishedForAdoption: false,
+        assignedVetId: chosenVet.userId,
+        assignedVetName: chosenVet.fullName,
+      });
+
+      await rescueApi.addProgressLog(rescueCase.caseId, {
+        title: `Animal dispatched to Veterinarian: ${chosenVet.fullName}`,
+        logType: 'Medical',
+        notes: vetNotes || `Animal transferred from intake to ${chosenVet.fullName} for initial clinical clearance.`,
+        loggedBy: 'Rescue Officer',
+      });
+
+      showToast('Dispatched to Veterinarian', `Case assigned to ${chosenVet.fullName} for medical assessment.`, 'success');
+      setIsVetAssignModalOpen(false);
+      loadCase();
+    } catch (err) {
+      showToast('Transfer Failed', err.message, 'error');
+    } finally {
+      setIsAssigningVet(false);
+    }
+  };
+
   // Auto-correct invalid published state: unpublish cases that are not ReadyForAdoption
   useEffect(() => {
     if (
@@ -95,11 +172,8 @@ export const RescueCaseDetailPage = () => {
     ) {
       rescueApi
         .updateRescueCase(rescueCase.caseId, { isPublishedForAdoption: false })
-        // bypass the guard by calling updateItem directly would fail, so we patch mockStore
-        // via a raw update that only sets the flag to false (never true, so guard allows it)
         .then(() => loadCase())
         .catch(() => {
-          // If API rejects (shouldn't for false), force the local state to appear unpublished
           setRescueCase((prev) => ({ ...prev, isPublishedForAdoption: false }));
         });
     }
@@ -107,6 +181,11 @@ export const RescueCaseDetailPage = () => {
 
   const handleStatusChange = async (newStatus) => {
     if (!newStatus || newStatus === rescueCase.status) return; // no-op for same status
+
+    if (newStatus === RescueCaseStatus.IN_TREATMENT) {
+      openVetAssignModal();
+      return;
+    }
 
     try {
       const updates = { status: newStatus };
@@ -465,6 +544,11 @@ export const RescueCaseDetailPage = () => {
           ) : (
             <span className="badge badge-success text-xs"><Check size={12} /> Completed</span>
           )}
+          {rescueCase.assignedVetName && (
+            <p className="text-xs text-muted mt-2">
+              Assigned Vet: <strong style={{ color: 'var(--text-main)' }}>{rescueCase.assignedVetName}</strong>
+            </p>
+          )}
         </div>
         <div className="card p-4" style={{ borderLeft: '4px solid var(--accent)' }}>
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Pet Care / Rehabilitation</h4>
@@ -475,6 +559,11 @@ export const RescueCaseDetailPage = () => {
           ) : (
             <span className="badge badge-secondary text-xs">Awaiting Vet Clearance</span>
           )}
+          {rescueCase.assignedProviderName && (
+            <p className="text-xs text-muted mt-2">
+              Assigned Provider: <strong style={{ color: 'var(--text-main)' }}>{rescueCase.assignedProviderName}</strong>
+            </p>
+          )}
         </div>
         <div className="card p-4" style={{ borderLeft: '4px solid var(--status-success)' }}>
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Adoption Readiness</h4>
@@ -484,6 +573,11 @@ export const RescueCaseDetailPage = () => {
             <span className="badge badge-success text-xs"><Check size={12} /> Cleared for Adoption</span>
           ) : (
             <span className="badge badge-secondary text-xs">Pending Clinical & Care Stages</span>
+          )}
+          {rescueCase.assignedOfficerName && (
+            <p className="text-xs text-muted mt-2">
+              Handover Officer: <strong style={{ color: 'var(--text-main)' }}>{rescueCase.assignedOfficerName}</strong>
+            </p>
           )}
         </div>
       </div>
@@ -821,6 +915,69 @@ export const RescueCaseDetailPage = () => {
               <Check size={16} /> Confirm Placement
             </button>
           </div>
+        </Modal>
+      )}
+
+      {/* Assign Veterinarian Modal */}
+      {isVetAssignModalOpen && (
+        <Modal
+          isOpen={isVetAssignModalOpen}
+          onClose={() => !isAssigningVet && setIsVetAssignModalOpen(false)}
+          title="Send to Veterinarian"
+          subtitle={`Assign clinical evaluation for ${rescueCase.temporaryName}`}
+          size="md"
+        >
+          <form onSubmit={handleConfirmVetAssign}>
+            <div className="form-group mb-4">
+              <label className="form-label" style={{ fontWeight: 600 }}>
+                Select Veterinarian <span className="text-danger">*</span>
+              </label>
+              <select
+                className="form-select"
+                value={selectedVetId}
+                onChange={(e) => setSelectedVetId(e.target.value)}
+                required
+              >
+                {vets.map((v) => (
+                  <option key={v.userId} value={v.userId}>
+                    {v.fullName || v.name} {v.specialization ? `(${v.specialization})` : ''}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-muted mt-1 block">
+                The selected veterinarian will receive a case notification and be assigned to record clinical observations.
+              </span>
+            </div>
+
+            <div className="form-group mb-4">
+              <label className="form-label" style={{ fontWeight: 600 }}>Clinical Intake Notes & Instructions</label>
+              <textarea
+                className="form-textarea"
+                rows={3}
+                value={vetNotes}
+                onChange={(e) => setVetNotes(e.target.value)}
+                placeholder="Describe current symptoms, injuries, or priority assessments needed..."
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 mt-6">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsVetAssignModalOpen(false)}
+                disabled={isAssigningVet}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isAssigningVet || !selectedVetId}
+              >
+                <Stethoscope size={16} /> {isAssigningVet ? 'Assigning...' : 'Dispatch to Veterinarian'}
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 

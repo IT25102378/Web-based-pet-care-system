@@ -165,6 +165,12 @@ public class RescueCaseService {
                 .coverPhotoUrl(request.getCoverPhotoUrl())
                 .fosterParentId(request.getFosterParentId())
                 .fosterParentName(request.getFosterParentName())
+                .assignedVetId(request.getAssignedVetId())
+                .assignedVetName(request.getAssignedVetName())
+                .assignedProviderId(request.getAssignedProviderId())
+                .assignedProviderName(request.getAssignedProviderName())
+                .assignedOfficerId(request.getAssignedOfficerId())
+                .assignedOfficerName(request.getAssignedOfficerName())
                 .build();
 
         rescueCase = rescueCaseRepository.save(rescueCase);
@@ -408,6 +414,54 @@ public class RescueCaseService {
         if (request.getReportedByUserId()    != null) rescueCase.setReportedByUserId(request.getReportedByUserId());
         if (request.getReportedByUserName()  != null) rescueCase.setReportedByUserName(request.getReportedByUserName());
         if (request.getReportedByUserPhone() != null) rescueCase.setReportedByUserPhone(request.getReportedByUserPhone());
+        if (request.getAssignedVetId()        != null) rescueCase.setAssignedVetId(request.getAssignedVetId());
+        if (request.getAssignedVetName()      != null) rescueCase.setAssignedVetName(request.getAssignedVetName());
+        if (request.getAssignedProviderId()   != null) rescueCase.setAssignedProviderId(request.getAssignedProviderId());
+        if (request.getAssignedProviderName() != null) rescueCase.setAssignedProviderName(request.getAssignedProviderName());
+        if (request.getAssignedOfficerId()    != null) rescueCase.setAssignedOfficerId(request.getAssignedOfficerId());
+        if (request.getAssignedOfficerName()  != null) rescueCase.setAssignedOfficerName(request.getAssignedOfficerName());
+
+        if (request.getAssignedVetId() != null && !request.getAssignedVetId().isBlank()) {
+            try {
+                notificationService.createNotification(
+                    request.getAssignedVetId().trim(),
+                    com.petnexus.backend.enums.NotificationType.Rescue,
+                    "🐾 Rescue Case Assigned",
+                    "Rescue case " + rescueCase.getTemporaryName() + " has been assigned to you for veterinary intake assessment.",
+                    "/vet/schedule"
+                );
+            } catch (Exception e) {
+                log.warn("Failed to notify assigned vet {}: {}", request.getAssignedVetId(), e.getMessage());
+            }
+        }
+
+        if (request.getAssignedProviderId() != null && !request.getAssignedProviderId().isBlank()) {
+            try {
+                notificationService.createNotification(
+                    request.getAssignedProviderId().trim(),
+                    com.petnexus.backend.enums.NotificationType.Rescue,
+                    "🐾 Rescue Animal Transferred",
+                    "Rescue companion " + rescueCase.getTemporaryName() + " has been transferred to you for rehabilitation & grooming care.",
+                    "/provider/status"
+                );
+            } catch (Exception e) {
+                log.warn("Failed to notify assigned provider {}: {}", request.getAssignedProviderId(), e.getMessage());
+            }
+        }
+
+        if (request.getAssignedOfficerId() != null && !request.getAssignedOfficerId().isBlank()) {
+            try {
+                notificationService.createNotification(
+                    request.getAssignedOfficerId().trim(),
+                    com.petnexus.backend.enums.NotificationType.Rescue,
+                    "🐾 Companion Returned from Care",
+                    "Rescue companion " + rescueCase.getTemporaryName() + " has finished rehabilitation care and is transferred back to your roster.",
+                    "/rescue/cases/" + rescueCase.getCaseId()
+                );
+            } catch (Exception e) {
+                log.warn("Failed to notify assigned officer {}: {}", request.getAssignedOfficerId(), e.getMessage());
+            }
+        }
         if (publishedFlag != null) {
             rescueCase.setIsPublishedForAdoption(publishedFlag);
             if (Boolean.TRUE.equals(publishedFlag)) {
@@ -664,6 +718,12 @@ public class RescueCaseService {
                 .coverPhotoUrl(rc.getCoverPhotoUrl())
                 .fosterParentId(rc.getFosterParentId())
                 .fosterParentName(rc.getFosterParentName())
+                .assignedVetId(rc.getAssignedVetId())
+                .assignedVetName(rc.getAssignedVetName())
+                .assignedProviderId(rc.getAssignedProviderId())
+                .assignedProviderName(rc.getAssignedProviderName())
+                .assignedOfficerId(rc.getAssignedOfficerId())
+                .assignedOfficerName(rc.getAssignedOfficerName())
                 .reportedByUserId(rc.getReportedByUserId())
                 .reportedByUserName(rc.getReportedByUserName())
                 .reportedByUserPhone(rc.getReportedByUserPhone())
@@ -697,6 +757,12 @@ public class RescueCaseService {
                 .coverPhotoUrl(rc.getCoverPhotoUrl())
                 .fosterParentId(rc.getFosterParentId())
                 .fosterParentName(rc.getFosterParentName())
+                .assignedVetId(rc.getAssignedVetId())
+                .assignedVetName(rc.getAssignedVetName())
+                .assignedProviderId(rc.getAssignedProviderId())
+                .assignedProviderName(rc.getAssignedProviderName())
+                .assignedOfficerId(rc.getAssignedOfficerId())
+                .assignedOfficerName(rc.getAssignedOfficerName())
                 .reportedByUserId(rc.getReportedByUserId())
                 .reportedByUserName(rc.getReportedByUserName())
                 .reportedByUserPhone(rc.getReportedByUserPhone())

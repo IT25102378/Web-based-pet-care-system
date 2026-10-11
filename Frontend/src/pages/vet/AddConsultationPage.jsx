@@ -4,6 +4,7 @@ import { petApi } from '../../api/petApi';
 import { consultationApi } from '../../api/consultationApi';
 import { rescueApi } from '../../api/rescueApi';
 import { careServiceApi } from '../../api/careServiceApi';
+import { userApi } from '../../api/userApi';
 import { RescueCaseStatus } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -20,6 +21,11 @@ export const AddConsultationPage = () => {
   const [rescueCases, setRescueCases] = useState([]);
   const [selectedPetId, setSelectedPetId] = useState('');
   const [appointmentId, setAppointmentId] = useState('');
+
+  // Pet Care Providers
+  const [providers, setProviders] = useState([]);
+  const [selectedProviderId, setSelectedProviderId] = useState('');
+
   const [formData, setFormData] = useState({
     temperatureC: 38.5,
     heartRateBpm: 90,
@@ -53,6 +59,30 @@ export const AddConsultationPage = () => {
       );
       setPets(petList || []);
       setRescueCases(awaitingRescues);
+
+      // Load Pet Care Providers
+      try {
+        const providerList = await userApi.getUsers({ role: 'PetCareProvider' });
+        const activeProviders = (providerList || []).filter(u => u.status === 'Active');
+        if (activeProviders.length > 0) {
+          setProviders(activeProviders);
+          setSelectedProviderId(activeProviders[0].userId);
+        } else {
+          const fallbacks = [
+            { userId: 'USR-016', fullName: 'Eshani (Pet Care Provider)' },
+            { userId: 'USR-004', fullName: 'Nimali Fernando (Grooming Specialist)' },
+          ];
+          setProviders(fallbacks);
+          setSelectedProviderId(fallbacks[0].userId);
+        }
+      } catch (e) {
+        const fallbacks = [
+          { userId: 'USR-016', fullName: 'Eshani (Pet Care Provider)' },
+          { userId: 'USR-004', fullName: 'Nimali Fernando (Grooming Specialist)' },
+        ];
+        setProviders(fallbacks);
+        setSelectedProviderId(fallbacks[0].userId);
+      }
 
       // If opened via Dashboard "Start Assessment" button, auto-select the rescue case
       const inboundCaseId = location.state?.rescueCaseId;
@@ -108,10 +138,19 @@ export const AddConsultationPage = () => {
           vetName: currentUser?.fullName || 'Dr. Michael Chen, DVM',
         });
 
-        // Always update rescue case status: if passToProvider is true -> ReadyForFoster, otherwise InTreatment
+        const chosenProvider = providers.find((p) => p.userId === selectedProviderId) || {
+          userId: selectedProviderId || 'USR-016',
+          fullName: 'Pet Care Provider',
+        };
+
+        // Always update rescue case status: if passToProvider is true -> ReadyForFoster with assigned provider, otherwise InTreatment
         const updates = {
           status: formData.passToProvider ? RescueCaseStatus.READY_FOR_FOSTER : RescueCaseStatus.IN_TREATMENT,
         };
+        if (formData.passToProvider) {
+          updates.assignedProviderId = chosenProvider.userId;
+          updates.assignedProviderName = chosenProvider.fullName;
+        }
         if (formData.rescueMedicalSummary) {
           updates.medicalSummary = formData.rescueMedicalSummary;
         }
@@ -119,7 +158,7 @@ export const AddConsultationPage = () => {
 
         await rescueApi.addProgressLog(selectedPetId, {
           title: formData.passToProvider 
-            ? `Veterinary assessment completed. Case passed to Pet Care Provider.` 
+            ? `Veterinary assessment completed. Case transferred to Pet Care Provider: ${chosenProvider.fullName}.` 
             : `Veterinary Consultation: ${formData.assessmentDiagnosis}`,
           logType: 'Medical',
           notes: formData.treatmentPlan,
@@ -128,7 +167,7 @@ export const AddConsultationPage = () => {
 
         if (formData.passToProvider) {
           try {
-            // Create a care service log assigned to Pet Care Provider (Eshani).
+            // Create a care service log assigned to selected Pet Care Provider
             await careServiceApi.createServiceLog({
               caseId: selectedPetId,
               petName: rescueObj ? rescueObj.temporaryName : 'Rescue Patient',
@@ -142,8 +181,8 @@ export const AddConsultationPage = () => {
               ownerName: 'Rescue Organization',
               vetId: currentUser?.userId,
               vetName: currentUser?.fullName,
-              providerId: 'USR-016',
-              providerName: 'Eshani',
+              providerId: chosenProvider.userId,
+              providerName: chosenProvider.fullName,
               status: 'CheckedIn',
               returnToRescue: true,
               serviceDate: new Date().toISOString().split('T')[0],
@@ -165,9 +204,10 @@ export const AddConsultationPage = () => {
       }
 
       if (patientType === 'rescue' && formData.passToProvider) {
+        const chosenProvider = providers.find((p) => p.userId === selectedProviderId);
         showToast(
           '✅ Transferred to Pet Care Provider',
-          `Medical report saved. ${rescueCases.find(r => r.caseId === selectedPetId)?.temporaryName || selectedPetId} is now queued for the Pet Care Provider. Issue a prescription if needed.`,
+          `Medical report saved. ${rescueCases.find(r => r.caseId === selectedPetId)?.temporaryName || selectedPetId} has been transferred to ${chosenProvider?.fullName || 'Pet Care Provider'}. Issue a prescription if needed.`,
           'success'
         );
         // Route vet to prescriptions page for the rescue case (optional step)
@@ -319,7 +359,7 @@ export const AddConsultationPage = () => {
                       onChange={() => setFormData({ ...formData, passToProvider: true })}
                       style={{ marginTop: '2px' }}
                     />
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div className="flex items-center gap-2">
                         <Scissors size={14} color="#D97706" />
                         <strong className="text-sm" style={{ color: '#92400E' }}>Pass to Pet Care Provider</strong>
@@ -327,6 +367,34 @@ export const AddConsultationPage = () => {
                       <p className="text-xs text-muted mt-0.5">
                         Animal is medically cleared. Grooming, rehabilitation & behavioral care will be arranged by the Pet Care Provider before returning to Rescue Officer.
                       </p>
+
+                      {formData.passToProvider && (
+                        <div
+                          className="mt-3 pt-3"
+                          style={{ borderTop: '1px dashed rgba(217, 119, 6, 0.3)' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <label className="form-label text-xs font-bold" style={{ color: '#92400E', marginBottom: '0.35rem' }}>
+                            Choose Pet Care Provider <span className="text-danger">*</span>
+                          </label>
+                          <select
+                            className="form-select text-sm"
+                            value={selectedProviderId}
+                            onChange={(e) => setSelectedProviderId(e.target.value)}
+                            required={formData.passToProvider}
+                            style={{ backgroundColor: '#fff' }}
+                          >
+                            {providers.map((p) => (
+                              <option key={p.userId} value={p.userId}>
+                                {p.fullName || p.name} {p.businessName ? `(${p.businessName})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="text-xs text-muted mt-1 block">
+                            Assigned provider will manage foster bathing, rehabilitation, and care intake.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </label>
 

@@ -33,10 +33,13 @@ public class UserController {
     // User Retrieval
     // =========================================================================
 
-    /** GET /api/users — Get all users */
-    @PreAuthorize("hasRole('Admin')")
+    /** GET /api/users — Get all users or filter by role for professional assignment */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getUsers() {
+    public ResponseEntity<List<UserResponse>> getUsers(@RequestParam(required = false) String role) {
+        if (role != null && !role.isBlank()) {
+            return ResponseEntity.ok(userService.getUsersByRole(role));
+        }
         return ResponseEntity.ok(userService.getAllUsers());
     }
 

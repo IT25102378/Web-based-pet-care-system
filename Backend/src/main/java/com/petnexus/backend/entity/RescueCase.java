@@ -119,6 +119,28 @@ public class RescueCase {
     private String fosterParentName;
 
     // -----------------------------------------------------------------------
+    // Professional Workflow Assignments
+    // -----------------------------------------------------------------------
+
+    @Column(length = 50)
+    private String assignedVetId;
+
+    @Column(length = 150)
+    private String assignedVetName;
+
+    @Column(length = 50)
+    private String assignedProviderId;
+
+    @Column(length = 150)
+    private String assignedProviderName;
+
+    @Column(length = 50)
+    private String assignedOfficerId;
+
+    @Column(length = 150)
+    private String assignedOfficerName;
+
+    // -----------------------------------------------------------------------
     // Reported By (Pet Owner Community Rescue Reports)
     // -----------------------------------------------------------------------
 

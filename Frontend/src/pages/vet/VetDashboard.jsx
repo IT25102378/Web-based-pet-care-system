@@ -272,6 +272,11 @@ export const VetDashboard = () => {
                     <p className="text-xs text-muted">
                       Found at: {rc.rescueLocation}
                     </p>
+                    {rc.assignedVetName && (
+                      <p className="text-xs mt-1" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                        Assigned Clinician: {rc.assignedVetName}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Link
