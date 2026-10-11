@@ -141,7 +141,7 @@ public class DesignPatternController {
         result.put("isEmergency", isEmergency);
         result.put("isRescueAnimal", isRescueAnimal);
         result.put("finalFee", finalFee);
-        result.put("currency", "USD ($) / LKR Equiv");
+        result.put("currency", "USD ($)");
         result.put("appliedRule", isRescueAnimal ? "100% Non-Profit Subsidy"
                 : isEmergency ? "Emergency Triage (1.5x + $20 Surcharge)"
                 : petAgeYears >= 8 ? "Senior Pet Compassionate Discount (15% Off)"

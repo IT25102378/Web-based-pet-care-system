@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Concrete Strategy: Emergency Urgent Care / Critical Triage Fee Calculation.
- * Implements a 1.5x urgent care multiplier plus a standardized trauma triage surcharge ($20 / LKR 2000).
+ * Implements a 1.5x urgent care multiplier plus a standardized trauma triage surcharge ($20).
  */
 @Component
 public class EmergencyTriageStrategy implements FeeCalculationStrategy {
