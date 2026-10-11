@@ -25,7 +25,7 @@ import {
   initialApprovalHistory,
 } from './initialData';
 
-const STORAGE_PREFIX = 'petnexus_db_v4_';
+const STORAGE_PREFIX = 'petnexus_db_v5_';
 
 const SEED_MAP = {
   users: initialUsers,

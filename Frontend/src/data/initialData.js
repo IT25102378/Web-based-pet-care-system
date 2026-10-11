@@ -639,7 +639,7 @@ export const initialRescueCases = [
     rescueLocation: 'Found near Kandy Road, Kelaniya',
     intakeDate: '2026-07-02',
     conditionSeverity: 'Moderate',
-    status: RescueCaseStatus.INTAKE,
+    status: RescueCaseStatus.IN_FOSTER,
     isPublishedForAdoption: false,
     microchipId: '985141099238471',
     intakeOfficer: 'Shehan Rajapaksha (Rescue Officer)',

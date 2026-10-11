@@ -768,7 +768,7 @@ public class DataInitializer implements CommandLineRunner {
                     .rescueLocation("Found near Kandy Road, Kelaniya")
                     .intakeDate(LocalDate.of(2026, 7, 2))
                     .conditionSeverity("Moderate")
-                    .status("Intake")
+                    .status("InFoster")
                     .isPublishedForAdoption(false)
                     .microchipId("985141099238471")
                     .intakeOfficer("Shehan Rajapaksha (Rescue Officer)")

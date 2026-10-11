@@ -230,6 +230,32 @@ export const RescueCaseDetailPage = () => {
     );
   }
 
+  const hasFosterAssigned = Boolean(rescueCase.fosterParentId || rescueCase.fosterParentName);
+
+  const isCareCompleted = Boolean(
+    hasFosterAssigned ||
+    rescueCase.status === RescueCaseStatus.IN_FOSTER ||
+    rescueCase.status === RescueCaseStatus.READY_FOR_ADOPTION ||
+    rescueCase.status === RescueCaseStatus.ADOPTED ||
+    (careLogs && careLogs.some(
+      (l) =>
+        l.status === 'Completed' ||
+        l.status === 'ReadyForPickup' ||
+        (l.notes && l.notes.toLowerCase().includes('transferred to rescue officer')) ||
+        (l.notes && l.notes.toLowerCase().includes('handed off to rescue')) ||
+        (l.notes && l.notes.toLowerCase().includes('ready for foster'))
+    )) ||
+    (rescueCase.progressLogs && rescueCase.progressLogs.some(
+      (l) =>
+        (l.title && (l.title.toLowerCase().includes('care completed') || l.title.toLowerCase().includes('foster'))) ||
+        (l.logType && l.logType.toLowerCase() === 'foster')
+    ))
+  );
+
+  const isWithCareProvider =
+    !isCareCompleted &&
+    (careLogs && careLogs.some((l) => l.status === 'InProgress' || l.status === 'CheckedIn'));
+
   return (
     <div>
       {/* Back button */}
@@ -356,6 +382,26 @@ export const RescueCaseDetailPage = () => {
               </button>
             )}
 
+            {rescueCase.status === RescueCaseStatus.READY_FOR_FOSTER && (
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={() => handleStatusChange(RescueCaseStatus.IN_FOSTER)}
+              >
+                <Home size={14} /> Confirm In Foster Care
+              </button>
+            )}
+
+            {rescueCase.status === RescueCaseStatus.IN_FOSTER && !rescueCase.isPublishedForAdoption && (
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={() => handleStatusChange(RescueCaseStatus.READY_FOR_ADOPTION)}
+              >
+                <Heart size={14} /> Mark Ready for Adoption
+              </button>
+            )}
+
             {/* Publish / Hide / List for Adoption action */}
             {rescueCase.isPublishedForAdoption ? (
               <button
@@ -420,12 +466,12 @@ export const RescueCaseDetailPage = () => {
         </div>
         <div className="card p-4" style={{ borderLeft: '4px solid var(--accent)' }}>
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Pet Care / Rehabilitation</h4>
-          {rescueCase.status === RescueCaseStatus.INTAKE || rescueCase.status === RescueCaseStatus.IN_TREATMENT ? (
-            <span className="badge badge-secondary text-xs">Awaiting Vet Clearance</span>
-          ) : rescueCase.status === RescueCaseStatus.READY_FOR_FOSTER ? (
+          {isCareCompleted ? (
+            <span className="badge badge-success text-xs"><Check size={12} /> Completed</span>
+          ) : isWithCareProvider ? (
             <span className="badge badge-warning text-xs">With Care Provider</span>
           ) : (
-            <span className="badge badge-success text-xs"><Check size={12} /> Completed</span>
+            <span className="badge badge-secondary text-xs">Awaiting Vet Clearance</span>
           )}
         </div>
         <div className="card p-4" style={{ borderLeft: '4px solid var(--status-success)' }}>
