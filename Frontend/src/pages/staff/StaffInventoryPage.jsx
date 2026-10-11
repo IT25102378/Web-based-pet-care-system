@@ -296,10 +296,10 @@ export const StaffInventoryPage = () => {
       render: (row) => (
         <div>
           <span className="font-semibold text-xs text-gray-800">
-            LKR {Number(row.unitPrice || 0).toLocaleString()}
+            ${Number(row.unitPrice || 0).toLocaleString()}
           </span>
           <div className="text-xs text-muted">
-            Sell: LKR {Number(row.sellingPrice || 0).toLocaleString()}
+            Sell: ${Number(row.sellingPrice || 0).toLocaleString()}
           </div>
         </div>
       ),
@@ -689,7 +689,7 @@ export const StaffInventoryPage = () => {
 
           <div className="grid-2 gap-4">
             <div>
-              <label className="form-label font-bold text-xs">Unit Cost (LKR)</label>
+              <label className="form-label font-bold text-xs">Unit Cost ($)</label>
               <input
                 type="number"
                 step="0.01"
@@ -700,7 +700,7 @@ export const StaffInventoryPage = () => {
               />
             </div>
             <div>
-              <label className="form-label font-bold text-xs">Selling Price (LKR)</label>
+              <label className="form-label font-bold text-xs">Selling Price ($)</label>
               <input
                 type="number"
                 step="0.01"
@@ -861,7 +861,7 @@ export const StaffInventoryPage = () => {
 
             <div className="grid-2 gap-4">
               <div>
-                <label className="form-label font-bold text-xs">Unit Cost (LKR)</label>
+                <label className="form-label font-bold text-xs">Unit Cost ($)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -872,7 +872,7 @@ export const StaffInventoryPage = () => {
                 />
               </div>
               <div>
-                <label className="form-label font-bold text-xs">Selling Price (LKR)</label>
+                <label className="form-label font-bold text-xs">Selling Price ($)</label>
                 <input
                   type="number"
                   step="0.01"

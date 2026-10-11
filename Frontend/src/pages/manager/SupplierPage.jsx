@@ -298,7 +298,7 @@ export const SupplierPage = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Estimated Order Value (Rs.) <span className="required">*</span></label>
+              <label className="form-label">Estimated Order Value ($) <span className="required">*</span></label>
               <input
                 type="number"
                 step="0.01"

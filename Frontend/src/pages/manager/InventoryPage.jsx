@@ -208,10 +208,10 @@ export const InventoryPage = () => {
       render: (row) => (
         <div>
           <div className="font-semibold text-xs text-gray-800">
-            Cost: LKR {Number(row.unitPrice || 0).toLocaleString()}
+            Cost: ${Number(row.unitPrice || 0).toLocaleString()}
           </div>
           <div className="text-xs font-bold" style={{ color: 'var(--primary)' }}>
-            Sell: LKR {Number(row.sellingPrice || 0).toLocaleString()}
+            Sell: ${Number(row.sellingPrice || 0).toLocaleString()}
           </div>
           {row.expiryDate && (
             <div className="text-xs text-muted">
