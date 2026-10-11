@@ -432,13 +432,15 @@ export const RescueCaseDetailPage = () => {
               </button>
             )}
 
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setIsAssignFosterOpen(true)}
-            >
-              <Home size={14} /> Assign Foster
-            </button>
+            {!hasFosterAssigned && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setIsAssignFosterOpen(true)}
+              >
+                <Home size={14} /> Assign Foster
+              </button>
+            )}
 
             <button
               type="button"
@@ -556,13 +558,25 @@ export const RescueCaseDetailPage = () => {
                   borderRadius: 'var(--radius-md)',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'space-between',
                   gap: '0.6rem',
                 }}
               >
-                <Home size={18} color="var(--primary)" />
-                <div className="text-xs">
-                  <strong>Current Foster Parent:</strong> {rescueCase.fosterParentName}
+                <div className="flex items-center gap-2">
+                  <Home size={18} color="var(--primary)" />
+                  <div className="text-xs">
+                    <strong>Current Foster Parent:</strong> {rescueCase.fosterParentName}
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm text-primary"
+                  onClick={() => setIsAssignFosterOpen(true)}
+                  style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', fontWeight: 600 }}
+                  title="Reassign to another foster home"
+                >
+                  Change Foster
+                </button>
               </div>
             )}
           </div>
