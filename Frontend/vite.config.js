@@ -12,6 +12,7 @@ export default defineConfig({
     exclude: ['tests/**', 'node_modules/**', 'dist/**'],
   },
   server: {
+    host: true,
     port: 3000,
     open: true,
     proxy: {
