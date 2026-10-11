@@ -305,6 +305,8 @@ export const authApi = {
    */
   async fetchCurrentUser() {
     if (!USE_MOCK_DATA) {
+      const token = tokenStore.getToken();
+      if (!token) return null;
       try {
         return await apiFetch('/auth/me');
       } catch (_) {

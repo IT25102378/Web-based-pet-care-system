@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { notificationApi } from '../api/notificationApi';
+import { tokenStore } from '../api/client';
 import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext(null);
@@ -10,7 +11,8 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
-    if (!currentUser) {
+    const token = tokenStore.getToken();
+    if (!currentUser || !token) {
       setNotifications([]);
       setUnreadCount(0);
       return;

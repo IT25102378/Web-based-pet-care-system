@@ -96,7 +96,7 @@ export async function apiFetch(endpoint, options = {}, skipAuth = false) {
   } catch (_) { /* empty body */ }
 
   if (!response.ok) {
-    if (response.status === 401) {
+    if (response.status === 401 && !skipAuth && tokenStore.getToken()) {
       window.dispatchEvent(new CustomEvent('petnexus:unauthorized'));
     }
     const message = body?.message || `HTTP ${response.status}: ${response.statusText}`;
