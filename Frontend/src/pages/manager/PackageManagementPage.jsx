@@ -164,11 +164,11 @@ export const PackageManagementPage = () => {
 
               <div className="flex items-baseline gap-2 mb-4">
                 <span style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--primary-dark)' }}>
-                  Rs. {Number(pkg.price).toLocaleString()}
+                  ${Number(pkg.price).toLocaleString()}
                 </span>
                 {pkg.originalValue > pkg.price && (
                   <span style={{ textDecoration: 'line-through', color: 'var(--text-subtle)', fontSize: '1rem' }}>
-                    Rs. {Number(pkg.originalValue).toLocaleString()}
+                    ${Number(pkg.originalValue).toLocaleString()}
                   </span>
                 )}
               </div>
@@ -222,7 +222,7 @@ export const PackageManagementPage = () => {
 
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Special Package Price (Rs.) <span className="required">*</span></label>
+                <label className="form-label">Special Package Price ($) <span className="required">*</span></label>
                 <input
                   type="number"
                   step="0.01"
@@ -234,7 +234,7 @@ export const PackageManagementPage = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Original Standard Value (Rs.)</label>
+                <label className="form-label">Original Standard Value ($)</label>
                 <input
                   type="number"
                   step="0.01"

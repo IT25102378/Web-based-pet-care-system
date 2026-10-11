@@ -349,8 +349,8 @@ export const LandingPage = () => {
                   <p>{pkg.tagline}</p>
 
                   <div className="lp-price">
-                    <strong>Rs. {pkg.price.toLocaleString()}</strong>
-                    {pkg.originalValue > pkg.price && <s>Rs. {pkg.originalValue.toLocaleString()}</s>}
+                    <strong>${pkg.price.toLocaleString()}</strong>
+                    {pkg.originalValue > pkg.price && <s>${pkg.originalValue.toLocaleString()}</s>}
                   </div>
 
                   <div className="lp-plan-features">

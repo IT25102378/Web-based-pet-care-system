@@ -391,12 +391,12 @@ export const PackagesBrowsePage = () => {
 
                 <div className="flex items-baseline gap-2 mb-6">
                   <span style={{ fontSize: '2rem', fontWeight: 800, color: isCareOnly ? 'var(--primary)' : isMedicalOnly ? 'var(--primary)' : 'var(--primary-dark)' }}>
-                    Rs. {pkg.price.toLocaleString()}
+                    ${pkg.price.toLocaleString()}
                   </span>
                   {pkg.originalValue > pkg.price && (
                     <>
                       <span style={{ textDecoration: 'line-through', color: 'var(--text-subtle)', fontSize: '1.1rem' }}>
-                        Rs. {pkg.originalValue.toLocaleString()}
+                        ${pkg.originalValue.toLocaleString()}
                       </span>
                       <span className="badge badge-warning text-xs">Save {pkg.discountPercent}%</span>
                     </>
@@ -497,7 +497,7 @@ export const PackagesBrowsePage = () => {
           isOpen={!!bookingPackage}
           onClose={() => setBookingPackage(null)}
           title={`Enroll: ${bookingPackage.name}`}
-          subtitle={`Total Investment: Rs. ${bookingPackage.price.toLocaleString()}`}
+          subtitle={`Total Investment: $${bookingPackage.price.toLocaleString()}`}
           size="md"
           footer={
             <div className="flex items-center justify-end gap-2" style={{ width: '100%' }}>
