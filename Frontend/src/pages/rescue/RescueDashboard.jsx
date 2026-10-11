@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { rescueApi } from '../../api/rescueApi';
 import { adoptionApi } from '../../api/adoptionApi';
 import { StatCard } from '../../components/common/StatCard';
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export const RescueDashboard = () => {
+  const navigate = useNavigate();
   const [cases, setCases] = useState([]);
   const [applications, setApplications] = useState([]);
   const [fosters, setFosters] = useState([]);
@@ -82,6 +83,9 @@ export const RescueDashboard = () => {
           <Link to="/rescue/register-case" className="apple-pill-btn apple-pill-btn-primary" style={{ background: 'var(--primary)' }}>
             <PlusCircle size={16} /> Register Intake
           </Link>
+          <Link to="/rescue/fosters" className="apple-pill-btn apple-pill-btn-secondary">
+            <Home size={16} /> Foster Care ({fosters.length})
+          </Link>
           <Link to="/rescue/applications" className="apple-pill-btn apple-pill-btn-secondary">
             <FileCheck size={16} /> Applications ({pendingReviewApps})
           </Link>
@@ -96,6 +100,7 @@ export const RescueDashboard = () => {
           icon={FolderOpen}
           trend="In system"
           trendDirection="up"
+          onClick={() => navigate('/rescue/cases')}
         />
         <StatCard
           label="In Medical Rehab"
@@ -104,6 +109,7 @@ export const RescueDashboard = () => {
           iconBg="rgba(14, 165, 233, 0.15)"
           iconColor="#0EA5E9"
           trend="Under Dr. Chen"
+          onClick={() => navigate('/rescue/cases')}
         />
         <StatCard
           label="In Foster Care"
@@ -112,6 +118,7 @@ export const RescueDashboard = () => {
           iconBg="rgba(139, 92, 246, 0.15)"
           iconColor="#8B5CF6"
           trend={`${fosters.length} active fosters`}
+          onClick={() => navigate('/rescue/fosters')}
         />
         <StatCard
           label="Ready For Adoption"
@@ -120,6 +127,7 @@ export const RescueDashboard = () => {
           iconBg="var(--primary-subtle)"
           iconColor="var(--accent)"
           trend="Published to gallery"
+          onClick={() => navigate('/rescue/listings')}
         />
       </div>
 

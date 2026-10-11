@@ -50,6 +50,7 @@ import { RescueCaseDetailPage } from './pages/rescue/RescueCaseDetailPage';
 import { AdoptionListingsPage } from './pages/rescue/AdoptionListingsPage';
 import { AdoptionReviewPage } from './pages/rescue/AdoptionReviewPage';
 import { AdoptionHistoryPage } from './pages/rescue/AdoptionHistoryPage';
+import { FosterManagementPage } from './pages/rescue/FosterManagementPage';
 
 // Veterinarian Role Pages
 import { VetDashboard } from './pages/vet/VetDashboard';
@@ -130,6 +131,7 @@ export function App() {
           <Route path="register-case" element={<RegisterRescuePage />} />
           <Route path="cases" element={<RescueCaseListPage />} />
           <Route path="cases/:id" element={<RescueCaseDetailPage />} />
+          <Route path="fosters" element={<FosterManagementPage />} />
           <Route path="listings" element={<AdoptionListingsPage />} />
           <Route path="adoptable-pets" element={<AdoptablePetsPage />} />
           <Route path="applications" element={<AdoptionReviewPage />} />

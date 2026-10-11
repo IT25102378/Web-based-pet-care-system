@@ -26,6 +26,7 @@ import {
   LayoutDashboard,
   User,
   AlertTriangle,
+  Home,
 } from 'lucide-react';
 
 // Each role's navigation is grouped into sections: { title, items[] }
@@ -73,9 +74,10 @@ export const getNavSections = (role) => {
         { title: 'Overview', items: [
           { label: 'Dashboard', path: '/rescue/dashboard', icon: Activity },
         ]},
-        { title: 'Rescue', items: [
+        { title: 'Rescue & Foster', items: [
           { label: 'Register Case', path: '/rescue/register-case', icon: PlusCircle },
           { label: 'Rescue Cases', path: '/rescue/cases', icon: FolderOpen },
+          { label: 'Foster Care', path: '/rescue/fosters', icon: Home },
         ]},
         { title: 'Adoption', items: [
           { label: 'Adoption Listings', path: '/rescue/listings', icon: PawPrint },

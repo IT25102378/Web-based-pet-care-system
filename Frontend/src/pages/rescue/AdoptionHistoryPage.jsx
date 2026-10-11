@@ -52,7 +52,7 @@ export const AdoptionHistoryPage = () => {
     {
       header: 'Adoption Fee',
       key: 'adoptionFee',
-      render: (row) => <span className="text-xs font-bold text-main">Rs. {Number(row.adoptionFee).toLocaleString()}</span>,
+      render: (row) => <span className="text-xs font-bold text-main">${Number(row.adoptionFee).toLocaleString()}</span>,
     },
     {
       header: 'Post-Adoption Welfare Checkup',
