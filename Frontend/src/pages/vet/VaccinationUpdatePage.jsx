@@ -15,8 +15,11 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
+import { validateText, validateRequired, validateNotFutureDate, validateDateAfter, todayISO } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const VaccinationUpdatePage = () => {
   const { currentUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
 
   const [pets, setPets] = useState([]);
@@ -61,13 +64,16 @@ export const VaccinationUpdatePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPetId || !vaccineName.trim() || !batchNumber.trim()) {
-      showToast('Action Required', 'All vaccine fields are required.', 'error');
-      return;
-    }
-
-    if (new Date(nextDueDate) <= new Date(administeredDate)) {
-      showToast('Action Required', 'Next due date must be after administered date.', 'error');
+    const vaccineError = check(
+      !selectedPetId ? 'Please select the pet that was vaccinated' : null,
+      ['vaccineName', vaccineName, validateText(vaccineName, { label: 'Vaccine name', required: true, min: 2, max: 200 })],
+      ['batchNumber', batchNumber, validateText(batchNumber, { label: 'Batch number', required: true, max: 50 })],
+      ['administeredDate', administeredDate, validateNotFutureDate(administeredDate, { label: 'Vaccination date', required: true })],
+      ['nextDueDate', nextDueDate, validateRequired(nextDueDate, 'Next due date')],
+      ['nextDueDate', nextDueDate, validateDateAfter(nextDueDate, administeredDate, { label: 'Next due date', otherLabel: 'vaccination date' })],
+    );
+    if (vaccineError) {
+      showToast('Please Check the Vaccination Record', vaccineError, 'error');
       return;
     }
 
@@ -107,13 +113,15 @@ export const VaccinationUpdatePage = () => {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editFormData.vaccineName.trim() || !editFormData.batchNumber.trim()) {
-      showToast('Action Required', 'Vaccine name and batch number are required.', 'error');
-      return;
-    }
-
-    if (new Date(editFormData.nextDueDate) <= new Date(editFormData.administeredDate)) {
-      showToast('Action Required', 'Next due date must be after administered date.', 'error');
+    const editError = check(
+      ['editFormData.vaccineName', editFormData.vaccineName, validateText(editFormData.vaccineName, { label: 'Vaccine name', required: true, min: 2, max: 200 })],
+      ['editFormData.batchNumber', editFormData.batchNumber, validateText(editFormData.batchNumber, { label: 'Batch number', required: true, max: 50 })],
+      ['editFormData.administeredDate', editFormData.administeredDate, validateNotFutureDate(editFormData.administeredDate, { label: 'Vaccination date', required: true })],
+      ['editFormData.nextDueDate', editFormData.nextDueDate, validateRequired(editFormData.nextDueDate, 'Next due date')],
+      ['editFormData.nextDueDate', editFormData.nextDueDate, validateDateAfter(editFormData.nextDueDate, editFormData.administeredDate, { label: 'Next due date', otherLabel: 'vaccination date' })],
+    );
+    if (editError) {
+      showToast('Please Check the Vaccination Record', editError, 'error');
       return;
     }
 
@@ -263,6 +271,7 @@ export const VaccinationUpdatePage = () => {
                 <option value="Leptospirosis 4-Strain Vaccine">Leptospirosis 4-Strain Vaccine (UltraFil)</option>
                 <option value="Feline Leukemia (FeLV) Recombinant">Feline Leukemia (FeLV) Recombinant</option>
               </select>
+              {errorFor('vaccineName', vaccineName)}
             </div>
 
             <div className="form-group">
@@ -275,6 +284,7 @@ export const VaccinationUpdatePage = () => {
                 placeholder="e.g. RB-2026-8492"
                 required
               />
+              {errorFor('batchNumber', batchNumber)}
             </div>
 
             <div className="grid-2">
@@ -284,9 +294,11 @@ export const VaccinationUpdatePage = () => {
                   type="date"
                   className="form-control"
                   value={administeredDate}
+                  max={todayISO()}
                   onChange={(e) => setAdministeredDate(e.target.value)}
                   required
                 />
+                {errorFor('administeredDate', administeredDate)}
               </div>
 
               <div className="form-group">
@@ -298,6 +310,7 @@ export const VaccinationUpdatePage = () => {
                   onChange={(e) => setNextDueDate(e.target.value)}
                   required
                 />
+                {errorFor('nextDueDate', nextDueDate)}
               </div>
             </div>
 
@@ -367,6 +380,7 @@ export const VaccinationUpdatePage = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, vaccineName: e.target.value })}
                 required
               />
+              {errorFor('editFormData.vaccineName', editFormData.vaccineName)}
             </div>
             <div className="form-group">
               <label className="form-label">Manufacturer Batch Number <span className="required">*</span></label>
@@ -377,6 +391,7 @@ export const VaccinationUpdatePage = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, batchNumber: e.target.value })}
                 required
               />
+              {errorFor('editFormData.batchNumber', editFormData.batchNumber)}
             </div>
             <div className="grid-2">
               <div className="form-group">
@@ -388,6 +403,7 @@ export const VaccinationUpdatePage = () => {
                   onChange={(e) => setEditFormData({ ...editFormData, administeredDate: e.target.value })}
                   required
                 />
+                {errorFor('editFormData.administeredDate', editFormData.administeredDate)}
               </div>
               <div className="form-group">
                 <label className="form-label">Next Due Date <span className="required">*</span></label>
@@ -398,6 +414,7 @@ export const VaccinationUpdatePage = () => {
                   onChange={(e) => setEditFormData({ ...editFormData, nextDueDate: e.target.value })}
                   required
                 />
+                {errorFor('editFormData.nextDueDate', editFormData.nextDueDate)}
               </div>
             </div>
             <div className="modal-actions flex justify-end gap-3 mt-4">

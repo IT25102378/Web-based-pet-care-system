@@ -30,8 +30,11 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
+import { validatePetName, validateText, validateNumber, validateNotFutureDate, validateEmergencyContact, validateAgeMatchesBirthDate, ageFromBirthDate, isoDaysFromToday, todayISO } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const MyPetsPage = () => {
   const { currentUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
 
   const [pets, setPets] = useState([]);
@@ -125,12 +128,12 @@ export const MyPetsPage = () => {
       gender: 'Male',
       ageYears: 1,
       ageMonths: 0,
-      dateOfBirth: new Date().toISOString().split('T')[0],
+      dateOfBirth: isoDaysFromToday(-365),
       weightKg: 5,
       microchipId: `98514100${Math.floor(1000000 + Math.random() * 9000000)}`,
       allergies: 'None',
       medicalNotes: '',
-      emergencyContact: `${currentUser.fullName} - ${currentUser.phone || '+94 77 123 4567'}`,
+      emergencyContact: `${currentUser.fullName} - ${currentUser.phone || '0771234567'}`,
       imageUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&auto=format&fit=crop&q=80',
     });
     setIsModalOpen(true);
@@ -140,8 +143,9 @@ export const MyPetsPage = () => {
     setIsEditing(true);
     setFormData({
       ...pet,
-      ageYears: pet.ageYears ?? 0,
-      ageMonths: pet.ageMonths ?? 0,
+      // Age is kept in step with the date of birth, so an older record shows the pet's current age
+      ageYears: ageFromBirthDate(pet.dateOfBirth)?.years ?? pet.ageYears ?? 0,
+      ageMonths: ageFromBirthDate(pet.dateOfBirth)?.months ?? pet.ageMonths ?? 0,
       imageUrl: pet.imageUrl || '',
     });
     setIsModalOpen(true);
@@ -149,12 +153,21 @@ export const MyPetsPage = () => {
 
   const handleSavePet = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.breed.trim()) {
-      showToast('Action Required', 'Pet name and breed are required.', 'error');
-      return;
-    }
-    if (!formData.emergencyContact.trim()) {
-      showToast('Action Required', 'Emergency contact information is required.', 'error');
+    const petError = check(
+      ['formData.name', formData.name, validatePetName(formData.name)],
+      ['formData.breed', formData.breed, validateText(formData.breed, { label: 'Breed', required: true, max: 100 })],
+      ['formData.ageYears', formData.ageYears, validateNumber(formData.ageYears, { label: 'Age in years', min: 0, max: 40, integer: true })],
+      ['formData.ageMonths', formData.ageMonths, validateNumber(formData.ageMonths, { label: 'Age in months', min: 0, max: 11, integer: true })],
+      ['formData.dateOfBirth', formData.dateOfBirth, validateNotFutureDate(formData.dateOfBirth, { label: 'Date of birth' })],
+      ['formData.ageYears', formData.ageYears, validateAgeMatchesBirthDate(formData.ageYears, formData.ageMonths, formData.dateOfBirth)],
+      ['formData.weightKg', formData.weightKg, validateNumber(formData.weightKg, { label: 'Weight', greaterThanZero: true, max: 500, unit: 'kg' })],
+      ['formData.microchipId', formData.microchipId, validateText(formData.microchipId, { label: 'Microchip ID', max: 20 })],
+      ['formData.allergies', formData.allergies, validateText(formData.allergies, { label: 'Allergies', max: 500 })],
+      ['formData.medicalNotes', formData.medicalNotes, validateText(formData.medicalNotes, { label: 'Medical notes', max: 2000 })],
+      ['formData.emergencyContact', formData.emergencyContact, validateEmergencyContact(formData.emergencyContact, { required: true, max: 300 })],
+    );
+    if (petError) {
+      showToast('Please Check the Pet Details', petError, 'error');
       return;
     }
 
@@ -753,6 +766,7 @@ export const MyPetsPage = () => {
                   placeholder="e.g. Barnaby"
                   required
                 />
+                {errorFor('formData.name', formData.name)}
               </div>
 
               <div className="form-group">
@@ -782,6 +796,7 @@ export const MyPetsPage = () => {
                   placeholder="e.g. Golden Retriever"
                   required
                 />
+                {errorFor('formData.breed', formData.breed)}
               </div>
 
               <div className="form-group">
@@ -811,6 +826,7 @@ export const MyPetsPage = () => {
                   onChange={(e) => setFormData({ ...formData, ageYears: Number(e.target.value) })}
                   placeholder="e.g. 2"
                 />
+                {errorFor('formData.ageYears', formData.ageYears)}
               </div>
 
               <div className="form-group">
@@ -824,6 +840,7 @@ export const MyPetsPage = () => {
                   onChange={(e) => setFormData({ ...formData, ageMonths: Number(e.target.value) })}
                   placeholder="0 - 11"
                 />
+                {errorFor('formData.ageMonths', formData.ageMonths)}
               </div>
             </div>
 
@@ -834,8 +851,17 @@ export const MyPetsPage = () => {
                   type="date"
                   className="form-control"
                   value={formData.dateOfBirth}
-                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  max={todayISO()}
+                  onChange={(e) => {
+                    const age = ageFromBirthDate(e.target.value);
+                    setFormData({
+                      ...formData,
+                      dateOfBirth: e.target.value,
+                      ...(age ? { ageYears: age.years, ageMonths: age.months } : {}),
+                    });
+                  }}
                 />
+                {errorFor('formData.dateOfBirth', formData.dateOfBirth)}
               </div>
 
               <div className="form-group">
@@ -843,10 +869,13 @@ export const MyPetsPage = () => {
                 <input
                   type="number"
                   step="0.1"
+                  min="0.1"
+                  max="500"
                   className="form-control"
                   value={formData.weightKg}
                   onChange={(e) => setFormData({ ...formData, weightKg: Number(e.target.value) })}
                 />
+                {errorFor('formData.weightKg', formData.weightKg)}
               </div>
             </div>
 
@@ -871,6 +900,7 @@ export const MyPetsPage = () => {
                 onChange={(e) => setFormData({ ...formData, microchipId: e.target.value })}
                 placeholder="15-digit standard microchip"
               />
+              {errorFor('formData.microchipId', formData.microchipId)}
             </div>
 
             <div className="form-group">
@@ -882,6 +912,7 @@ export const MyPetsPage = () => {
                 onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
                 placeholder="e.g. Chicken protein, Penicillin"
               />
+              {errorFor('formData.allergies', formData.allergies)}
             </div>
 
             <div className="form-group">
@@ -893,6 +924,7 @@ export const MyPetsPage = () => {
                 onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
                 placeholder="Name & Telephone number"
               />
+              {errorFor('formData.emergencyContact', formData.emergencyContact)}
             </div>
 
             <div className="form-group">
@@ -904,6 +936,7 @@ export const MyPetsPage = () => {
                 onChange={(e) => setFormData({ ...formData, medicalNotes: e.target.value })}
                 placeholder="Behavioral traits, dietary requirements, past surgeries..."
               />
+              {errorFor('formData.medicalNotes', formData.medicalNotes)}
             </div>
 
             <div className="flex items-center justify-end gap-2 mt-6">

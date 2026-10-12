@@ -272,6 +272,8 @@ public class PetService {
         Pet pet = petRepository.findByPetId(request.getPetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Pet not found with ID: " + request.getPetId()));
 
+        validateVaccinationDates(request.getAdministeredDate(), request.getNextDueDate());
+
         String vaccineId = generateVaccineId();
         String status = (request.getStatus() != null && !request.getStatus().trim().isEmpty())
 
@@ -299,6 +301,10 @@ public class PetService {
     public VaccinationResponse updateVaccination(String vaccineId, VaccinationRequest request) {
         Vaccination vaccination = vaccinationRepository.findByVaccineId(vaccineId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vaccination record not found with id: " + vaccineId));
+
+        validateVaccinationDates(
+                request.getAdministeredDate() != null ? request.getAdministeredDate() : vaccination.getAdministeredDate(),
+                request.getNextDueDate() != null ? request.getNextDueDate() : vaccination.getNextDueDate());
 
         if (request.getVaccineName() != null && !request.getVaccineName().trim().isEmpty()) {
             vaccination.setVaccineName(request.getVaccineName().trim());
@@ -448,16 +454,48 @@ public class PetService {
         return candidate;
     }
 
+    private void validateVaccinationDates(java.time.LocalDate administeredDate, java.time.LocalDate nextDueDate) {
+        if (administeredDate != null && administeredDate.isAfter(java.time.LocalDate.now())) {
+            throw new BadRequestException("Vaccination date cannot be in the future.");
+        }
+        if (administeredDate != null && nextDueDate != null && !nextDueDate.isAfter(administeredDate)) {
+            throw new BadRequestException("Next due date must be after the vaccination date.");
+        }
+    }
+
     private void validatePetAttributes(PetRequest request) {
         if (request == null) return;
-        if (request.getWeightKg() != null && request.getWeightKg().compareTo(java.math.BigDecimal.ZERO) < 0) {
-            throw new BadRequestException("Pet weight cannot be negative.");
+        if (request.getWeightKg() != null && request.getWeightKg().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Weight must be greater than 0 kg.");
+        }
+        if (request.getDateOfBirth() != null && request.getDateOfBirth().isAfter(java.time.LocalDate.now())) {
+            throw new BadRequestException("Date of birth cannot be in the future.");
         }
         if (request.getAgeYears() != null && request.getAgeYears() < 0) {
             throw new BadRequestException("Pet age in years cannot be negative.");
         }
         if (request.getAgeMonths() != null && (request.getAgeMonths() < 0 || request.getAgeMonths() > 11)) {
             throw new BadRequestException("Pet age in months must be between 0 and 11.");
+        }
+        validateAgeMatchesDateOfBirth(request);
+    }
+
+    /** When both an age and a date of birth are given they must describe the same pet (one month of leeway). */
+    private void validateAgeMatchesDateOfBirth(PetRequest request) {
+        if (request.getDateOfBirth() == null || request.getAgeYears() == null) return;
+        java.time.Period actual = java.time.Period.between(request.getDateOfBirth(), java.time.LocalDate.now());
+        boolean matches;
+        if (request.getAgeMonths() == null) {
+            matches = actual.getYears() == request.getAgeYears();
+        } else {
+            long actualMonths = actual.toTotalMonths();
+            long givenMonths = request.getAgeYears() * 12L + request.getAgeMonths();
+            matches = Math.abs(actualMonths - givenMonths) <= 1;
+        }
+        if (!matches) {
+            throw new BadRequestException("Age does not match the date of birth. A pet born on "
+                    + request.getDateOfBirth() + " is " + actual.getYears() + (actual.getYears() == 1 ? " year and " : " years and ")
+                    + actual.getMonths() + (actual.getMonths() == 1 ? " month old." : " months old."));
         }
     }
 }

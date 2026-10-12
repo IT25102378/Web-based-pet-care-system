@@ -10,8 +10,11 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { Stethoscope, Check, Activity, Pill, ArrowRight, UserCheck, Heart, Scissors } from 'lucide-react';
 
+import { validateNumber, validateText, validateNotPastDate, todayISO } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const AddConsultationPage = () => {
   const { currentUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -118,8 +121,18 @@ export const AddConsultationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPetId || !formData.assessmentDiagnosis || !formData.treatmentPlan) {
-      showToast('Action Required', 'Diagnosis and treatment plan are required.', 'error');
+    const consultationError = check(
+      !selectedPetId ? 'Please select the patient for this consultation' : null,
+      ['formData.temperatureC', formData.temperatureC, validateNumber(formData.temperatureC, { label: 'Temperature', min: 30, max: 45, unit: 'degrees Celsius' })],
+      ['formData.heartRateBpm', formData.heartRateBpm, validateNumber(formData.heartRateBpm, { label: 'Heart rate', min: 20, max: 400, integer: true, unit: 'bpm' })],
+      ['formData.respiratoryRateBpm', formData.respiratoryRateBpm, validateNumber(formData.respiratoryRateBpm, { label: 'Respiratory rate', min: 5, max: 200, integer: true, unit: 'breaths per minute' })],
+      ['formData.weightKg', formData.weightKg, validateNumber(formData.weightKg, { label: 'Weight', greaterThanZero: true, max: 500, unit: 'kg' })],
+      ['formData.assessmentDiagnosis', formData.assessmentDiagnosis, validateText(formData.assessmentDiagnosis, { label: 'Assessment and diagnosis', required: true, min: 5, max: 2000 })],
+      ['formData.treatmentPlan', formData.treatmentPlan, validateText(formData.treatmentPlan, { label: 'Treatment plan', required: true, min: 5, max: 2000 })],
+      ['formData.followUpDate', formData.followUpDate, validateNotPastDate(formData.followUpDate, { label: 'Follow-up date' })],
+    );
+    if (consultationError) {
+      showToast('Please Check the Consultation Record', consultationError, 'error');
       return;
     }
 
@@ -452,6 +465,7 @@ export const AddConsultationPage = () => {
                   value={formData.temperatureC}
                   onChange={(e) => setFormData({ ...formData, temperatureC: Number(e.target.value) })}
                 />
+                {errorFor('formData.temperatureC', formData.temperatureC)}
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -462,6 +476,7 @@ export const AddConsultationPage = () => {
                   value={formData.heartRateBpm}
                   onChange={(e) => setFormData({ ...formData, heartRateBpm: Number(e.target.value) })}
                 />
+                {errorFor('formData.heartRateBpm', formData.heartRateBpm)}
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -472,6 +487,7 @@ export const AddConsultationPage = () => {
                   value={formData.respiratoryRateBpm}
                   onChange={(e) => setFormData({ ...formData, respiratoryRateBpm: Number(e.target.value) })}
                 />
+                {errorFor('formData.respiratoryRateBpm', formData.respiratoryRateBpm)}
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -483,6 +499,7 @@ export const AddConsultationPage = () => {
                   value={formData.weightKg}
                   onChange={(e) => setFormData({ ...formData, weightKg: Number(e.target.value) })}
                 />
+                {errorFor('formData.weightKg', formData.weightKg)}
               </div>
             </div>
           </div>
@@ -526,6 +543,7 @@ export const AddConsultationPage = () => {
               placeholder="e.g. Acute Allergic Pododermatitis"
               required
             />
+            {errorFor('formData.assessmentDiagnosis', formData.assessmentDiagnosis)}
           </div>
 
           <div className="form-group">
@@ -540,6 +558,7 @@ export const AddConsultationPage = () => {
               placeholder="e.g. Prescribed Apoquel 16mg daily for 14 days, Chlorhexidine wash..."
               required
             />
+            {errorFor('formData.treatmentPlan', formData.treatmentPlan)}
           </div>
 
           <div className="form-group">
@@ -548,8 +567,10 @@ export const AddConsultationPage = () => {
               type="date"
               className="form-control"
               value={formData.followUpDate}
+              min={todayISO()}
               onChange={(e) => setFormData({ ...formData, followUpDate: e.target.value })}
             />
+            {errorFor('formData.followUpDate', formData.followUpDate)}
           </div>
 
           <button

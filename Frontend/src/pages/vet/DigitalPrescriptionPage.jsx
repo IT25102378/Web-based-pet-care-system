@@ -18,6 +18,7 @@ import {
   Package,
 } from 'lucide-react';
 
+import { firstError, validateNumber } from '../../utils/validators';
 export const DigitalPrescriptionPage = () => {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
@@ -86,8 +87,22 @@ export const DigitalPrescriptionPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPetId || items.length === 0 || !items[0].medicationName) {
-      showToast('Action Required', 'Please select a pet and specify at least one medication.', 'error');
+    const itemErrors = items.map((item, idx) => {
+      const n = `Medication ${idx + 1}`;
+      return firstError(
+        !item.medicationName ? `${n}: please choose a medication` : null,
+        validateNumber(item.durationDays, { label: `${n} duration`, required: true, min: 1, max: 365, integer: true, unit: 'days' }),
+        validateNumber(item.quantityPrescribed, { label: `${n} quantity`, required: true, min: 1, max: 1000, integer: true }),
+        validateNumber(item.refillsAllowed, { label: `${n} refills`, min: 0, max: 10, integer: true }),
+      );
+    });
+    const prescriptionError = check(
+      !selectedPetId ? 'Please select the patient for this prescription' : null,
+      items.length === 0 ? 'Please add at least one medication' : null,
+      ...itemErrors,
+    );
+    if (prescriptionError) {
+      showToast('Please Check the Prescription', prescriptionError, 'error');
       return;
     }
 

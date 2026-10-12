@@ -29,6 +29,7 @@ public class PrescriptionCreateRequest {
     private String digitalSignature;
 
     @Builder.Default
+    @jakarta.validation.Valid
     private List<PrescriptionItemDto> items = new ArrayList<>();
 
     // Helper getters to resolve fields whether wrapped or flat
