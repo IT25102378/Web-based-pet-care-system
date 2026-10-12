@@ -12,6 +12,7 @@ import { Stethoscope, Check, Activity, Pill, ArrowRight, UserCheck, Heart, Sciss
 
 import { validateNumber, validateText, validateNotPastDate, todayISO } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const AddConsultationPage = () => {
   const { currentUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -283,6 +284,7 @@ export const AddConsultationPage = () => {
 
       <div className="card p-6">
         <form onSubmit={handleSubmit}>
+          <RecordIds ids={[['Consultation ID', null], [patientType === 'rescue' ? 'Case ID' : 'Pet ID', selectedPetId], ['Appointment ID', appointmentId || 'None (direct consultation)'], ['Vet ID', currentUser?.userId]]} />
           {/* Patient Selector */}
           <div className="form-group mb-6">
             <div className="flex items-center gap-4 mb-3">

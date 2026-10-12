@@ -19,6 +19,7 @@ import {
 
 import { validatePersonName, validateEmail, validatePhone, validateText, validatePassword, validatePasswordMatch, validateEmergencyContact } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const StaffProfilePage = () => {
   const { currentUser, refreshUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -202,6 +203,7 @@ export const StaffProfilePage = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <Card title="Personal Details & Contact" subtitle="Update your name, contact phone, residential address, and emergency contact details." icon={User}>
             <form onSubmit={handleSaveProfile}>
+              <RecordIds ids={[['User ID', currentUser?.userId]]} />
               <div className="form-group mb-4">
                 <label className="form-label">Full Name <span className="required">*</span></label>
                 <div style={{ position: 'relative' }}>

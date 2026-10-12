@@ -7,6 +7,7 @@ import { Truck, Plus, Send, Phone, Mail, MapPin, Star, Check, Edit2, Trash2 } fr
 
 import { validateText, validatePersonName, validateEmail, validatePhone, validateNumber } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const SupplierPage = () => {
   const { showToast } = useToast();
   const { check, errorFor } = useFieldErrors();
@@ -282,6 +283,7 @@ export const SupplierPage = () => {
           size="md"
         >
           <form onSubmit={handleCreatePo}>
+            <RecordIds ids={[['Purchase Order ID', null], ['Supplier ID', poSupplier?.supplierId]]} />
             <div className="form-group">
               <label className="form-label">Order Line Items & Quantities <span className="required">*</span></label>
               <textarea
@@ -327,6 +329,7 @@ export const SupplierPage = () => {
           size="md"
         >
           <form onSubmit={handleAddSupplier}>
+            <RecordIds ids={[['Supplier ID', null]]} />
             <div className="form-group">
               <label className="form-label">Company Name <span className="required">*</span></label>
               <input
@@ -462,6 +465,7 @@ export const SupplierPage = () => {
           size="md"
         >
           <form onSubmit={handleSaveEditSupplier}>
+            <RecordIds ids={[['Supplier ID', editSupplierData?.supplierId]]} />
             <div className="form-group">
               <label className="form-label">Company Name <span className="required">*</span></label>
               <input

@@ -20,6 +20,7 @@ import {
 
 import { validateText } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const FeedbackSubmitPage = () => {
   const { currentUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -175,6 +176,7 @@ export const FeedbackSubmitPage = () => {
           </h3>
 
           <form onSubmit={handleSubmit}>
+            <RecordIds ids={[['Feedback ID', null], ['User ID', currentUser?.userId]]} />
             <div className="form-group">
               <label className="form-label">Service Category <span className="required">*</span></label>
               <select
@@ -344,6 +346,7 @@ export const FeedbackSubmitPage = () => {
           title="Edit Submitted Review"
         >
           <form onSubmit={handleSaveEdit}>
+            <RecordIds ids={[['Feedback ID', editingFeedback?.feedbackId]]} />
             <div className="form-group">
               <label className="form-label">Service Category</label>
               <select

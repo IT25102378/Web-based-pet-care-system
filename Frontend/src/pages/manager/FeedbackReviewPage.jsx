@@ -4,6 +4,7 @@ import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
 import { MessageSquare, Star, Reply, Check, ShieldCheck } from 'lucide-react';
+import { RecordIds } from '../../components/common/RecordIds';
 
 export const FeedbackReviewPage = () => {
   const { showToast } = useToast();
@@ -138,6 +139,7 @@ export const FeedbackReviewPage = () => {
           size="md"
         >
           <form onSubmit={handleSendResponse}>
+            <RecordIds ids={[['Feedback ID', respondingTo?.feedbackId]]} />
             <div className="form-group">
               <label className="form-label">Client Review Comments:</label>
               <p className="text-xs text-muted p-3 bg-subtle rounded">{respondingTo.comments}</p>

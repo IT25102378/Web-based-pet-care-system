@@ -9,6 +9,7 @@ import { PlusCircle, Check, ArrowRight, ShieldAlert } from 'lucide-react';
 
 import { validatePetName, validateText, validateNotFutureDate } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const RegisterRescuePage = () => {
   const { currentUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -85,6 +86,7 @@ export const RegisterRescuePage = () => {
 
       <div className="card p-6">
         <form onSubmit={handleSubmit}>
+          <RecordIds ids={[['Case ID', null]]} />
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Temporary Given Name <span className="required">*</span></label>

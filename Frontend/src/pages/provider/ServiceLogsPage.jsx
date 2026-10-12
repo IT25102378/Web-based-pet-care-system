@@ -14,6 +14,7 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { validateDateWithin, isoDaysFromToday } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 import {
   FileText,
   Plus,
@@ -865,6 +866,7 @@ export const ServiceLogsPage = () => {
           size="md"
         >
           <form onSubmit={handleSubmit}>
+            <RecordIds ids={[['Service Log ID', null], ['Pet / Case ID', selectedPetId], ['Provider ID', currentUser?.userId]]} />
             <div className="form-group">
               <div className="flex items-center gap-4 mb-3 flex-wrap">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -1106,6 +1108,7 @@ export const ServiceLogsPage = () => {
           size="md"
         >
           <form onSubmit={handleConfirmTransfer}>
+            <RecordIds ids={[['Service Log ID', transferTarget?.serviceLogId], ['Case ID', transferTarget?.caseId]]} />
             <div
               style={{
                 backgroundColor: 'var(--bg-subtle)',
@@ -1275,6 +1278,7 @@ export const ServiceLogsPage = () => {
           size="md"
         >
           <form onSubmit={handleEditSubmit}>
+            <RecordIds ids={[['Service Log ID', editingLog?.serviceLogId], ['Pet / Case ID', editingLog?.petId || editingLog?.caseId]]} />
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">

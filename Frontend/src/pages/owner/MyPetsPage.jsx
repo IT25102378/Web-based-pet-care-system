@@ -32,6 +32,7 @@ import {
 
 import { validatePetName, validateText, validateNumber, validateNotFutureDate, validateEmergencyContact, validateAgeMatchesBirthDate, ageFromBirthDate, isoDaysFromToday, todayISO } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const MyPetsPage = () => {
   const { currentUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -755,6 +756,7 @@ export const MyPetsPage = () => {
           size="lg"
         >
           <form onSubmit={handleSavePet}>
+            <RecordIds ids={[['Pet ID', isEditing ? formData.petId : null], ['Owner ID', currentUser?.userId]]} />
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Pet Name <span className="required">*</span></label>
@@ -963,6 +965,7 @@ export const MyPetsPage = () => {
           size="lg"
         >
           <form onSubmit={handleSaveDocument}>
+            <RecordIds ids={[['Document ID', null], ['Pet ID', selectedPet?.petId]]} />
             <div className="form-row mb-4">
               <div className="form-group">
                 <label className="form-label">

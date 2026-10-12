@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
+import { RecordIds } from '../../components/common/RecordIds';
 import {
   Scissors,
   Check,
@@ -671,6 +672,7 @@ export const ServiceStatusPage = () => {
           size="md"
         >
           <form onSubmit={handleConfirmTransfer}>
+            <RecordIds ids={[['Service Log ID', transferTarget?.serviceLogId], ['Case ID', transferTarget?.caseId]]} />
             <div
               style={{
                 backgroundColor: 'var(--bg-subtle)',

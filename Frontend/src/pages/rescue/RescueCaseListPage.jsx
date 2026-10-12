@@ -25,6 +25,7 @@ import {
 
 import { validatePetName, validateText } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const RescueCaseListPage = () => {
   const { showToast } = useToast();
   const { check, errorFor } = useFieldErrors();
@@ -412,6 +413,7 @@ export const RescueCaseListPage = () => {
           title={`Edit Intake Information – ${editingCase.caseNumber}`}
         >
           <form onSubmit={handleSaveQuickEdit}>
+            <RecordIds ids={[['Case ID', editingCase?.caseId]]} />
             <div className="form-group">
               <label className="form-label">Temporary Name <span className="required">*</span></label>
               <input

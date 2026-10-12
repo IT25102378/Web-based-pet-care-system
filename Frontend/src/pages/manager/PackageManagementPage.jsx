@@ -6,6 +6,7 @@ import { Layers, Plus, Edit2, CheckCircle, Check, Tag, Power } from 'lucide-reac
 
 import { validateText, validateNumber } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const PackageManagementPage = () => {
   const { showToast } = useToast();
   const { check, errorFor } = useFieldErrors();
@@ -215,6 +216,7 @@ export const PackageManagementPage = () => {
           size="md"
         >
           <form onSubmit={handleSubmit}>
+            <RecordIds ids={[['Package ID', editingPackage ? editingPackage.serviceId || editingPackage.packageId : null]]} />
             <div className="form-group">
               <label className="form-label">Package Name <span className="required">*</span></label>
               <input

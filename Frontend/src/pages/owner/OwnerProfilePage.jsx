@@ -32,6 +32,7 @@ import {
 
 import { validatePersonName, validateEmail, validatePhone, validateText, validatePassword, validatePasswordMatch, validateEmergencyContact } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const OwnerProfilePage = () => {
   const { currentUser, refreshUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -347,6 +348,7 @@ export const OwnerProfilePage = () => {
             icon={User}
           >
             <form onSubmit={handleSaveProfile}>
+              <RecordIds ids={[['User ID', currentUser?.userId]]} />
               <div className="form-group mb-4">
                 <label className="form-label">
                   Full Name <span className="required">*</span>

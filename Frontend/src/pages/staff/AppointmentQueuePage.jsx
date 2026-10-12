@@ -20,6 +20,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { AppointmentDetailsModal } from '../../components/common/AppointmentDetailsModal';
+import { RecordIds } from '../../components/common/RecordIds';
 
 export const AppointmentQueuePage = () => {
   const { showToast } = useToast();
@@ -455,6 +456,7 @@ export const AppointmentQueuePage = () => {
           size="sm"
         >
           <form onSubmit={handleCancelSubmit}>
+            <RecordIds ids={[['Appointment ID', cancelModalAppt?.appointmentId], ['Pet ID', cancelModalAppt?.petId]]} />
             <div className="form-group">
               <label className="form-label">Cancellation Reason <span className="required">*</span></label>
               <textarea

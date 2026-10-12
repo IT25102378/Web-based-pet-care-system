@@ -8,6 +8,7 @@ import { Home, User, Phone, MapPin, Star, Plus, Edit2, Check, Trash2, AlertTrian
 
 import { validatePersonName, validatePhone, validateEmail, validateText, validateNumber } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const FosterManagementPage = () => {
   const { showToast } = useToast();
   const { check, errorFor } = useFieldErrors();
@@ -274,6 +275,7 @@ export const FosterManagementPage = () => {
           size="lg"
         >
           <form onSubmit={handleAddSubmit} className="flex flex-col gap-4">
+            <RecordIds ids={[['Foster ID', null]]} />
             <div className="form-group">
               <label className="form-label font-bold text-xs">Full Name <span className="text-danger">*</span></label>
               <input
@@ -402,6 +404,7 @@ export const FosterManagementPage = () => {
           size="lg"
         >
           <form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
+            <RecordIds ids={[['Foster ID', editFoster?.fosterId]]} />
             <div className="form-group">
               <label className="form-label font-bold text-xs">Full Name <span className="text-danger">*</span></label>
               <input

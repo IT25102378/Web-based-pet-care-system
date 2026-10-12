@@ -17,6 +17,7 @@ import {
 
 import { validateText, validateRequired, validateNotFutureDate, validateDateAfter, todayISO } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const VaccinationUpdatePage = () => {
   const { currentUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -242,6 +243,7 @@ export const VaccinationUpdatePage = () => {
           </h3>
 
           <form onSubmit={handleSubmit}>
+            <RecordIds ids={[['Vaccination ID', null], ['Pet ID', selectedPetId]]} />
             <div className="form-group">
               <label className="form-label">Patient Companion <span className="required">*</span></label>
               <select
@@ -368,6 +370,7 @@ export const VaccinationUpdatePage = () => {
           title={`Edit Vaccination Record – ${editingVac.vaccineId}`}
         >
           <form onSubmit={handleSaveEdit}>
+            <RecordIds ids={[['Vaccination ID', editingVac?.vaccineId], ['Pet ID', editingVac?.petId]]} />
             <p className="text-xs text-muted mb-3">
               Patient: <strong>{editingVac.petName}</strong>
             </p>

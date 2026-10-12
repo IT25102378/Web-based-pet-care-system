@@ -9,6 +9,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 
 import { validatePersonName, validatePhone, validatePetName, validateText } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const WalkInRegistrationPage = () => {
   const { showToast } = useToast();
   const { check, errorFor } = useFieldErrors();
@@ -220,6 +221,7 @@ export const WalkInRegistrationPage = () => {
       ) : (
         <div className="card p-6">
           <form onSubmit={handleSubmit}>
+            <RecordIds ids={[['Appointment ID', null]]} />
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Owner / Client Full Name <span className="required">*</span></label>

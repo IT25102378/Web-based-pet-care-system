@@ -20,6 +20,7 @@ import {
 
 import { validateText, validatePhone } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const OwnerRescueReportPage = () => {
   const { currentUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -161,6 +162,7 @@ export const OwnerRescueReportPage = () => {
           icon={AlertTriangle}
         >
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <RecordIds ids={[['Case ID', null], ['Reported By (User ID)', currentUser?.userId]]} />
             <div className="grid-2" style={{ gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label" style={{ fontWeight: 600 }}>

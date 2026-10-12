@@ -32,6 +32,7 @@ import { userApi } from '../../api/userApi';
 
 import { validateText } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const RescueCaseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -785,6 +786,7 @@ export const RescueCaseDetailPage = () => {
           size="md"
         >
           <form onSubmit={handleSaveLog}>
+            <RecordIds ids={[['Case ID', rescueCase?.caseId]]} />
             <div className="form-group">
               <label className="form-label">Log Type</label>
               <select
@@ -846,6 +848,7 @@ export const RescueCaseDetailPage = () => {
           size="md"
         >
           <form onSubmit={handleSavePhoto}>
+            <RecordIds ids={[['Case ID', rescueCase?.caseId]]} />
             <div className="mb-4">
               <FileUploadField
                 label="Select Photo"
@@ -937,6 +940,7 @@ export const RescueCaseDetailPage = () => {
           size="md"
         >
           <form onSubmit={handleConfirmVetAssign}>
+            <RecordIds ids={[['Case ID', rescueCase?.caseId]]} />
             <div className="form-group mb-4">
               <label className="form-label" style={{ fontWeight: 600 }}>
                 Select Veterinarian <span className="text-danger">*</span>

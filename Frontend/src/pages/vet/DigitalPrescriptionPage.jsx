@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 
 import { firstError, validateNumber } from '../../utils/validators';
+import { RecordIds } from '../../components/common/RecordIds';
 export const DigitalPrescriptionPage = () => {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
@@ -243,6 +244,7 @@ export const DigitalPrescriptionPage = () => {
           </h3>
 
           <form onSubmit={handleSubmit}>
+            <RecordIds ids={[['Prescription ID', null], ['Pet ID', selectedPetId], ['Vet ID', currentUser?.userId]]} />
             {handoff && (
               <div
                 style={{
@@ -610,6 +612,7 @@ export const DigitalPrescriptionPage = () => {
           title={`Edit Instructions – Rx ${editingRx.prescriptionId}`}
         >
           <form onSubmit={handleSaveInstructions}>
+            <RecordIds ids={[['Prescription ID', editingRx?.prescriptionId]]} />
             <p className="text-xs text-muted mb-3">
               Update administration instructions for patient <strong>{editingRx.petName}</strong>:
             </p>

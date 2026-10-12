@@ -32,6 +32,7 @@ import {
 
 import { validateText } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const BookAppointmentPage = () => {
   const { currentUser } = useAuth();
   const { check, errorFor } = useFieldErrors();
@@ -474,6 +475,7 @@ export const BookAppointmentPage = () => {
           </h3>
 
           <form onSubmit={handleBookingSubmit}>
+            <RecordIds ids={[['Appointment ID', null], ['Pet ID', selectedPetId], ['Owner ID', currentUser?.userId]]} />
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Select Patient Companion <span className="required">*</span></label>
@@ -662,6 +664,7 @@ export const BookAppointmentPage = () => {
           {!isRescheduleConfirmStep ? (
             /* STEP 1: SELECT NEW DATE & TIME */
             <form onSubmit={handleProceedToRescheduleConfirm}>
+              <RecordIds ids={[['Appointment ID', apptToReschedule?.appointmentId], ['Pet ID', apptToReschedule?.petId]]} />
               {/* Current Appointment Snapshot */}
               <div
                 style={{

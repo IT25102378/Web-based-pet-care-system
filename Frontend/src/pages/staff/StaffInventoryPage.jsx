@@ -23,6 +23,7 @@ import {
 
 import { validateText, validateRequired, validateNumber, validateNotPastDate, todayISO } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { RecordIds } from '../../components/common/RecordIds';
 export const StaffInventoryPage = () => {
   const { showToast } = useToast();
   const { check, errorFor } = useFieldErrors();
@@ -628,6 +629,7 @@ export const StaffInventoryPage = () => {
         size="lg"
       >
         <form onSubmit={handleAddItemSubmit} className="flex flex-col gap-4">
+          <RecordIds ids={[['Item ID', null], ['Supplier ID', newItemData.supplierId || 'No supplier selected']]} />
           <div className="grid-2 gap-4">
             <div>
               <label className="form-label font-bold text-xs">Product Name *</label>
@@ -775,7 +777,7 @@ export const StaffInventoryPage = () => {
                 <option value="">Select Supplier (Optional)</option>
                 {suppliers.map((s) => (
                   <option key={s.supplierId} value={s.supplierId}>
-                    {s.companyName} ({s.category})
+                    {s.supplierId} - {s.companyName} ({s.category})
                   </option>
                 ))}
               </select>
@@ -813,6 +815,7 @@ export const StaffInventoryPage = () => {
           size="lg"
         >
           <form onSubmit={handleEditItemSubmit} className="flex flex-col gap-4">
+            <RecordIds ids={[['Item ID', editItem.itemId], ['Supplier ID', editItem.supplierId || 'No supplier selected']]} />
             <div className="grid-2 gap-4">
               <div>
                 <label className="form-label font-bold text-xs">Product Name *</label>
@@ -950,7 +953,7 @@ export const StaffInventoryPage = () => {
                   <option value="">Select Supplier (Optional)</option>
                   {suppliers.map((s) => (
                     <option key={s.supplierId} value={s.supplierId}>
-                      {s.companyName} ({s.category})
+                      {s.supplierId} - {s.companyName} ({s.category})
                     </option>
                   ))}
                 </select>
