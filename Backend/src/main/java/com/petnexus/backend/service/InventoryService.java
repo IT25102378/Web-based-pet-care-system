@@ -72,6 +72,9 @@ public class InventoryService {
         if (request.getSupplierId() != null && !request.getSupplierId().isBlank()) {
             supplier = supplierRepository.findBySupplierId(request.getSupplierId().trim())
                     .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with ID: " + request.getSupplierId()));
+            if (!supplier.isActive()) {
+                throw new BadRequestException("Selected supplier is inactive or disabled: " + request.getSupplierId());
+            }
             supplierName = supplier.getCompanyName();
         }
 
@@ -156,6 +159,9 @@ public class InventoryService {
         if (request.getSupplierId() != null && !request.getSupplierId().isBlank()) {
             Supplier supplier = supplierRepository.findBySupplierId(request.getSupplierId().trim())
                     .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with ID: " + request.getSupplierId()));
+            if (!supplier.isActive() && (item.getSupplier() == null || !item.getSupplier().getSupplierId().equals(supplier.getSupplierId()))) {
+                throw new BadRequestException("Selected supplier is inactive or disabled: " + request.getSupplierId());
+            }
             item.setSupplier(supplier);
             item.setSupplierName(supplier.getCompanyName());
         } else if (request.getSupplierId() != null && request.getSupplierId().isBlank()) {
