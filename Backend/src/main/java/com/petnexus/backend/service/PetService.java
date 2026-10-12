@@ -41,6 +41,9 @@ public class PetService {
     private final ConsultationRepository consultationRepository;
     private final PrescriptionRepository prescriptionRepository;
 
+    /** A document is sent as a base64 string; 14 million characters is about a 10 MB file. */
+    static final int MAX_DOCUMENT_CHARS = 14_000_000;
+
     // =========================================================================
     // Pet Operations
     // =========================================================================
@@ -408,6 +411,10 @@ public class PetService {
         }
 
         SecurityUtils.enforceOwnershipOrRole(ownerId, UserRole.Admin, UserRole.Veterinarian, UserRole.ClinicManager, UserRole.ClinicStaff);
+
+        if (request.getFileUrl() != null && request.getFileUrl().length() > MAX_DOCUMENT_CHARS) {
+            throw new BadRequestException("The file is too large. The maximum size is 10 MB.");
+        }
 
         PetDocument doc = PetDocument.builder()
                 .documentId(documentId)

@@ -5,6 +5,7 @@ import com.petnexus.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,4 +21,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     long countByUserAndIsReadFalse(User user);
 
     List<Notification> findAllByOrderByCreatedAtDesc();
+
+    boolean existsByUserAndTitleAndMessageAndCreatedAtAfter(User user, String title, String message, LocalDateTime after);
 }

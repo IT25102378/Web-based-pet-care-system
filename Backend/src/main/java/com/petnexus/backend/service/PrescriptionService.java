@@ -96,14 +96,22 @@ public class PrescriptionService {
             vet = userRepository.findByUserId(vetId.trim()).orElse(null);
         }
 
+        if (vet == null) {
+            User signedIn = SecurityUtils.getCurrentUser();
+            if (signedIn != null && signedIn.getRole() == UserRole.Veterinarian) {
+                vet = signedIn;
+                vetId = signedIn.getUserId();
+            }
+        }
+
         String newRxId = generatePrescriptionId();
         String petName = request.resolvePetName() != null ? request.resolvePetName().trim() : pet.getName();
         String ownerName = request.resolveOwnerName() != null ? request.resolveOwnerName().trim() :
                 (pet.getOwner() != null ? pet.getOwner().getFullName() : "Client");
         String vetName = request.resolveVetName() != null ? request.resolveVetName().trim() :
-                (vet != null ? vet.getFullName() : "Dr. Michael Chen, DVM");
+                (vet != null ? vet.getFullName() : "Veterinarian");
         String vetLicense = request.resolveVetLicense() != null ? request.resolveVetLicense().trim() :
-                (vet != null ? (vet instanceof com.petnexus.backend.entity.Veterinarian v ? v.getLicenseNumber() : null) : "VET-NY-84920");
+                (vet instanceof com.petnexus.backend.entity.Veterinarian v ? v.getLicenseNumber() : null);
 
         Prescription rx = Prescription.builder()
                 .prescriptionId(newRxId)
@@ -169,21 +177,7 @@ public class PrescriptionService {
         if (pi.getMedicationName() == null || pi.getMedicationName().isBlank()) return;
         String medName = pi.getMedicationName().trim().toLowerCase();
 
-        com.petnexus.backend.entity.InventoryItem matchedItem = inventoryItemRepository.findAll().stream()
-                .filter(inv -> {
-                    String invName = inv.getName().toLowerCase();
-                    String invSku = inv.getSku() != null ? inv.getSku().toLowerCase() : "";
-                    if (invName.contains(medName) || medName.contains(invName)) return true;
-                    String[] keywords = {"apoquel", "clavamox", "amoxicillin", "metacam", "meloxicam", "prednisolone", "otomax", "gentamicin", "chlorhexidine", "rabies", "vaccine"};
-                    for (String kw : keywords) {
-                        if (medName.contains(kw) && (invName.contains(kw) || invSku.contains(kw))) {
-                            return true;
-                        }
-                    }
-                    return false;
-                })
-                .findFirst()
-                .orElse(null);
+        com.petnexus.backend.entity.InventoryItem matchedItem = findBestInventoryMatch(medName);
 
         if (matchedItem != null) {
             int qtyToDeduct = (pi.getQuantityPrescribed() != null && pi.getQuantityPrescribed() > 0) ? pi.getQuantityPrescribed() : 1;
@@ -201,6 +195,37 @@ public class PrescriptionService {
         } else {
             log.info("No matching clinical inventory item found for prescribed medication: {}", pi.getMedicationName());
         }
+    }
+
+    /**
+     * Picks the inventory item that best matches a medication name:
+     * exact name (100), exact SKU (90), name starts with the other (80), one contains the other (60),
+     * same drug (first word) (50). Items with no match score 0 and are never selected.
+     */
+    private com.petnexus.backend.entity.InventoryItem findBestInventoryMatch(String medicationLowerCase) {
+        com.petnexus.backend.entity.InventoryItem best = null;
+        int bestScore = 0;
+        for (com.petnexus.backend.entity.InventoryItem inv : inventoryItemRepository.findAll()) {
+            int score = matchScore(medicationLowerCase, inv);
+            if (score > bestScore) {
+                best = inv;
+                bestScore = score;
+            }
+        }
+        return best;
+    }
+
+    public static int matchScore(String med, com.petnexus.backend.entity.InventoryItem inv) {
+        String name = inv.getName() == null ? "" : inv.getName().trim().toLowerCase();
+        String sku = inv.getSku() == null ? "" : inv.getSku().trim().toLowerCase();
+        if (med.isEmpty()) return 0;
+        if (name.equals(med)) return 100;
+        if (!sku.isEmpty() && sku.equals(med)) return 90;
+        if (!name.isEmpty() && (name.startsWith(med) || med.startsWith(name))) return 80;
+        if (!name.isEmpty() && (name.contains(med) || med.contains(name))) return 60;
+        String drug = med.split("[\\s,/(]+")[0];
+        if (drug.length() >= 4 && name.startsWith(drug)) return 50;
+        return 0;
     }
 
     private Prescription findOrThrow(String prescriptionId) {

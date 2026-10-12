@@ -69,7 +69,17 @@ public class CareService {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     @Builder.Default
-    private ServiceStatus status = ServiceStatus.SCHEDULED; // SCHEDULED = active
+    private ServiceStatus status = ServiceStatus.SCHEDULED; // kept for backward compatibility; see `active`
+
+    /** Explicit availability flag of the package (null on rows created before this column existed). */
+    @Column
+    @Builder.Default
+    private Boolean active = Boolean.TRUE;
+
+    /** A package is live when `active` says so; legacy rows fall back to the old status convention. */
+    public boolean isActive() {
+        return active != null ? active : status != ServiceStatus.COMPLETED;
+    }
 
     // Creator of the service (admin or provider)
     @ManyToOne(fetch = FetchType.LAZY)

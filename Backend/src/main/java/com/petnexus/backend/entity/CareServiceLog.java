@@ -45,6 +45,10 @@ public class CareServiceLog {
     @Column(nullable = false)
     private boolean returnToRescue;
 
+    /** True once grooming supplies were deducted from inventory for this session (prevents double deduction). */
+    @Column
+    private Boolean suppliesDeducted;
+
     // Date of service (defaults to today if not supplied)
     @Column(nullable = false)
     private LocalDate serviceDate;

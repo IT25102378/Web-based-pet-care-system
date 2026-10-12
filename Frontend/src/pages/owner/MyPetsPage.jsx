@@ -68,6 +68,17 @@ export const MyPetsPage = () => {
     uploadedFile: null,
   });
 
+  // Vaccination Add Modal (FR-01: owners record vaccinations of their own pets)
+  const [isVaccModalOpen, setIsVaccModalOpen] = useState(false);
+  const [isSavingVacc, setIsSavingVacc] = useState(false);
+  const [vaccForm, setVaccForm] = useState({
+    vaccineName: '',
+    batchNumber: '',
+    administeredDate: '',
+    nextDueDate: '',
+    administeredBy: '',
+  });
+
   // Pet Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -258,6 +269,60 @@ export const MyPetsPage = () => {
       showToast('Upload Failed', err.message || 'Unable to save document.', 'error');
     } finally {
       setIsUploadingDoc(false);
+    }
+  };
+
+  // Vaccination Handlers
+  const handleOpenAddVaccination = () => {
+    setVaccForm({
+      vaccineName: '',
+      batchNumber: '',
+      administeredDate: todayISO(),
+      nextDueDate: '',
+      administeredBy: '',
+    });
+    setIsVaccModalOpen(true);
+  };
+
+  const handleSaveVaccination = async (e) => {
+    e.preventDefault();
+    if (!selectedPet) return;
+    const name = vaccForm.vaccineName.trim();
+    if (!name) {
+      showToast('Missing Vaccine Name', 'Please enter the vaccine name.', 'error');
+      return;
+    }
+    if (!vaccForm.administeredDate) {
+      showToast('Missing Date', 'Please enter the date the vaccine was given.', 'error');
+      return;
+    }
+    if (vaccForm.administeredDate > todayISO()) {
+      showToast('Invalid Date', 'The vaccination date cannot be in the future.', 'error');
+      return;
+    }
+    if (vaccForm.nextDueDate && vaccForm.nextDueDate <= vaccForm.administeredDate) {
+      showToast('Invalid Date', 'The next due date must be after the vaccination date.', 'error');
+      return;
+    }
+
+    setIsSavingVacc(true);
+    try {
+      await petApi.addVaccination({
+        petId: selectedPet.petId,
+        petName: selectedPet.name,
+        vaccineName: name,
+        batchNumber: vaccForm.batchNumber.trim() || undefined,
+        administeredDate: vaccForm.administeredDate,
+        nextDueDate: vaccForm.nextDueDate || undefined,
+        administeredBy: vaccForm.administeredBy.trim() || undefined,
+      });
+      showToast('Vaccination Saved', `${name} was added to ${selectedPet.name}'s record.`, 'success');
+      setIsVaccModalOpen(false);
+      loadData();
+    } catch (err) {
+      showToast('Save Failed', err.message || 'Unable to save the vaccination.', 'error');
+    } finally {
+      setIsSavingVacc(false);
     }
   };
 
@@ -481,6 +546,9 @@ export const MyPetsPage = () => {
               <h4 className="text-sm font-bold flex items-center gap-2 text-main">
                 <Syringe size={16} className="text-primary" /> Vaccination History & Booster Schedule
               </h4>
+              <button type="button" className="btn btn-primary btn-sm" onClick={handleOpenAddVaccination}>
+                <Plus size={15} /> Add Vaccination
+              </button>
             </div>
 
             <div className="table-responsive">
@@ -947,6 +1015,89 @@ export const MyPetsPage = () => {
               </button>
               <button type="submit" className="btn btn-primary">
                 <Check size={16} /> Save Companion Profile
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* ========================================================================= */}
+      {/* ADD VACCINATION MODAL */}
+      {/* ========================================================================= */}
+      {isVaccModalOpen && selectedPet && (
+        <Modal
+          isOpen={isVaccModalOpen}
+          onClose={() => !isSavingVacc && setIsVaccModalOpen(false)}
+          title={`Add Vaccination for ${selectedPet.name}`}
+          subtitle="Record a vaccine your companion has received and when the next booster is due."
+          size="lg"
+        >
+          <form onSubmit={handleSaveVaccination}>
+            <RecordIds ids={[['Vaccine ID', null], ['Pet ID', selectedPet?.petId]]} />
+            <div className="form-row mb-4">
+              <div className="form-group">
+                <label className="form-label">Vaccine Name <span className="required">*</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={vaccForm.vaccineName}
+                  onChange={(e) => setVaccForm({ ...vaccForm, vaccineName: e.target.value })}
+                  placeholder="e.g. Rabies, DHPP"
+                  maxLength={200}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Batch Number</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={vaccForm.batchNumber}
+                  onChange={(e) => setVaccForm({ ...vaccForm, batchNumber: e.target.value })}
+                  maxLength={50}
+                />
+              </div>
+            </div>
+            <div className="form-row mb-4">
+              <div className="form-group">
+                <label className="form-label">Date Given <span className="required">*</span></label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={vaccForm.administeredDate}
+                  max={todayISO()}
+                  onChange={(e) => setVaccForm({ ...vaccForm, administeredDate: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Next Due Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={vaccForm.nextDueDate}
+                  min={vaccForm.administeredDate || undefined}
+                  onChange={(e) => setVaccForm({ ...vaccForm, nextDueDate: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="form-group mb-6">
+              <label className="form-label">Administered By</label>
+              <input
+                type="text"
+                className="form-control"
+                value={vaccForm.administeredBy}
+                onChange={(e) => setVaccForm({ ...vaccForm, administeredBy: e.target.value })}
+                placeholder="Clinic or veterinarian name"
+                maxLength={150}
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button type="button" className="btn btn-secondary" onClick={() => setIsVaccModalOpen(false)} disabled={isSavingVacc}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={isSavingVacc} style={{ minWidth: '160px' }}>
+                {isSavingVacc ? 'Saving...' : (<><Syringe size={16} /> Save Vaccination</>)}
               </button>
             </div>
           </form>

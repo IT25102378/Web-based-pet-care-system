@@ -33,6 +33,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final NotificationFactory notificationFactory;
+    private final EmailService emailService;
 
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(String userId) {
@@ -126,8 +127,11 @@ public class NotificationService {
                 return;
             }
             String when = appointment.getAppointmentDate() + " " + appointment.getTimeSlot();
-            notificationRepository.save(notificationFactory.createAppointmentNotification(
-                    owner, appointment.getAppointmentId(), appointment.getPetName(), when, status));
+            Notification notification = notificationFactory.createAppointmentNotification(
+                    owner, appointment.getAppointmentId(), appointment.getPetName(), when, status);
+            notificationRepository.save(notification);
+            // FR-02 / minor function "e-mail confirmation": the same message is also e-mailed
+            emailService.sendNotificationEmail(owner.getEmail(), notification.getTitle(), notification.getMessage());
         } catch (Exception e) {
             log.warn("Could not dispatch appointment notification for {}: {}", appointment.getAppointmentId(), e.getMessage());
         }
@@ -144,11 +148,33 @@ public class NotificationService {
             }
             String notes = (application.getReviewNotes() != null && !application.getReviewNotes().isBlank())
                     ? application.getReviewNotes().trim() : "No additional notes.";
-            notificationRepository.save(notificationFactory.createAdoptionStatusNotification(
-                    applicant, application.getApplicationId(), application.getPetName(), status, notes));
+            Notification notification = notificationFactory.createAdoptionStatusNotification(
+                    applicant, application.getApplicationId(), application.getPetName(), status, notes);
+            notificationRepository.save(notification);
+            emailService.sendNotificationEmail(applicant.getEmail(), notification.getTitle(), notification.getMessage());
         } catch (Exception e) {
             log.warn("Could not dispatch adoption notification for {}: {}", application.getApplicationId(), e.getMessage());
         }
+    }
+
+    /**
+     * Sends the same notification to every active clinic manager (instead of guessing a single manager).
+     * Never throws: callers use it for side effects that must not break their own transaction.
+     */
+    public int notifyClinicManagers(NotificationType type, String title, String message, String link) {
+        int sent = 0;
+        try {
+            for (User manager : userRepository.findByRole(UserRole.ClinicManager)) {
+                if (manager.getStatus() != null && manager.getStatus() != com.petnexus.backend.enums.UserStatus.Active) {
+                    continue;
+                }
+                notificationRepository.save(notificationFactory.create(manager, type, title, message, link));
+                sent++;
+            }
+        } catch (Exception e) {
+            log.warn("Could not notify clinic managers: {}", e.getMessage());
+        }
+        return sent;
     }
 
     @Transactional(readOnly = true)

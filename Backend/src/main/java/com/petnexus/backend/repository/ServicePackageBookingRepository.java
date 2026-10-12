@@ -11,5 +11,6 @@ public interface ServicePackageBookingRepository extends JpaRepository<ServicePa
     Optional<ServicePackageBooking> findByBookingId(String bookingId);
     List<ServicePackageBooking> findByOwnerId(String ownerId);
     boolean existsByOwnerIdAndPackageNameAndStatus(String ownerId, String packageName, String status);
+    boolean existsByBookingId(String bookingId);
     // Additional query methods can be added as needed
 }

@@ -130,6 +130,11 @@ public class ConsultationService {
             vet = userRepository.findByUserId(request.getVetId().trim()).orElse(null);
         } else if (appointment != null && appointment.getVeterinarian() != null) {
             vet = appointment.getVeterinarian();
+        } else {
+            User signedIn = SecurityUtils.getCurrentUser();
+            if (signedIn != null && signedIn.getRole() == UserRole.Veterinarian) {
+                vet = signedIn;   // the vet recording the consultation
+            }
         }
 
         String newConsultationId = generateConsultationId();
@@ -139,7 +144,7 @@ public class ConsultationService {
 
         String vetName = (request.getVetName() != null && !request.getVetName().trim().isEmpty())
                 ? request.getVetName().trim()
-                : (vet != null ? vet.getFullName() : (appointment != null ? appointment.getVetName() : "Dr. Michael Chen, DVM"));
+                : (vet != null ? vet.getFullName() : (appointment != null ? appointment.getVetName() : "Veterinarian"));
 
         Consultation c = Consultation.builder()
                 .consultationId(newConsultationId)

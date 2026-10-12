@@ -263,18 +263,6 @@ public class PurchaseOrderService {
     }
 
     private void notifyManager(PurchaseOrder po, String title, String message) {
-        try {
-            List<User> managers = userRepository.findByRole(UserRole.ClinicManager);
-            String managerUserId = !managers.isEmpty() ? managers.get(0).getUserId() : "USR-005";
-            notificationService.createNotification(
-                    managerUserId,
-                    NotificationType.Inventory,
-                    title,
-                    message,
-                    "/manager/inventory"
-            );
-        } catch (Exception e) {
-            log.warn("Could not dispatch PO notification: {}", e.getMessage());
-        }
+        notificationService.notifyClinicManagers(NotificationType.Inventory, title, message, "/manager/inventory");
     }
 }

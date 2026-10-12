@@ -88,7 +88,7 @@ public class InventoryService {
 
         int currentStock = request.getCurrentStock() != null ? request.getCurrentStock() : 0;
         int minThreshold = request.getMinStockThreshold() != null ? request.getMinStockThreshold() : 5;
-        StockStatus status = calculateStatus(currentStock, minThreshold);
+        StockStatus status = calculateStatus(currentStock, minThreshold, request.getExpiryDate());
 
         InventoryItem item = InventoryItem.builder()
                 .itemId(itemId)
@@ -173,7 +173,7 @@ public class InventoryService {
             item.setSupplierName(request.getSupplierName().trim());
         }
 
-        item.setStatus(calculateStatus(item.getCurrentStock(), item.getMinStockThreshold()));
+        item.setStatus(calculateStatus(item.getCurrentStock(), item.getMinStockThreshold(), item.getExpiryDate()));
         inventoryItemRepository.save(item);
 
         if (request.getCurrentStock() != null && request.getCurrentStock() != previousStock) {
@@ -201,7 +201,7 @@ public class InventoryService {
         }
 
         item.setCurrentStock(newStock);
-        item.setStatus(calculateStatus(newStock, item.getMinStockThreshold()));
+        item.setStatus(calculateStatus(newStock, item.getMinStockThreshold(), item.getExpiryDate()));
         inventoryItemRepository.save(item);
 
         // Notify Observer Pattern subscribers (LowStockAlertObserver, audit, etc.)
@@ -335,10 +335,19 @@ public class InventoryService {
         }
     }
 
-    private StockStatus calculateStatus(int currentStock, int minThreshold) {
+    private StockStatus calculateStatus(int currentStock, int minThreshold, java.time.LocalDate expiryDate) {
+        if (expiryDate != null && expiryDate.isBefore(java.time.LocalDate.now())) return StockStatus.EXPIRED;
         if (currentStock == 0) return StockStatus.OUT_OF_STOCK;
         if (currentStock <= minThreshold) return StockStatus.LOW_STOCK;
         return StockStatus.IN_STOCK;
+    }
+
+    /** An item whose expiry date has passed is reported as Expired even if it was stored before that day. */
+    private StockStatus effectiveStatus(InventoryItem item) {
+        if (item.getExpiryDate() != null && item.getExpiryDate().isBefore(java.time.LocalDate.now())) {
+            return StockStatus.EXPIRED;
+        }
+        return item.getStatus();
     }
 
     private InventoryItemResponse toResponse(InventoryItem item) {
@@ -356,7 +365,7 @@ public class InventoryService {
                 .expiryDate(item.getExpiryDate())
                 .supplierId(item.getSupplierId())
                 .supplierName(item.getSupplierName())
-                .status(item.getStatus().getJsonValue())
+                .status(effectiveStatus(item).getJsonValue())
                 .createdAt(item.getCreatedAt())
                 .build();
     }

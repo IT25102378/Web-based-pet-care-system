@@ -20,6 +20,7 @@ import com.petnexus.backend.repository.NotificationRepository;
 import com.petnexus.backend.repository.PetRepository;
 import com.petnexus.backend.repository.UserRepository;
 import com.petnexus.backend.service.AppointmentService;
+import com.petnexus.backend.service.EmailService;
 import com.petnexus.backend.service.NotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +55,7 @@ class PatternWiringUnitTest {
 
     private NotificationFactory notificationFactory;
     private NotificationService notificationService;
+    private EmailService emailService;
     private AppointmentService appointmentService;
 
     private User owner;
@@ -66,7 +68,8 @@ class PatternWiringUnitTest {
         notificationRepository = mock(NotificationRepository.class);
 
         notificationFactory = new NotificationFactory();
-        notificationService = new NotificationService(notificationRepository, userRepository, notificationFactory);
+        emailService = mock(EmailService.class);
+        notificationService = new NotificationService(notificationRepository, userRepository, notificationFactory, emailService);
 
         StandardConsultationStrategy standard = new StandardConsultationStrategy();
         FeeCalculationContext context = new FeeCalculationContext(
@@ -75,7 +78,8 @@ class PatternWiringUnitTest {
                 standard);
 
         appointmentService = new AppointmentService(
-                appointmentRepository, petRepository, userRepository, context, notificationService);
+                appointmentRepository, petRepository, userRepository, context, notificationService,
+                java.time.Clock.systemDefaultZone());
 
         owner = User.builder().userId("USR-OWN").email("owner@test.com").fullName("Jane Owner")
                 .role(UserRole.PetOwner).build();

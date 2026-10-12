@@ -45,7 +45,26 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(String toEmail, String token) {
         String resetLink = frontendUrl + "/reset-password?token=" + token;
+        String body = "Hello,\n\n" +
+                "We received a request to reset your password for your PetNexus account.\n\n" +
+                "Please click the link below to set a new password:\n\n" +
+                resetLink + "\n\n" +
+                "If you did not request a password reset, please ignore this email.\n\n" +
+                "Regards,\n" +
+                "PetNexus Team";
+        deliver(toEmail, "PetNexus — Password Reset Request", body, resetLink);
+    }
 
+    @Override
+    public void sendNotificationEmail(String toEmail, String subject, String body) {
+        if (toEmail == null || toEmail.isBlank()) {
+            return;
+        }
+        deliver(toEmail, subject, body + "\n\nRegards,\nPetNexus Team", null);
+    }
+
+    /** Sends through SMTP when configured, otherwise logs the e-mail (development mode). Failures are logged, never thrown. */
+    private void deliver(String toEmail, String subject, String body, String linkForLog) {
         boolean isSmtpConfigured = fromEmail != null && !fromEmail.isBlank() &&
                 mailHost != null && !mailHost.isBlank() && !"localhost".equalsIgnoreCase(mailHost);
 
@@ -53,8 +72,12 @@ public class EmailServiceImpl implements EmailService {
             log.info("================================================================================");
             log.info("[PETNEXUS DEV EMAIL SERVICE] SMTP unconfigured or in local dev mode.");
             log.info("Recipient : {}", toEmail);
-            log.info("Subject   : PetNexus — Password Reset Request");
-            log.info("Link      : {}", resetLink);
+            log.info("Subject   : {}", subject);
+            if (linkForLog != null) {
+                log.info("Link      : {}", linkForLog);
+            } else {
+                log.info("Body      : {}", body.replace("\n", " | "));
+            }
             log.info("================================================================================");
             return;
         }
@@ -63,21 +86,12 @@ public class EmailServiceImpl implements EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject("PetNexus — Password Reset Request");
-            message.setText(
-                    "Hello,\n\n" +
-                    "We received a request to reset your password for your PetNexus account.\n\n" +
-                    "Please click the link below to set a new password:\n\n" +
-                    resetLink + "\n\n" +
-                    "If you did not request a password reset, please ignore this email.\n\n" +
-                    "Regards,\n" +
-                    "PetNexus Team"
-            );
-
+            message.setSubject(subject);
+            message.setText(body);
             mailSender.send(message);
-            log.info("Password reset email successfully dispatched to: {}", toEmail);
+            log.info("E-mail '{}' dispatched to: {}", subject, toEmail);
         } catch (Exception ex) {
-            log.warn("[PETNEXUS EMAIL WARNING] Failed to send password reset email via SMTP ({}); link: {}", ex.getMessage(), resetLink);
+            log.warn("[PETNEXUS EMAIL WARNING] Failed to send '{}' via SMTP ({})", subject, ex.getMessage());
         }
     }
 }

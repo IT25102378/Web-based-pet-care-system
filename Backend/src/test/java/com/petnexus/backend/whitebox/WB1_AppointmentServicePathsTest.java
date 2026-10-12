@@ -22,7 +22,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,7 +57,9 @@ class WB1_AppointmentServicePathsTest {
         FeeCalculationContext fee = new FeeCalculationContext(
                 List.of(standard, new EmergencyTriageStrategy(), new SeniorPetDiscountStrategy(), new RescueAnimalWelfareStrategy()),
                 standard);
-        service = new AppointmentService(appointments, pets, users, fee, notifications);
+        // the clinic day is frozen at 10:15 so the "slot already passed today" rule is deterministic
+        Clock clock = Clock.fixed(LocalDate.now().atTime(10, 15).atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        service = new AppointmentService(appointments, pets, users, fee, notifications, clock);
 
         owner = User.builder().userId("USR-001").fullName("Owner One").phone("0771234567").role(UserRole.PetOwner).build();
         pet = Pet.builder().petId("PET-1").name("Bella").species("Dog").breed("Lab").owner(owner).ageYears(3).build();
@@ -162,6 +166,7 @@ class WB1_AppointmentServicePathsTest {
         r.setAppointmentDate(LocalDate.now().minusDays(1));
         assertThrows(BadRequestException.class, () -> service.bookAppointment(r));
         r.setAppointmentDate(LocalDate.now());
+        r.setTimeSlot("11:00 AM");   // later than the frozen 10:15
         assertDoesNotThrow(() -> service.bookAppointment(r));
     }
 
@@ -340,7 +345,9 @@ class WB1_AppointmentServicePathsTest {
         assertThrows(BadRequestException.class, () -> service.updateStatus("APT-1", "CheckedIn"));
 
         authenticate(user("USR-002", UserRole.Veterinarian));
+        found(existing(AppointmentStatus.CheckedIn));
         assertEquals("InRoom", service.updateStatus("APT-1", "INROOM").getStatus());
+        found(existing(AppointmentStatus.Scheduled));
         assertThrows(BadRequestException.class, () -> service.updateStatus("APT-1", "Banana"));
         assertThrows(BadRequestException.class, () -> service.updateStatus("APT-1", "ALL"));
     }
@@ -475,5 +482,62 @@ class WB1_AppointmentServicePathsTest {
 
         List<SlotAvailabilityResponse> excl = service.getAvailableSlots(" ", LocalDate.now(), "apt-1");
         assertTrue(excl.stream().allMatch(SlotAvailabilityResponse::isAvailable));
+    }
+    // ------------------------------------------------------------------ status workflow, slot time, locking
+
+    private static final java.util.Map<AppointmentStatus, java.util.Set<AppointmentStatus>> STATUS_GRAPH = java.util.Map.of(
+            AppointmentStatus.Scheduled, java.util.Set.of(AppointmentStatus.Confirmed, AppointmentStatus.CheckedIn, AppointmentStatus.Cancelled, AppointmentStatus.NoShow),
+            AppointmentStatus.Pending, java.util.Set.of(AppointmentStatus.Confirmed, AppointmentStatus.CheckedIn, AppointmentStatus.Cancelled, AppointmentStatus.NoShow),
+            AppointmentStatus.Confirmed, java.util.Set.of(AppointmentStatus.CheckedIn, AppointmentStatus.Cancelled, AppointmentStatus.NoShow),
+            AppointmentStatus.CheckedIn, java.util.Set.of(AppointmentStatus.InRoom, AppointmentStatus.Completed, AppointmentStatus.Cancelled, AppointmentStatus.NoShow),
+            AppointmentStatus.InRoom, java.util.Set.of(AppointmentStatus.Completed),
+            AppointmentStatus.Completed, java.util.Set.of(),
+            AppointmentStatus.Cancelled, java.util.Set.of(),
+            AppointmentStatus.NoShow, java.util.Set.of());
+
+    @Test
+    @DisplayName("updateStatus: all 64 (from,to) pairs follow the appointment workflow graph")
+    void statusGraphExhaustive() {
+        authenticate(user("USR-003", UserRole.ClinicStaff));
+        for (AppointmentStatus from : AppointmentStatus.values()) {
+            for (AppointmentStatus to : AppointmentStatus.values()) {
+                found(existing(from));
+                if (from == to || STATUS_GRAPH.get(from).contains(to)) {
+                    assertEquals(to.name(), service.updateStatus("APT-1", to.name()).getStatus(), from + " -> " + to);
+                } else {
+                    assertThrows(BadRequestException.class, () -> service.updateStatus("APT-1", to.name()), from + " -> " + to);
+                }
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("slot time: a slot earlier than now is rejected today, accepted for tomorrow")
+    void slotAlreadyPassedToday() {
+        AppointmentRequest r = request();
+        r.setAppointmentDate(LocalDate.now());
+        r.setTimeSlot("09:00 AM");                       // frozen clock says 10:15
+        assertThrows(BadRequestException.class, () -> service.bookAppointment(r));
+        r.setTimeSlot("10:00 AM");
+        assertThrows(BadRequestException.class, () -> service.bookAppointment(r));
+        r.setTimeSlot("10:30 AM");
+        assertDoesNotThrow(() -> service.bookAppointment(r));
+        r.setAppointmentDate(LocalDate.now().plusDays(1));
+        r.setTimeSlot("09:00 AM");
+        assertDoesNotThrow(() -> service.bookAppointment(r));
+    }
+
+    @Test
+    @DisplayName("concurrency: booking and rescheduling lock the vet and pet rows before checking conflicts")
+    void locksBeforeConflictCheck() {
+        service.bookAppointment(request());
+        var order = org.mockito.Mockito.inOrder(users, pets, appointments);
+        order.verify(users).findByUserIdForUpdate("USR-002");
+        order.verify(pets).findByPetIdForUpdate("PET-1");
+        order.verify(appointments).findVetConflicts(any(), any(), any(), any(), any());
+
+        found(existing(AppointmentStatus.Scheduled));
+        service.rescheduleAppointment("APT-1", resched(LocalDate.now().plusDays(6), "11:00 AM"), null);
+        verify(users, times(2)).findByUserIdForUpdate("USR-002");
     }
 }

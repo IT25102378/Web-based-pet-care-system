@@ -180,7 +180,6 @@ class BB6_FeedbackPackagesTest extends BlackBoxSupport {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("ownerId", ownerId);
         m.put("ownerName", "Kavindu Perera");
-        m.put("packageId", "CSR-001");
         m.put("packageName", packageName);
         m.put("totalSessions", sessions);
         return m;
@@ -266,5 +265,30 @@ class BB6_FeedbackPackagesTest extends BlackBoxSupport {
             if ("USR-001".equals(n.get("ownerId").asText())) sawOwnerA = true;
         }
         assertTrue(sawOwnerA);
+    }
+
+    @Test
+    @DisplayName("PK-11 [rule] a booking with a packageId must reference an ACTIVE catalogue package; the catalogue name is recorded")
+    void bookingValidatesCatalogue() throws Exception {
+        String manager = login(MANAGER);
+        String owner = login(OWNER);
+        String name = "BB Catalogue " + System.nanoTime();
+        MvcResult pkg = post("/packages", manager, pkg(name, 12000));
+        String serviceId = body(pkg).get("serviceId").asText();
+
+        Map<String, Object> b = booking("USR-001", "Name Typed By Owner", 3);
+        b.put("packageId", "CSR-DOES-NOT-EXIST");
+        assertEquals(400, status(post("/packages/bookings", owner, b)));
+
+        b.put("packageId", serviceId);
+        MvcResult ok = post("/packages/bookings", owner, b);
+        assertEquals(201, status(ok));
+        assertEquals(name, body(ok).get("packageName").asText(), "the catalogue name wins over the typed name");
+
+        // deactivated packages cannot be bought
+        put("/packages/" + serviceId + "/deactivate", manager, null);
+        Map<String, Object> again = booking("USR-013", "x", 3);
+        again.put("packageId", serviceId);
+        assertEquals(400, status(post("/packages/bookings", login(OTHER_OWNER), again)));
     }
 }

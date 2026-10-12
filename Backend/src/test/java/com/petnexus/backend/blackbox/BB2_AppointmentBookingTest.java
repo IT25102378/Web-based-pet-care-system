@@ -75,8 +75,14 @@ class BB2_AppointmentBookingTest extends BlackBoxSupport {
         MvcResult past = book(owner, "USR-001", petId, LocalDate.now().minusDays(1), "09:00 AM");
         assertEquals(400, status(past));
         assertTrue(message(past).toLowerCase().contains("past"));
-        // today, at a slot far from any seeded appointment of this vet
-        assertEquals(201, status(book(owner, "USR-001", petId, LocalDate.now(), "04:30 PM")));
+        // today: the last slot (04:30 PM) is bookable until it has passed, after that the clinic day is over
+        boolean lastSlotStillAhead = java.time.LocalTime.now().isBefore(java.time.LocalTime.of(16, 30));
+        MvcResult today = book(owner, "USR-001", petId, LocalDate.now(), "04:30 PM");
+        assertEquals(lastSlotStillAhead ? 201 : 400, status(today), message(today));
+        // once 09:00 has passed, the 09:00 slot of today is refused
+        if (java.time.LocalTime.now().isAfter(java.time.LocalTime.of(9, 0))) {
+            assertEquals(400, status(book(owner, "USR-001", petId, LocalDate.now(), "09:00 AM")));
+        }
     }
 
     @Test
@@ -268,6 +274,22 @@ class BB2_AppointmentBookingTest extends BlackBoxSupport {
     }
 
     // ------------------------------------------------------------------ availability / misc
+
+    @Test
+    @DisplayName("AP-21 [state transition] the queue only moves forward: Scheduled -> CheckedIn -> InRoom -> Completed, never back")
+    void queueWorkflow() throws Exception {
+        String owner = login(OWNER);
+        String staff = login(STAFF);
+        String petId = createPet(owner, "Queued", 3);
+        String id = bookOk(owner, "USR-001", petId, farFuture(17), "09:00 AM");
+
+        assertEquals(400, status(put("/appointments/" + id + "/status", staff, Map.of("status", "Completed"))), "cannot skip check-in");
+        assertEquals(200, status(put("/appointments/" + id + "/status", staff, Map.of("status", "CheckedIn"))));
+        assertEquals(200, status(put("/appointments/" + id + "/status", staff, Map.of("status", "InRoom"))));
+        assertEquals(400, status(put("/appointments/" + id + "/status", staff, Map.of("status", "Scheduled"))), "cannot go backwards");
+        assertEquals(200, status(put("/appointments/" + id + "/status", staff, Map.of("status", "Completed"))));
+        assertEquals(400, status(put("/appointments/" + id + "/status", staff, Map.of("status", "CheckedIn"))), "completed is final");
+    }
 
     @Test
     @DisplayName("AP-16 available-slots marks a booked slot as unavailable and the rest as available")

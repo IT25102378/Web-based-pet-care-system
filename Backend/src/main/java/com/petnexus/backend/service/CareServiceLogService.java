@@ -197,6 +197,10 @@ public class CareServiceLogService {
             serviceLog.setServiceDate(request.getServiceDate());
         }
         if (request.getStatus() != null) {
+            if (!isValidTransition(serviceLog.getStatus(), request.getStatus())) {
+                throw new BadRequestException("Invalid status transition from " + serviceLog.getStatus()
+                        + " to " + request.getStatus());
+            }
             serviceLog.setStatus(request.getStatus());
         }
         if (request.getReturnToRescue() != null) {
@@ -222,15 +226,22 @@ public class CareServiceLogService {
         log.info("Deleted CareServiceLog {}", serviceLogId);
     }
 
+    /** Session progress, in order. A session may skip ahead but never move backwards, and Completed is final. */
+    private static final List<ServiceStatus> STATUS_FLOW = List.of(
+            ServiceStatus.SCHEDULED, ServiceStatus.CHECKED_IN, ServiceStatus.IN_PROGRESS,
+            ServiceStatus.READY_FOR_PICKUP, ServiceStatus.COMPLETED);
+
     private boolean isValidTransition(ServiceStatus from, ServiceStatus to) {
         if (to == null) return false;
-        // Allow all non-null status transitions for pet care services
-        return true;
+        if (from == null || from == to) return true;
+        if (from == ServiceStatus.COMPLETED) return false;
+        return STATUS_FLOW.indexOf(to) > STATUS_FLOW.indexOf(from);
     }
 
     private void deductCareProductsForService(CareServiceLog serviceLog) {
         String existingNotes = serviceLog.getNotes() != null ? serviceLog.getNotes() : "";
-        if (existingNotes.contains("[Supplies Dispensed from Inventory]")) {
+        if (Boolean.TRUE.equals(serviceLog.getSuppliesDeducted())
+                || existingNotes.contains("[Supplies Dispensed from Inventory")) {
             return; // Already deducted for this service log
         }
 
@@ -277,6 +288,7 @@ public class CareServiceLogService {
         }
 
         if (!dispensedNames.isEmpty()) {
+            serviceLog.setSuppliesDeducted(true);
             String tag = "\n[Supplies Dispensed from Inventory: " + String.join(", ", dispensedNames) + "]";
             serviceLog.setNotes(existingNotes.isEmpty() ? tag.trim() : existingNotes + tag);
             logRepository.save(serviceLog);

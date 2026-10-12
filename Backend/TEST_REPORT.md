@@ -9,11 +9,11 @@ non-functional requirement NFR-02 (security / role-based access).
 
 | | Result |
 |---|---|
-| Automated tests | **379** run: 139 black-box, 72 white-box, 6 pattern-wiring and the project's existing `Phase*` / design-pattern suites (re-run as a regression check) |
-| Passed | **379** |
+| Automated tests | **408** run (whole `src/test` tree): black-box suites `BB1`-`BB8`, white-box suites `WB1`-`WB5`, `PatternWiringUnitTest`, and the project's existing `Phase*` / design-pattern / Cucumber suites (re-run as a regression check) |
+| Passed | **408** |
 | Failed | **0**. Initial run (before fixes): 6 failures, all genuine defects, now resolved (section 4). |
 | UI smoke test | 55 pages across 7 roles loaded: **0 error screens, 0 failed API calls**, route guards correct |
-| Coverage (JaCoCo) | services 80.8 % line / 53.4 % branch · security 98.9 % / 78.8 % · design patterns 100 % / 100 % · whole backend 60.4 % / 50.1 % |
+| Coverage (JaCoCo) | services 86.5 % line / 61.3 % branch · security 98.9 % / 78.8 % · design patterns 100 % / 100 % · whole backend 65.5 % / 56.8 % |
 
 Every automated test is `@Transactional` (rolled back) so the shared `PetNexus` database is left unchanged.
 This was verified after the run (no leftover test users, items or suppliers; seeded passwords intact).
@@ -101,13 +101,39 @@ Lower-covered, not yet exercised in depth: `SupplierService` (60 %), `AdoptionLi
 
 | Proposal item | Finding |
 |---|---|
-| Minor: Email & SMS confirmation | Only the password-reset e-mail exists. Booking / update confirmations are in-app notifications; there is no SMS code. |
-| Minor: Notification & alerts – vaccination, grooming-completion, boarding-pickup reminders | No scheduler (`@Scheduled` = 0). `createVaccinationReminderNotification` exists in the factory but nothing calls it. |
+| Minor: Email & SMS confirmation | **E-mail now implemented** for appointment and adoption notifications (logged instead when SMTP is not configured). There is still no SMS: it needs a paid gateway and the proposal lists it only as a minor function. |
+| Minor: Notification & alerts – vaccination, grooming-completion, boarding-pickup reminders | **Partly implemented:** `ReminderService` (`@Scheduled`, daily 08:00) sends tomorrow's-appointment and vaccination-due (7 days) reminders once per day. Grooming-completion and boarding-pickup reminders are not scheduled jobs (status changes already notify through the care-session workflow). |
 | Minor: Calendar view | No calendar component; "Vet availability" is a date picker with a slot list. |
 | Minor: Logout | Client-side only (token discarded). Tokens stay valid until expiry (24 h) – acceptable for stateless JWT, but worth stating. |
-| Document upload | Files are stored as base64 data-URLs in the database (no multipart endpoint, no size limit). Works; heavy for large files. |
+| Document upload | Files are stored as base64 data-URLs in the database (no multipart endpoint). A 10 MB size limit is now enforced by the backend. Works; heavy for very large files. |
 | NFR-01 performance (2–3 s) | Not measured with a load tool. Evidence: all 55 pages finished rendering inside the 3 s harness wait. |
 | Frontend vet list | `VetAvailabilityPage` hard-codes three vet names (one is not a seeded user). |
+
+## 5b. Hardening release: documented limitations that were fixed
+
+The viva guides listed limitations of each module. These were fixed and each has a test (suite `WB5_HardenedRulesTest`,
+plus `BB2`/`BB6` and extended `WB1`/`WB2`):
+
+| Module | Limitation | Fix |
+|---|---|---|
+| Appointments | Status could be set to anything | Status workflow graph (all 64 pairs tested) |
+| Appointments | Double-booking check not atomic | Vet and pet rows locked before the conflict queries |
+| Appointments | Already-passed slot bookable today | Slot time checked against an injected clock |
+| Appointments / adoption | No e-mail confirmation | `NotificationService` also e-mails the owner / applicant |
+| Notifications | No scheduled reminders | `ReminderService`, daily 08:00, once per day |
+| Rescue | Foster placements never counted | Capacity reserved / released, full family refused |
+| Rescue | Reporter identity from request body, contact public | Taken from the account; hidden from public view |
+| Care sessions | Any status change allowed | Forward-only workflow, Completed final |
+| Care sessions | Supplies could be deducted twice (marker never matched) | Explicit `suppliesDeducted` flag |
+| Prescriptions | Crude medication matching, hard-coded vet name / licence | Scored matching; uses the logged-in vet |
+| Inventory | `Expired` status never set | Derived from expiry date |
+| Purchase orders / feedback | Alerts to one hard-coded manager | All active clinic managers notified |
+| Packages | Active flag in a status enum; bookings not checked against catalogue; expiry not enforced; time-based ids | Explicit flag; catalogue validation; lazy expiry; sequential ids |
+| Pet documents | No size limit | 10 MB limit |
+| Owner screens | No "add vaccination" form | Form added to My Pets |
+
+Deliberately left as they are (with reasons in the viva guides): id generation with `count()+1` (unique columns make a
+collision fail safely), permanent deletes, per-vet schedules, SMS, online payment, automatic re-ordering.
 
 ## 6. Conclusion
 
@@ -115,5 +141,5 @@ All six major functions work end-to-end for their main flows and every page load
 The first run found six problems; D1, D2, D3 and D5 are fixed, D4 turned out to be intended behaviour
 (only its id-collision risk was real and is fixed), and D6 is fixed together with a missing authorization
 check on vaccination edit / delete. After the fixes the full suite, including the project's existing
-integration tests, runs 379 tests with 0 failures. The remaining proposal gaps in section 5 are features
+integration tests, runs 408 tests with 0 failures. The remaining proposal gaps in section 5 are features
 that were never built, not bugs.

@@ -38,6 +38,7 @@ public class RescueCaseService {
     private final com.petnexus.backend.repository.AdoptionApplicationRepository adoptionApplicationRepository;
     private final com.petnexus.backend.repository.UserRepository userRepository;
     private final NotificationService notificationService;
+    private final com.petnexus.backend.repository.FosterRecordRepository fosterRecordRepository;
 
     // -----------------------------------------------------------------------
     // State Machine
@@ -222,6 +223,14 @@ public class RescueCaseService {
             throw new BadRequestException("Rescue location is required.");
         }
 
+        // The reporter is the logged-in pet owner - never an identity supplied in the request body
+        com.petnexus.backend.entity.User reporter = com.petnexus.backend.security.SecurityUtils.getCurrentUser();
+        if (reporter != null && reporter.getRole() == com.petnexus.backend.enums.UserRole.PetOwner) {
+            request.setReportedByUserId(reporter.getUserId());
+            request.setReportedByUserName(reporter.getFullName());
+            request.setReportedByUserPhone(reporter.getPhone());
+        }
+
         int year = Year.now().getValue();
         long count = rescueCaseRepository.count() + 1;
         String caseId     = String.format("RSC-%d-%03d", year, count);
@@ -394,6 +403,7 @@ public class RescueCaseService {
         }
 
         String oldStatus = rescueCase.getStatus();
+        String previousFosterId = rescueCase.getFosterParentId();
         // Apply updates (null-safe partial patch)
         if (request.getTemporaryName()       != null) rescueCase.setTemporaryName(request.getTemporaryName());
         if (request.getSpecies()             != null) rescueCase.setSpecies(request.getSpecies());
@@ -491,6 +501,11 @@ public class RescueCaseService {
 
         rescueCaseRepository.save(rescueCase);
         
+        // A case leaving foster care frees one placement in the foster directory
+        if ("InFoster".equals(oldStatus) && request.getStatus() != null && !"InFoster".equals(request.getStatus())) {
+            releaseFosterPlacement(previousFosterId);
+        }
+
         // Notify Rescue Officers if transferred by Pet Care Provider (i.e. status changed to ReadyForFoster/Adoption)
         if (request.getStatus() != null && !request.getStatus().equals(oldStatus) 
                 && ("ReadyForFoster".equals(request.getStatus()) || "ReadyForAdoption".equals(request.getStatus()))) {
@@ -583,6 +598,17 @@ public class RescueCaseService {
             throw new BadRequestException("fosterName is required for foster assignment.");
         }
 
+        // Capacity: a registered foster family cannot take more animals than its maximum
+        RescueCase current = findByCaseIdOrThrow(caseId);
+        boolean alreadyWithThisFoster = "InFoster".equals(current.getStatus())
+                && request.getFosterId() != null && request.getFosterId().equals(current.getFosterParentId());
+        if (!alreadyWithThisFoster) {
+            reserveFosterPlacement(request.getFosterId());
+            if ("InFoster".equals(current.getStatus())) {
+                releaseFosterPlacement(current.getFosterParentId());   // moved from another family
+            }
+        }
+
         RescueCaseRequest update = new RescueCaseRequest();
         update.setStatus("InFoster");
         update.setFosterParentId(request.getFosterId());
@@ -654,6 +680,56 @@ public class RescueCaseService {
         log.info("Deleted rescue case {}", caseId);
     }
 
+    /** Takes one placement from a registered foster family; refuses when the family is full or inactive. */
+    private void reserveFosterPlacement(String fosterId) {
+        if (fosterId == null || fosterId.isBlank()) {
+            return;
+        }
+        fosterRecordRepository.findByFosterId(fosterId.trim()).ifPresent(record -> {
+            int active = record.getActivePlacements() != null ? record.getActivePlacements() : 0;
+            int max = record.getMaxCapacity() != null ? record.getMaxCapacity() : 2;
+            if (record.getStatus() != null && !"Active".equalsIgnoreCase(record.getStatus())) {
+                throw new BadRequestException("Foster family " + record.getFullName() + " is not currently active.");
+            }
+            if (active >= max) {
+                throw new BadRequestException("Foster family " + record.getFullName() + " is at full capacity ("
+                        + active + "/" + max + ").");
+            }
+            record.setActivePlacements(active + 1);
+            fosterRecordRepository.save(record);
+        });
+    }
+
+    private void releaseFosterPlacement(String fosterId) {
+        if (fosterId == null || fosterId.isBlank()) {
+            return;
+        }
+        fosterRecordRepository.findByFosterId(fosterId.trim()).ifPresent(record -> {
+            int active = record.getActivePlacements() != null ? record.getActivePlacements() : 0;
+            record.setActivePlacements(Math.max(0, active - 1));
+            fosterRecordRepository.save(record);
+        });
+    }
+
+    /** Reporter name and phone are only shown to staff roles and to the person who made the report. */
+    private RescueCaseResponse applyReporterPrivacy(RescueCase rc, RescueCaseResponse response) {
+        com.petnexus.backend.entity.User viewer = com.petnexus.backend.security.SecurityUtils.getCurrentUser();
+        boolean allowed = false;
+        if (viewer != null) {
+            com.petnexus.backend.enums.UserRole role = viewer.getRole();
+            allowed = role == com.petnexus.backend.enums.UserRole.RescueOfficer
+                    || role == com.petnexus.backend.enums.UserRole.Admin
+                    || role == com.petnexus.backend.enums.UserRole.Veterinarian
+                    || role == com.petnexus.backend.enums.UserRole.PetCareProvider
+                    || (rc.getReportedByUserId() != null && rc.getReportedByUserId().equals(viewer.getUserId()));
+        }
+        if (!allowed) {
+            response.setReportedByUserName(null);
+            response.setReportedByUserPhone(null);
+        }
+        return response;
+    }
+
     private String normalizeConditionSeverity(String raw) {
         if (raw == null || raw.isBlank()) return "Moderate";
         String lower = raw.toLowerCase().trim();
@@ -698,7 +774,7 @@ public class RescueCaseService {
     // -----------------------------------------------------------------------
 
     private RescueCaseResponse toSummaryResponse(RescueCase rc) {
-        return RescueCaseResponse.builder()
+        RescueCaseResponse response = RescueCaseResponse.builder()
                 .caseId(rc.getCaseId())
                 .caseNumber(rc.getCaseNumber())
                 .temporaryName(rc.getTemporaryName())
@@ -732,12 +808,13 @@ public class RescueCaseService {
                 .progressLogs(Collections.emptyList())
                 .photos(Collections.emptyList())
                 .build();
+        return applyReporterPrivacy(rc, response);
     }
 
     private RescueCaseResponse toFullResponse(RescueCase rc,
                                               List<RescueProgressLogResponse> logs,
                                               List<RescuePhotoResponse> photos) {
-        return RescueCaseResponse.builder()
+        RescueCaseResponse response = RescueCaseResponse.builder()
                 .caseId(rc.getCaseId())
                 .caseNumber(rc.getCaseNumber())
                 .temporaryName(rc.getTemporaryName())
@@ -771,6 +848,7 @@ public class RescueCaseService {
                 .progressLogs(logs)
                 .photos(photos)
                 .build();
+        return applyReporterPrivacy(rc, response);
     }
 
     private RescueProgressLogResponse toLogResponse(RescueProgressLog log) {

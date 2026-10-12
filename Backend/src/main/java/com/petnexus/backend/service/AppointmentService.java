@@ -19,8 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,11 +37,34 @@ public class AppointmentService {
     private final UserRepository userRepository;
     private final FeeCalculationContext feeCalculationContext;
     private final NotificationService notificationService;
+    private final Clock clock;
 
     private static final List<AppointmentStatus> EXCLUDED_CONFLICT_STATUSES = List.of(
             AppointmentStatus.Cancelled,
             AppointmentStatus.NoShow
     );
+
+    /**
+     * Appointment status workflow. A status can only move along these edges
+     * (setting the same status again is a harmless no-op). Completed, Cancelled and NoShow are final.
+     */
+    private static final Map<AppointmentStatus, Set<AppointmentStatus>> ALLOWED_STATUS_TRANSITIONS = Map.of(
+            AppointmentStatus.Scheduled, Set.of(AppointmentStatus.Confirmed, AppointmentStatus.CheckedIn,
+                    AppointmentStatus.Cancelled, AppointmentStatus.NoShow),
+            AppointmentStatus.Pending, Set.of(AppointmentStatus.Confirmed, AppointmentStatus.CheckedIn,
+                    AppointmentStatus.Cancelled, AppointmentStatus.NoShow),
+            AppointmentStatus.Confirmed, Set.of(AppointmentStatus.CheckedIn, AppointmentStatus.Cancelled,
+                    AppointmentStatus.NoShow),
+            AppointmentStatus.CheckedIn, Set.of(AppointmentStatus.InRoom, AppointmentStatus.Completed,
+                    AppointmentStatus.Cancelled, AppointmentStatus.NoShow),
+            AppointmentStatus.InRoom, Set.of(AppointmentStatus.Completed),
+            AppointmentStatus.Completed, Set.of(),
+            AppointmentStatus.Cancelled, Set.of(),
+            AppointmentStatus.NoShow, Set.of()
+    );
+
+    private static final java.time.format.DateTimeFormatter SLOT_FORMAT =
+            java.time.format.DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
 
     private static final List<String> STANDARD_SLOTS = List.of(
             "09:00 AM",
@@ -127,10 +152,14 @@ public class AppointmentService {
         }
 
         // 4. Validate appointment date is not in past
-        if (request.getAppointmentDate().isBefore(LocalDate.now())) {
+        if (request.getAppointmentDate().isBefore(LocalDate.now(clock))) {
             throw new BadRequestException("Cannot book an appointment for a date in the past.");
         }
-        validateClinicSlot(request.getTimeSlot());
+        validateClinicSlot(request.getAppointmentDate(), request.getTimeSlot());
+
+        // Serialise concurrent bookings for this vet and pet: the rows are locked until this transaction commits,
+        // so the check-then-insert below cannot be raced by a second request.
+        lockSchedule(request.getVetId(), pet.getPetId());
 
         // 5. Double-Booking Prevention: Check if Vet is already booked for date & time slot
         List<Appointment> vetConflicts = appointmentRepository.findVetConflicts(
@@ -316,6 +345,12 @@ public class AppointmentService {
             throw new BadRequestException("Invalid appointment status: " + newStatusStr);
         }
 
+        if (newStatus != appt.getStatus()
+                && !ALLOWED_STATUS_TRANSITIONS.getOrDefault(appt.getStatus(), Set.of()).contains(newStatus)) {
+            throw new BadRequestException("Appointment cannot move from " + appt.getStatus() + " to " + newStatus
+                    + ". Allowed: " + ALLOWED_STATUS_TRANSITIONS.getOrDefault(appt.getStatus(), Set.of()) + ".");
+        }
+
         appt.setStatus(newStatus);
         appt.setUpdatedAt(LocalDateTime.now());
         Appointment saved = appointmentRepository.save(appt);
@@ -352,10 +387,10 @@ public class AppointmentService {
         }
 
         // Validate date
-        if (request.getAppointmentDate().isBefore(LocalDate.now())) {
+        if (request.getAppointmentDate().isBefore(LocalDate.now(clock))) {
             throw new BadRequestException("Cannot reschedule an appointment to a date in the past.");
         }
-        validateClinicSlot(request.getTimeSlot());
+        validateClinicSlot(request.getAppointmentDate(), request.getTimeSlot());
 
         String effectiveVetName = (request.getVetName() != null && !request.getVetName().trim().isEmpty())
                 ? request.getVetName().trim()
@@ -364,6 +399,8 @@ public class AppointmentService {
         String effectiveVetId = (request.getVetId() != null && !request.getVetId().trim().isEmpty())
                 ? request.getVetId().trim()
                 : appt.getVetId();
+
+        lockSchedule(effectiveVetId, appt.getPetId());
 
         // Double-Booking Check: Conflict for vet excluding this appointment
         List<Appointment> vetConflicts = appointmentRepository.findVetConflictsExcluding(
@@ -526,11 +563,31 @@ public class AppointmentService {
         return 3500.00;
     }
 
-    /** Appointments can only be placed on the clinic's published working-hour slots. */
-    private void validateClinicSlot(String timeSlot) {
+    /**
+     * Appointments can only be placed on the clinic's published working-hour slots,
+     * and a slot whose time has already passed today cannot be booked.
+     */
+    private void validateClinicSlot(LocalDate date, String timeSlot) {
         if (timeSlot == null || !STANDARD_SLOTS.contains(timeSlot.trim())) {
             throw new BadRequestException("Time slot \"" + timeSlot + "\" is outside clinic hours. Available slots: "
                     + String.join(", ", STANDARD_SLOTS));
+        }
+        if (date != null && date.equals(LocalDate.now(clock))) {
+            LocalTime slotTime = LocalTime.parse(timeSlot.trim(), SLOT_FORMAT);
+            if (!slotTime.isAfter(LocalTime.now(clock))) {
+                throw new BadRequestException("The " + timeSlot.trim() + " slot has already passed today. "
+                        + "Please choose a later slot or another day.");
+            }
+        }
+    }
+
+    /** Locks the vet's and the pet's rows (database write lock) until the current transaction ends. */
+    private void lockSchedule(String vetId, String petId) {
+        if (vetId != null && !vetId.trim().isEmpty()) {
+            userRepository.findByUserIdForUpdate(vetId.trim());
+        }
+        if (petId != null && !petId.trim().isEmpty()) {
+            petRepository.findByPetIdForUpdate(petId.trim());
         }
     }
 

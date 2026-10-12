@@ -99,6 +99,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("excludedStatuses") Collection<AppointmentStatus> excludedStatuses
     );
 
+    List<Appointment> findByAppointmentDateAndStatusIn(LocalDate date, Collection<AppointmentStatus> statuses);
+
     List<Appointment> findByPet(Pet pet);
 
     List<Appointment> findByPetId(String petId);

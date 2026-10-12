@@ -28,6 +28,10 @@ public class AuthController {
 
     private final UserService userService;
 
+    /** Demo convenience (login autofill). Set petnexus.demo.suggest-accounts-enabled=false to switch it off. */
+    @org.springframework.beans.factory.annotation.Value("${petnexus.demo.suggest-accounts-enabled:true}")
+    private boolean suggestAccountsEnabled;
+
     /**
      * POST /api/auth/register
      * Register a new user. Status starts at PendingEmailVerification.
@@ -104,6 +108,9 @@ public class AuthController {
     @GetMapping("/suggest-accounts")
     public ResponseEntity<List<UserService.AccountSuggestion>> suggestAccounts(
             @RequestParam(value = "query", required = false, defaultValue = "") String query) {
+        if (!suggestAccountsEnabled) {
+            return ResponseEntity.ok(List.of());
+        }
         try {
             return ResponseEntity.ok(userService.searchAutofillAccounts(query));
         } catch (Exception ex) {

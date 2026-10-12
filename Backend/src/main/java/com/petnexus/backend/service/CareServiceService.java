@@ -82,6 +82,7 @@ public class CareServiceService {
                 .recommendedFor(request.getRecommendedFor())
                 .durationMinutes(duration)
                 .status(ServiceStatus.SCHEDULED)
+                .active(true)
                 .createdBy(creator)
                 .build();
         careServiceRepository.save(service);
@@ -125,6 +126,7 @@ public class CareServiceService {
         }
         // active flag toggles status between SCHEDULED (active) and COMPLETED (inactive)
         if (request.getActive() != null) {
+            service.setActive(request.getActive());
             service.setStatus(request.getActive() ? ServiceStatus.SCHEDULED : ServiceStatus.COMPLETED);
         }
         careServiceRepository.save(service);
@@ -137,6 +139,7 @@ public class CareServiceService {
     public CareServiceResponseDto activateService(String serviceId) {
         CareService service = careServiceRepository.findByServiceId(serviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("CareService not found: " + serviceId));
+        service.setActive(true);
         service.setStatus(ServiceStatus.SCHEDULED);
         careServiceRepository.save(service);
         return mapToResponse(service);
@@ -146,7 +149,8 @@ public class CareServiceService {
     public CareServiceResponseDto deactivateService(String serviceId) {
         CareService service = careServiceRepository.findByServiceId(serviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("CareService not found: " + serviceId));
-        service.setStatus(ServiceStatus.COMPLETED); // treat COMPLETED as deactivated
+        service.setActive(false);
+        service.setStatus(ServiceStatus.COMPLETED);
         careServiceRepository.save(service);
         return mapToResponse(service);
     }
@@ -164,8 +168,7 @@ public class CareServiceService {
         dto.setRecommendedFor(service.getRecommendedFor());
         dto.setDurationMinutes(service.getDurationMinutes());
         dto.setStatus(service.getStatus());
-        // active = true when status is SCHEDULED (the "live" state)
-        dto.setActive(service.getStatus() == ServiceStatus.SCHEDULED);
+        dto.setActive(service.isActive());
         // Parse features from the description field (comma or newline separated)
         if (service.getDescription() != null && !service.getDescription().isBlank()) {
             java.util.List<String> features = java.util.Arrays.stream(

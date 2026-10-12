@@ -18,6 +18,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -44,15 +45,17 @@ class WB2_WorkflowStateMachinesTest {
 
     private RescueCaseRepository cases;
     private AdoptionListingRepository listings;
+    private FosterRecordRepository fosters;
     private RescueCaseService rescue;
 
     @BeforeEach
     void setUp() {
         cases = mock(RescueCaseRepository.class);
         listings = mock(AdoptionListingRepository.class);
+        fosters = mock(FosterRecordRepository.class);
         when(cases.save(any(RescueCase.class))).thenAnswer(i -> i.getArgument(0));
         rescue = new RescueCaseService(cases, mock(RescueProgressLogRepository.class), mock(RescuePhotoRepository.class),
-                listings, mock(AdoptionApplicationRepository.class), mock(UserRepository.class), mock(NotificationService.class));
+                listings, mock(AdoptionApplicationRepository.class), mock(UserRepository.class), mock(NotificationService.class), fosters);
     }
 
     private RescueCase caseIn(String status) {
@@ -183,6 +186,95 @@ class WB2_WorkflowStateMachinesTest {
         assertThrows(BadRequestException.class, () -> rescue.addPhoto("RSC-1", new RescuePhotoRequest()));
         FosterAssignRequest f = new FosterAssignRequest();
         assertThrows(BadRequestException.class, () -> rescue.assignFoster("RSC-1", f));
+    }
+
+    // =========================================================================== foster capacity + reporter privacy
+
+    private FosterRecord family(int active, int max, String status) {
+        FosterRecord f = FosterRecord.builder().fosterId("FST-1").fullName("Perera Family")
+                .activePlacements(active).maxCapacity(max).status(status).build();
+        when(fosters.findByFosterId("FST-1")).thenReturn(Optional.of(f));
+        return f;
+    }
+
+    @Test
+    @DisplayName("foster: placement uses one slot, a full or inactive family is refused, leaving foster frees the slot")
+    void fosterCapacity() {
+        FosterAssignRequest assign = new FosterAssignRequest();
+        assign.setFosterId("FST-1");
+        assign.setFosterName("Perera Family");
+
+        RescueCase c = caseIn("ReadyForFoster");
+        FosterRecord roomy = family(1, 2, "Active");
+        rescue.assignFoster("RSC-1", assign);
+        assertEquals(2, roomy.getActivePlacements());
+        assertEquals("InFoster", c.getStatus());
+
+        caseIn("ReadyForFoster");
+        FosterRecord full = family(2, 2, "Active");
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> rescue.assignFoster("RSC-1", assign));
+        assertTrue(ex.getMessage().contains("full capacity"));
+        assertEquals(2, full.getActivePlacements());
+
+        caseIn("ReadyForFoster");
+        family(0, 2, "Inactive");
+        assertThrows(BadRequestException.class, () -> rescue.assignFoster("RSC-1", assign));
+
+        // leaving foster care releases the placement
+        RescueCase inFoster = caseIn("InFoster");
+        inFoster.setFosterParentId("FST-1");
+        FosterRecord busy = family(2, 3, "Active");
+        RescueCaseRequest back = new RescueCaseRequest();
+        back.setStatus("ReadyForAdoption");
+        rescue.updateRescueCase("RSC-1", back);
+        assertEquals(1, busy.getActivePlacements());
+    }
+
+    @Test
+    @DisplayName("privacy: reporter name and phone are hidden from anonymous visitors and other owners")
+    void reporterPrivacy() {
+        RescueCase c = RescueCase.builder().caseId("RSC-9").temporaryName("Rex").species("Dog").status("Intake")
+                .reportedByUserId("USR-001").reportedByUserName("Kavindu").reportedByUserPhone("0771234567").build();
+        when(cases.findAll()).thenReturn(java.util.List.of(c));
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+
+        RescueCaseResponse anonymous = rescue.getAllRescueCases(null, null, null).get(0);
+        assertNull(anonymous.getReportedByUserName());
+        assertNull(anonymous.getReportedByUserPhone());
+
+        authenticate(com.petnexus.backend.entity.User.builder().userId("USR-009").role(UserRole.PetOwner).build());
+        assertNull(rescue.getAllRescueCases(null, null, null).get(0).getReportedByUserPhone());
+
+        authenticate(com.petnexus.backend.entity.User.builder().userId("USR-001").role(UserRole.PetOwner).build());
+        assertEquals("0771234567", rescue.getAllRescueCases(null, null, null).get(0).getReportedByUserPhone());
+
+        authenticate(com.petnexus.backend.entity.User.builder().userId("USR-006").role(UserRole.RescueOfficer).build());
+        assertEquals("Kavindu", rescue.getAllRescueCases(null, null, null).get(0).getReportedByUserName());
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    @DisplayName("report: the reporter identity comes from the logged-in owner, not from the request body")
+    void reporterFromToken() {
+        authenticate(com.petnexus.backend.entity.User.builder().userId("USR-001").fullName("Kavindu Perera")
+                .phone("0771234567").role(UserRole.PetOwner).build());
+        when(cases.findByCaseId(anyString())).thenAnswer(i -> Optional.of(RescueCase.builder().caseId(i.getArgument(0)).status("Reported").build()));
+        RescueCaseRequest req = new RescueCaseRequest();
+        req.setSpecies("Cat");
+        req.setRescueLocation("Temple Rd");
+        req.setReportedByUserId("USR-HACKER");
+        req.setReportedByUserName("Somebody Else");
+        rescue.reportAnimalForRescue(req);
+        var captor = org.mockito.ArgumentCaptor.forClass(RescueCase.class);
+        verify(cases).save(captor.capture());
+        assertEquals("USR-001", captor.getValue().getReportedByUserId());
+        assertEquals("Kavindu Perera", captor.getValue().getReportedByUserName());
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+
+    private void authenticate(com.petnexus.backend.entity.User u) {
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(u, null, java.util.List.of()));
     }
 
     // =========================================================================== purchase order workflow

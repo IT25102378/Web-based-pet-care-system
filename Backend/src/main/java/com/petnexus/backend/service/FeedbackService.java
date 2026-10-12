@@ -164,25 +164,11 @@ public class FeedbackService {
     }
 
     private void notifyClinicManagerNewFeedback(String clientName, int rating, String category) {
-        try {
-            // Find clinic manager user or default to USR-005
-            List<User> managers = userRepository.findByRole(UserRole.ClinicManager);
-            String managerUserId = !managers.isEmpty() ? managers.get(0).getUserId() : "USR-005";
-
-            // If USR-005 exists in repository or manager found, create notification
-            Optional<User> targetManager = userRepository.findByUserId(managerUserId);
-            if (targetManager.isPresent()) {
-                notificationService.createNotification(
-                        targetManager.get().getUserId(),
-                        NotificationType.System,
-                        "New Client Feedback Submitted",
-                        String.format("%s submitted a %d-star review for %s.", clientName, rating, category),
-                        "/manager/feedback"
-                );
-            }
-        } catch (Exception e) {
-            log.warn("Could not dispatch feedback notification to clinic manager: {}", e.getMessage());
-        }
+        notificationService.notifyClinicManagers(
+                NotificationType.System,
+                "New Client Feedback Submitted",
+                String.format("%s submitted a %d-star review for %s.", clientName, rating, category),
+                "/manager/feedback");
     }
 
     private FeedbackResponse toResponse(Feedback f) {

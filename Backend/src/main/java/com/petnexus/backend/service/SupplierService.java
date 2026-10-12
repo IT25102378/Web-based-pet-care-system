@@ -185,20 +185,12 @@ public class SupplierService {
         purchaseOrderRepository.save(po);
         log.info("Dispatched purchase order {} for {} amount {}", orderId, po.getSupplierName(), po.getTotalAmount());
 
-        // Dispatch notification to Clinic Manager
-        try {
-            List<User> managers = userRepository.findByRole(UserRole.ClinicManager);
-            String managerUserId = !managers.isEmpty() ? managers.get(0).getUserId() : "USR-005";
-            notificationService.createNotification(
-                    managerUserId,
-                    NotificationType.Inventory,
-                    "Purchase Order Dispatched",
-                    String.format("PO #%s placed with %s for Rs. %s.", orderId.replace("PO-", ""), po.getSupplierName(), po.getTotalAmount()),
-                    "/manager/inventory"
-            );
-        } catch (Exception e) {
-            log.warn("Could not dispatch PO notification: {}", e.getMessage());
-        }
+        // Dispatch notification to every clinic manager
+        notificationService.notifyClinicManagers(
+                NotificationType.Inventory,
+                "Purchase Order Dispatched",
+                String.format("PO #%s placed with %s for Rs. %s.", orderId.replace("PO-", ""), po.getSupplierName(), po.getTotalAmount()),
+                "/manager/inventory");
 
         return PurchaseOrderResponse.builder()
                 .orderId(orderId)

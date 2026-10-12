@@ -4,6 +4,7 @@ import com.petnexus.backend.entity.Vaccination;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,4 +14,5 @@ public interface VaccinationRepository extends JpaRepository<Vaccination, Long> 
     List<Vaccination> findByPet_PetId(String petId);
     List<Vaccination> findByPet_Owner_UserId(String ownerId);
     boolean existsByVaccineId(String vaccineId);
+    List<Vaccination> findByNextDueDateBetween(LocalDate from, LocalDate to);
 }
