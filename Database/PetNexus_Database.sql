@@ -17,6 +17,38 @@ USE PetNexus;
 GO
 
 -- ==============================================================================
+-- SECTION 0: Legacy Schema Reset
+-- Older copies of this database used INT ids, which the current backend cannot
+-- migrate in place. If one is detected, every table is dropped so the sections
+-- below rebuild the schema from scratch. WARNING: this deletes the local data.
+-- ==============================================================================
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.columns c
+    JOIN sys.types t ON c.user_type_id = t.user_type_id
+    WHERE c.object_id = OBJECT_ID(N'dbo.[USER]')
+      AND c.name = 'id'
+      AND t.name <> 'bigint'
+)
+BEGIN
+    PRINT 'Legacy PetNexus schema detected (USER.id is not BIGINT). Dropping all tables for a clean rebuild...';
+
+    DECLARE @sql NVARCHAR(MAX) = N'';
+
+    SELECT @sql += N'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + N'.' + QUOTENAME(OBJECT_NAME(parent_object_id))
+                 + N' DROP CONSTRAINT ' + QUOTENAME(name) + N';'
+    FROM sys.foreign_keys;
+    EXEC sp_executesql @sql;
+
+    SET @sql = N'';
+    SELECT @sql += N'DROP TABLE ' + QUOTENAME(SCHEMA_NAME(schema_id)) + N'.' + QUOTENAME(name) + N';'
+    FROM sys.tables;
+    EXEC sp_executesql @sql;
+END
+GO
+
+-- ==============================================================================
 -- SECTION 1: Core PetNexus Application Schema (31 Tables & Relations)
 -- ==============================================================================
 
