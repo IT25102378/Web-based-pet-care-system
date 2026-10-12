@@ -109,7 +109,7 @@ export const AddConsultationPage = () => {
     setPatientType(type);
     if (type === 'owned' && pets.length > 0) {
       setSelectedPetId(pets[0].petId);
-      setFormData(prev => ({ ...prev, rescueMedicalSummary: '', passToProvider: false }));
+      setFormData(prev => ({ ...prev, rescueMedicalSummary: '', passToProvider: true }));
     } else if (type === 'rescue' && rescueCases.length > 0) {
       const firstRescue = rescueCases[0];
       setSelectedPetId(firstRescue.caseId);
@@ -214,6 +214,35 @@ export const AddConsultationPage = () => {
           vetId: currentUser?.userId || 'USR-002',
           vetName: currentUser?.fullName || 'Dr. Michael Chen, DVM',
         });
+
+        // Registered pet going on to a Pet Care Provider: the hand-over is completed on the
+        // prescription page, once the vet has issued (or skipped) the prescription.
+        if (formData.passToProvider) {
+          const chosenProvider = providers.find((p) => p.userId === selectedProviderId) || {
+            userId: selectedProviderId || 'USR-016',
+            fullName: 'Pet Care Provider',
+          };
+          showToast(
+            'Consultation Recorded',
+            `Medical report saved (Ref: ${created?.consultationId || 'N/A'}). Issue the prescription to pass ${petObj ? petObj.name : 'the pet'} to ${chosenProvider.fullName}.`,
+            'success'
+          );
+          navigate('/vet/prescriptions', {
+            state: {
+              handoff: {
+                petId: selectedPetId,
+                petName: petObj ? petObj.name : 'Patient',
+                providerId: chosenProvider.userId,
+                providerName: chosenProvider.fullName,
+                consultationId: created?.consultationId || '',
+                diagnosis: formData.assessmentDiagnosis,
+                treatmentPlan: formData.treatmentPlan,
+                findings: formData.objectiveFindings,
+              },
+            },
+          });
+          return;
+        }
       }
 
       if (patientType === 'rescue' && formData.passToProvider) {
@@ -441,6 +470,117 @@ export const AddConsultationPage = () => {
             </div>
           )}
 
+          {patientType === 'owned' && (
+            <div
+              style={{
+                backgroundColor: 'rgba(245, 158, 11, 0.06)',
+                padding: '1.25rem',
+                borderRadius: 'var(--radius-lg)',
+                marginBottom: '1.5rem',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '1.25rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'var(--primary)', color: '#fff', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-full)', fontSize: '0.78rem', fontWeight: 700 }}>
+                  <Stethoscope size={13} /> Consultation
+                </div>
+                <ArrowRight size={16} color="#D97706" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'var(--primary)', color: '#fff', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-full)', fontSize: '0.78rem', fontWeight: 700 }}>
+                  <Pill size={13} /> Prescription
+                </div>
+                <ArrowRight size={16} color="#D97706" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: formData.passToProvider ? '#D97706' : 'var(--border)', color: formData.passToProvider ? '#fff' : 'var(--text-muted)', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-full)', fontSize: '0.78rem', fontWeight: 700, transition: 'all 0.25s' }}>
+                  <Scissors size={13} /> Pet Care Provider
+                </div>
+              </div>
+
+              <p className="text-xs font-bold uppercase tracking-wider text-warning mb-2">Next Step After Consultation *</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <label
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                    padding: '0.75rem', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                    border: formData.passToProvider ? '2px solid #D97706' : '1px solid var(--border)',
+                    backgroundColor: formData.passToProvider ? 'rgba(217, 119, 6, 0.06)' : '#fff',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="ownedPassToProvider"
+                    checked={formData.passToProvider === true}
+                    onChange={() => setFormData({ ...formData, passToProvider: true })}
+                    style={{ marginTop: '2px' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div className="flex items-center gap-2">
+                      <Scissors size={14} color="#D97706" />
+                      <strong className="text-sm" style={{ color: '#92400E' }}>Pass to Pet Care Provider</strong>
+                    </div>
+                    <p className="text-xs text-muted mt-0.5">
+                      After the consultation and prescription, the pet goes to the Pet Care Provider for grooming and follow-up care.
+                    </p>
+
+                    {formData.passToProvider && (
+                      <div className="mt-3 pt-3" style={{ borderTop: '1px dashed rgba(217, 119, 6, 0.3)' }}>
+                        <label className="form-label text-xs font-bold" style={{ color: '#92400E', marginBottom: '0.35rem' }}>
+                          Choose Pet Care Provider <span className="text-danger">*</span>
+                        </label>
+                        <select
+                          className="form-select text-sm"
+                          value={selectedProviderId}
+                          onChange={(e) => setSelectedProviderId(e.target.value)}
+                          required={formData.passToProvider}
+                          style={{ backgroundColor: '#fff' }}
+                        >
+                          {providers.map((p) => (
+                            <option key={p.userId} value={p.userId}>
+                              {p.fullName || p.name} {p.businessName ? `(${p.businessName})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </label>
+
+                <label
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                    padding: '0.75rem', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                    border: formData.passToProvider === false ? '2px solid var(--primary)' : '1px solid var(--border)',
+                    backgroundColor: formData.passToProvider === false ? 'var(--primary-subtle)' : '#fff',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="ownedPassToProvider"
+                    checked={formData.passToProvider === false}
+                    onChange={() => setFormData({ ...formData, passToProvider: false })}
+                    style={{ marginTop: '2px' }}
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <UserCheck size={14} color="var(--primary)" />
+                      <strong className="text-sm text-main">Return to Owner</strong>
+                    </div>
+                    <p className="text-xs text-muted mt-0.5">
+                      No further care is needed. The pet goes home after the consultation and prescription.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Vitals Ribbon Inputs */}
           <div
             style={{
@@ -575,7 +715,7 @@ export const AddConsultationPage = () => {
 
           <button
             type="submit"
-            className={`btn btn-lg ${patientType === 'rescue' && formData.passToProvider ? 'btn-warning' : 'btn-primary'}`}
+            className={`btn btn-lg ${formData.passToProvider ? 'btn-warning' : 'btn-primary'}`}
             style={{ width: '100%', marginTop: '1rem' }}
             disabled={submitting}
           >
@@ -584,6 +724,8 @@ export const AddConsultationPage = () => {
               ? 'Recording...'
               : patientType === 'rescue' && formData.passToProvider
               ? 'Save Consultation & Transfer to Pet Care Provider'
+              : formData.passToProvider
+              ? 'Save Consultation & Prescribe Before Hand-Over'
               : 'Save Consultation & Proceed to Prescription'}
           </button>
         </form>

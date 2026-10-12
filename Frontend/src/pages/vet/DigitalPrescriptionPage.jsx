@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { petApi } from '../../api/petApi';
+import { careServiceApi } from '../../api/careServiceApi';
 import { prescriptionApi } from '../../api/prescriptionApi';
 import { inventoryApi } from '../../api/inventoryApi';
 import { Modal } from '../../components/common/Modal';
@@ -16,15 +18,22 @@ import {
   XCircle,
   AlertTriangle,
   Package,
+  Scissors,
 } from 'lucide-react';
 
 import { firstError, validateNumber } from '../../utils/validators';
 export const DigitalPrescriptionPage = () => {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Set when the vet chose "Pass to Pet Care Provider" on the consultation page
+  const [handoff, setHandoff] = useState(location.state?.handoff || null);
+  const [handingOver, setHandingOver] = useState(false);
 
   const [pets, setPets] = useState([]);
-  const [selectedPetId, setSelectedPetId] = useState('');
+  const [selectedPetId, setSelectedPetId] = useState(location.state?.handoff?.petId || '');
   const [instructions, setInstructions] = useState('Administer with morning meal. Complete full course.');
   const [items, setItems] = useState([
     { medicationName: 'Apoquel 16mg (Oclacitinib)', dosage: '1 tablet (16mg)', frequency: 'Once Daily', durationDays: 14, quantityPrescribed: 14, refillsAllowed: 1 },
@@ -85,6 +94,45 @@ export const DigitalPrescriptionPage = () => {
     setItems(copy);
   };
 
+  // Hands the pet over to the chosen Pet Care Provider by opening a care service log in their queue
+  const passToProvider = async (prescription) => {
+    if (!handoff) return;
+    setHandingOver(true);
+    try {
+      const medications = prescription
+        ? (prescription.items || items).map((i) => `${i.medicationName} - ${i.dosage || 'as directed'}, ${i.frequency}, ${i.durationDays} days`).join('; ')
+        : '';
+      const notes = [
+        handoff.consultationId && `Consultation ${handoff.consultationId}`,
+        handoff.diagnosis && `Diagnosis: ${handoff.diagnosis}`,
+        prescription ? `Prescription ${prescription.prescriptionId}: ${medications}` : 'No prescription issued',
+      ].filter(Boolean).join(' | ').slice(0, 1000);
+      await careServiceApi.createServiceLog({
+        petId: handoff.petId,
+        petName: handoff.petName,
+        serviceType: 'Post-Consultation Care',
+        intakeCondition: (handoff.findings || 'Examined and cleared by the veterinarian').slice(0, 1000),
+        servicesPerformed: (handoff.treatmentPlan || 'Follow the veterinary treatment plan').slice(0, 1000),
+        notes,
+        providerId: handoff.providerId,
+        providerName: handoff.providerName,
+        status: 'CheckedIn',
+        returnToRescue: false,
+      });
+      showToast(
+        'Transferred to Pet Care Provider',
+        `${handoff.petName} has been passed to ${handoff.providerName} with the consultation${prescription ? ' and prescription' : ''} details.`,
+        'success'
+      );
+      setHandoff(null);
+      navigate('/vet/dashboard', { replace: true, state: {} });
+    } catch (err) {
+      showToast('Hand-Over Failed', err.message, 'error');
+    } finally {
+      setHandingOver(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const itemErrors = items.map((item, idx) => {
@@ -128,6 +176,10 @@ export const DigitalPrescriptionPage = () => {
         `Digital Rx #${created.prescriptionId} signed. Prescribed medications were automatically deducted from clinic inventory.`,
         'success'
       );
+      if (handoff && handoff.petId === selectedPetId) {
+        await passToProvider(created);
+        return;
+      }
       loadData();
     } catch (err) {
       showToast('Error', err.message, 'error');
@@ -191,11 +243,52 @@ export const DigitalPrescriptionPage = () => {
           </h3>
 
           <form onSubmit={handleSubmit}>
+            {handoff && (
+              <div
+                style={{
+                  backgroundColor: 'rgba(245, 158, 11, 0.06)',
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-lg)',
+                  marginBottom: '1.25rem',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Scissors size={15} color="#D97706" />
+                  <strong className="text-sm" style={{ color: '#92400E' }}>
+                    {handoff.petName} is going to {handoff.providerName}
+                  </strong>
+                </div>
+                <p className="text-xs text-muted mb-3">
+                  Sign the prescription below and the pet is passed to the Pet Care Provider with the consultation and
+                  prescription details. If no medication is needed, pass the pet on without one.
+                </p>
+                <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={handingOver || submitting}
+                    onClick={() => passToProvider(null)}
+                  >
+                    Pass Without a Prescription
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={handingOver || submitting}
+                    onClick={() => setHandoff(null)}
+                  >
+                    Cancel Hand-Over
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label">Patient Companion <span className="required">*</span></label>
               <select
                 className="form-select"
                 value={selectedPetId}
+                disabled={Boolean(handoff)}
                 onChange={(e) => setSelectedPetId(e.target.value)}
               >
                 {pets.map((p) => (
@@ -418,8 +511,13 @@ export const DigitalPrescriptionPage = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={submitting}>
-              <Check size={16} /> Sign & Issue Digital Rx
+            <button
+              type="submit"
+              className={`btn ${handoff ? 'btn-warning' : 'btn-primary'}`}
+              style={{ width: '100%' }}
+              disabled={submitting || handingOver}
+            >
+              <Check size={16} /> {handoff ? 'Sign Rx & Pass to Pet Care Provider' : 'Sign & Issue Digital Rx'}
             </button>
           </form>
         </div>
@@ -443,7 +541,7 @@ export const DigitalPrescriptionPage = () => {
                       <>
                         <button
                           type="button"
-                          className="btn btn-ghost btn-sm"
+                          className="btn btn-secondary btn-sm"
                           style={{ padding: '0.15rem 0.35rem' }}
                           title="Edit Administration Instructions"
                           onClick={() => handleOpenEdit(rx)}
@@ -491,7 +589,7 @@ export const DigitalPrescriptionPage = () => {
                   <span>{rx.digitalSignature}</span>
                   <button
                     type="button"
-                    className="btn btn-ghost btn-sm"
+                    className="btn btn-secondary btn-sm"
                     onClick={() => window.print()}
                     title="Print prescription"
                   >
