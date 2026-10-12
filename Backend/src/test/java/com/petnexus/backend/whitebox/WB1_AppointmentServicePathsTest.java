@@ -481,7 +481,7 @@ class WB1_AppointmentServicePathsTest {
         assertFalse(all.stream().filter(s -> s.getTimeSlot().equals("10:00 AM")).findFirst().orElseThrow().isAvailable());
 
         List<SlotAvailabilityResponse> excl = service.getAvailableSlots(" ", LocalDate.now(), "apt-1");
-        assertTrue(excl.stream().allMatch(SlotAvailabilityResponse::isAvailable));
+        assertTrue(excl.stream().allMatch(s -> s.isAvailable()));
     }
     // ------------------------------------------------------------------ status workflow, slot time, locking
 
