@@ -22,18 +22,18 @@ import java.time.LocalDate;
 public class InventoryItemRequest {
 
     @NotBlank(message = "Item name is required")
-    @Size(max = 150)
+    @Size(max = 150, message = "Name cannot be longer than 150 characters")
     private String name;
 
     @NotBlank(message = "Category is required")
-    @Size(max = 100)
+    @Size(max = 100, message = "Category cannot be longer than 100 characters")
     private String category;
 
     @NotBlank(message = "SKU is required")
-    @Size(max = 50)
+    @Size(max = 50, message = "SKU cannot be longer than 50 characters")
     private String sku;
 
-    @Size(max = 50)
+    @Size(max = 50, message = "Batch number cannot be longer than 50 characters")
     private String batchNumber;
 
     @NotNull(message = "Current stock is required")
@@ -45,7 +45,7 @@ public class InventoryItemRequest {
     private Integer minStockThreshold;
 
     @NotBlank(message = "Unit is required")
-    @Size(max = 50)
+    @Size(max = 50, message = "Unit cannot be longer than 50 characters")
     private String unit;
 
     @NotNull(message = "Unit price is required")
@@ -58,9 +58,9 @@ public class InventoryItemRequest {
 
     private LocalDate expiryDate;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Supplier ID cannot be longer than 20 characters")
     private String supplierId;
 
-    @Size(max = 150)
+    @Size(max = 150, message = "Supplier name cannot be longer than 150 characters")
     private String supplierName;
 }

@@ -49,7 +49,7 @@ public class Phase8InventorySupplierIntegrationTest {
                         .companyName("Test Medical Supplies Ltd")
                         .contactPerson("Dr. Test")
                         .email("test.supplier@petnexus.com")
-                        .phone("+94 11 999 8888")
+                        .phone("0119998888")
                         .category("Pharmaceuticals")
                         .leadTimeDays(3)
                         .rating(new BigDecimal("4.8"))
@@ -386,7 +386,7 @@ public class Phase8InventorySupplierIntegrationTest {
                 .companyName("Apex MedTech Sri Lanka")
                 .contactPerson("Kusal Mendis")
                 .email("kusal@apexmedtech.lk")
-                .phone("+94 11 345 6789")
+                .phone("0113456789")
                 .category("Diagnostics & Labs")
                 .leadTimeDays(5)
                 .rating(new BigDecimal("4.9"))
@@ -431,7 +431,7 @@ public class Phase8InventorySupplierIntegrationTest {
     void testUpdateSupplier() {
         SupplierRequest updateReq = SupplierRequest.builder()
                 .contactPerson("Dr. Test Senior")
-                .phone("+94 11 888 7777")
+                .phone("0118887777")
                 .leadTimeDays(4)
                 .build();
 

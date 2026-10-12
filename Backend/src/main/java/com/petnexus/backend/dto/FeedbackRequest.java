@@ -34,11 +34,11 @@ public class FeedbackRequest {
     private Integer rating;
 
     @NotBlank(message = "Review headline / summary is required")
-    @Size(max = 200, message = "Title cannot exceed 200 characters")
+    @Size(min = 5, max = 200, message = "Review title must be between 5 and 200 characters")
     private String title;
 
     @NotBlank(message = "Review comments are required")
-    @Size(max = 2000, message = "Comments cannot exceed 2000 characters")
+    @Size(min = 10, max = 2000, message = "Review comments must be between 10 and 2000 characters")
     private String comments;
 
     private String staffMentioned;

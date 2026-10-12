@@ -63,7 +63,7 @@ public class Phase10A6PurchaseOrderIntegrationTest {
                         .companyName("PO Test Supplies Inc")
                         .contactPerson("Jane PO Tester")
                         .email("po.test@petnexus.com")
-                        .phone("+94 11 777 6666")
+                        .phone("0117776666")
                         .category("Medical Supplies")
                         .leadTimeDays(3)
                         .rating(new BigDecimal("4.5"))

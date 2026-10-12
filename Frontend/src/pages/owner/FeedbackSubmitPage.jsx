@@ -18,8 +18,11 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
+import { validateText } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const FeedbackSubmitPage = () => {
   const { currentUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
 
   const [feedbacks, setFeedbacks] = useState([]);
@@ -61,8 +64,12 @@ export const FeedbackSubmitPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim() || !comments.trim()) {
-      showToast('Form Incomplete', 'Please provide a title and review comments.', 'error');
+    const feedbackError = check(
+      ['title', title, validateText(title, { label: 'Review title', required: true, min: 5, max: 200 })],
+      ['comments', comments, validateText(comments, { label: 'Review comments', required: true, min: 10, max: 2000 })],
+    );
+    if (feedbackError) {
+      showToast('Form Incomplete', feedbackError, 'error');
       return;
     }
 
@@ -105,12 +112,12 @@ export const FeedbackSubmitPage = () => {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editFormData.title.trim() || editFormData.title.trim().length < 5) {
-      showToast('Action Required', 'Title must be at least 5 characters.', 'error');
-      return;
-    }
-    if (!editFormData.comments.trim() || editFormData.comments.trim().length < 10) {
-      showToast('Action Required', 'Comments must be at least 10 characters for clinical review.', 'error');
+    const editError = check(
+      ['editFormData.title', editFormData.title, validateText(editFormData.title, { label: 'Review title', required: true, min: 5, max: 200 })],
+      ['editFormData.comments', editFormData.comments, validateText(editFormData.comments, { label: 'Review comments', required: true, min: 10, max: 2000 })],
+    );
+    if (editError) {
+      showToast('Action Required', editError, 'error');
       return;
     }
 
@@ -215,6 +222,7 @@ export const FeedbackSubmitPage = () => {
                 placeholder="e.g. Outstanding surgical care by Dr. Chen"
                 required
               />
+              {errorFor('title', title)}
             </div>
 
             <div className="form-group">
@@ -238,6 +246,7 @@ export const FeedbackSubmitPage = () => {
                 placeholder="Tell us about the care provided to your pet, wait times, cleanliness, and treatment outcomes..."
                 required
               />
+              {errorFor('comments', comments)}
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={submitting}>
@@ -380,6 +389,7 @@ export const FeedbackSubmitPage = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
                 required
               />
+              {errorFor('editFormData.title', editFormData.title)}
             </div>
 
             <div className="form-group">
@@ -401,6 +411,7 @@ export const FeedbackSubmitPage = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, comments: e.target.value })}
                 required
               />
+              {errorFor('editFormData.comments', editFormData.comments)}
             </div>
 
             <div className="modal-actions flex justify-end gap-3 mt-4">

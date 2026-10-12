@@ -59,6 +59,9 @@ public class InventoryService {
     @Transactional
     public InventoryItemResponse addInventoryItem(InventoryItemRequest request) {
         validateItemRequest(request);
+        if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(java.time.LocalDate.now())) {
+            throw new BadRequestException("Expiry date cannot be in the past for a new inventory item.");
+        }
 
         if (inventoryItemRepository.existsBySku(request.getSku().trim())) {
             throw new BadRequestException("Inventory item with SKU already exists: " + request.getSku());
@@ -132,6 +135,7 @@ public class InventoryService {
             }
             item.setSellingPrice(request.getSellingPrice());
         }
+        validateSellingPrice(item.getUnitPrice(), item.getSellingPrice());
         if (request.getExpiryDate() != null) item.setExpiryDate(request.getExpiryDate());
 
         int previousStock = item.getCurrentStock();
@@ -310,6 +314,13 @@ public class InventoryService {
         }
         if (request.getSellingPrice() != null && request.getSellingPrice().compareTo(BigDecimal.ZERO) < 0) {
             throw new BadRequestException("Selling price cannot be negative");
+        }
+        validateSellingPrice(request.getUnitPrice(), request.getSellingPrice());
+    }
+
+    private void validateSellingPrice(BigDecimal unitPrice, BigDecimal sellingPrice) {
+        if (unitPrice != null && sellingPrice != null && sellingPrice.compareTo(unitPrice) < 0) {
+            throw new BadRequestException("Selling price cannot be lower than the unit (cost) price");
         }
     }
 

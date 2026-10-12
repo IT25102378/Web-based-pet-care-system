@@ -5,8 +5,11 @@ import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
 import { Truck, Plus, Send, Phone, Mail, MapPin, Star, Check, Edit2, Trash2 } from 'lucide-react';
 
+import { validateText, validatePersonName, validateEmail, validatePhone, validateNumber } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const SupplierPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,30 +49,18 @@ export const SupplierPage = () => {
     loadSuppliers();
   }, []);
 
-  const validateSupplier = (data) => {
-    if (!data.companyName || !data.companyName.trim()) {
-      showToast('Action Required', 'Company name is required.', 'error');
-      return false;
-    }
-    if (!data.email || !data.email.trim()) {
-      showToast('Action Required', 'Email address is required.', 'error');
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email.trim())) {
-      showToast('Action Required', 'Please provide a valid email address.', 'error');
-      return false;
-    }
-    if (data.phone && !/^\d{10}$/.test(data.phone.replace(/\D/g, ''))) {
-      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
-      return false;
-    }
-    if (data.leadTimeDays !== undefined && (isNaN(data.leadTimeDays) || Number(data.leadTimeDays) < 0)) {
-      showToast('Action Required', 'Lead time must be a positive number of days (0 or greater).', 'error');
-      return false;
-    }
-    if (data.rating !== undefined && (isNaN(data.rating) || Number(data.rating) < 0 || Number(data.rating) > 5)) {
-      showToast('Action Required', 'Rating must be between 0.0 and 5.0.', 'error');
+  const validateSupplier = (data, form) => {
+    const supplierError = check(
+      [`${form}.`, data.companyName, validateText(data.companyName, { label: 'Company name', required: true, min: 2, max: 150 })],
+      [`${form}.`, data.contactPerson, validatePersonName(data.contactPerson, { label: 'Contact person', required: false, max: 100 })],
+      [`${form}.`, data.email, validateEmail(data.email)],
+      [`${form}.`, data.phone, validatePhone(data.phone)],
+      [`${form}.`, data.leadTimeDays, validateNumber(data.leadTimeDays, { label: 'Lead time', min: 0, max: 365, integer: true, unit: 'days' })],
+      [`${form}.`, data.rating, validateNumber(data.rating, { label: 'Rating', min: 0, max: 5 })],
+      [`${form}.`, data.address, validateText(data.address, { label: 'Address', max: 300 })],
+    );
+    if (supplierError) {
+      showToast('Please Check the Supplier Details', supplierError, 'error');
       return false;
     }
     return true;
@@ -78,6 +69,11 @@ export const SupplierPage = () => {
   const handleCreatePo = async (e) => {
     e.preventDefault();
     if (!poSupplier) return;
+    const poError = validateNumber(poAmount, { label: 'Purchase order total', required: true, greaterThanZero: true });
+    if (poError) {
+      showToast('Please Check the Purchase Order', poError, 'error');
+      return;
+    }
     try {
       const res = await supplierApi.createPurchaseOrder({
         supplierId: poSupplier.supplierId,
@@ -94,7 +90,7 @@ export const SupplierPage = () => {
 
   const handleAddSupplier = async (e) => {
     e.preventDefault();
-    if (!validateSupplier(newSupplier)) return;
+    if (!validateSupplier(newSupplier, 'newSupplier')) return;
     try {
       await supplierApi.addSupplier({
         ...newSupplier,
@@ -136,7 +132,7 @@ export const SupplierPage = () => {
 
   const handleSaveEditSupplier = async (e) => {
     e.preventDefault();
-    if (!editSupplierData || !validateSupplier(editSupplierData)) return;
+    if (!editSupplierData || !validateSupplier(editSupplierData, 'editSupplierData')) return;
     try {
       await supplierApi.updateSupplier(editSupplierData.supplierId, {
         companyName: editSupplierData.companyName.trim(),
@@ -302,6 +298,7 @@ export const SupplierPage = () => {
               <input
                 type="number"
                 step="0.01"
+                min="0.01"
                 className="form-control"
                 value={poAmount}
                 onChange={(e) => setPoAmount(Number(e.target.value))}
@@ -340,6 +337,7 @@ export const SupplierPage = () => {
                 placeholder="e.g. MedVet Pharmaceuticals Ltd"
                 required
               />
+              {errorFor('newSupplier.companyName', newSupplier.companyName)}
             </div>
 
             <div className="form-row">
@@ -352,6 +350,7 @@ export const SupplierPage = () => {
                   onChange={(e) => setNewSupplier({ ...newSupplier, contactPerson: e.target.value })}
                   placeholder="e.g. Samantha Fernando"
                 />
+                {errorFor('newSupplier.contactPerson', newSupplier.contactPerson)}
               </div>
 
               <div className="form-group">
@@ -364,6 +363,7 @@ export const SupplierPage = () => {
                   placeholder="orders@supplier.com"
                   required
                 />
+                {errorFor('newSupplier.email', newSupplier.email)}
               </div>
             </div>
 
@@ -375,8 +375,11 @@ export const SupplierPage = () => {
                   className="form-control"
                   value={newSupplier.phone}
                   onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
-                  placeholder="+94 11 234 5678"
+                  placeholder="0112345678"
+                  maxLength={10}
+                  inputMode="numeric"
                 />
+                {errorFor('newSupplier.phone', newSupplier.phone)}
               </div>
 
               <div className="form-group">
@@ -404,6 +407,7 @@ export const SupplierPage = () => {
                   value={newSupplier.leadTimeDays}
                   onChange={(e) => setNewSupplier({ ...newSupplier, leadTimeDays: Number(e.target.value) })}
                 />
+                {errorFor('newSupplier.leadTimeDays', newSupplier.leadTimeDays)}
               </div>
 
               <div className="form-group">
@@ -417,6 +421,7 @@ export const SupplierPage = () => {
                   value={newSupplier.rating}
                   onChange={(e) => setNewSupplier({ ...newSupplier, rating: Number(e.target.value) })}
                 />
+                {errorFor('newSupplier.rating', newSupplier.rating)}
               </div>
             </div>
 
@@ -429,6 +434,7 @@ export const SupplierPage = () => {
                 onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })}
                 placeholder="e.g. 55 Union Place, Colombo 02"
               />
+              {errorFor('newSupplier.address', newSupplier.address)}
             </div>
 
             <div className="flex items-center justify-end gap-2 mt-4">
@@ -465,6 +471,7 @@ export const SupplierPage = () => {
                 onChange={(e) => setEditSupplierData({ ...editSupplierData, companyName: e.target.value })}
                 required
               />
+              {errorFor('editSupplierData.companyName', editSupplierData.companyName)}
             </div>
 
             <div className="form-row">
@@ -476,6 +483,7 @@ export const SupplierPage = () => {
                   value={editSupplierData.contactPerson}
                   onChange={(e) => setEditSupplierData({ ...editSupplierData, contactPerson: e.target.value })}
                 />
+                {errorFor('editSupplierData.contactPerson', editSupplierData.contactPerson)}
               </div>
 
               <div className="form-group">
@@ -487,6 +495,7 @@ export const SupplierPage = () => {
                   onChange={(e) => setEditSupplierData({ ...editSupplierData, email: e.target.value })}
                   required
                 />
+                {errorFor('editSupplierData.email', editSupplierData.email)}
               </div>
             </div>
 
@@ -499,6 +508,7 @@ export const SupplierPage = () => {
                   value={editSupplierData.phone}
                   onChange={(e) => setEditSupplierData({ ...editSupplierData, phone: e.target.value })}
                 />
+                {errorFor('editSupplierData.phone', editSupplierData.phone)}
               </div>
 
               <div className="form-group">
@@ -526,6 +536,7 @@ export const SupplierPage = () => {
                   value={editSupplierData.leadTimeDays}
                   onChange={(e) => setEditSupplierData({ ...editSupplierData, leadTimeDays: Number(e.target.value) })}
                 />
+                {errorFor('editSupplierData.leadTimeDays', editSupplierData.leadTimeDays)}
               </div>
 
               <div className="form-group">
@@ -539,6 +550,7 @@ export const SupplierPage = () => {
                   value={editSupplierData.rating}
                   onChange={(e) => setEditSupplierData({ ...editSupplierData, rating: Number(e.target.value) })}
                 />
+                {errorFor('editSupplierData.rating', editSupplierData.rating)}
               </div>
             </div>
 
@@ -550,6 +562,7 @@ export const SupplierPage = () => {
                 value={editSupplierData.address}
                 onChange={(e) => setEditSupplierData({ ...editSupplierData, address: e.target.value })}
               />
+              {errorFor('editSupplierData.address', editSupplierData.address)}
             </div>
 
             <div className="flex items-center justify-end gap-2 mt-4">

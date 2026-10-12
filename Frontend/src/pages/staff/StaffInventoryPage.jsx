@@ -21,8 +21,11 @@ import {
   Layers,
 } from 'lucide-react';
 
+import { validateText, validateRequired, validateNumber, validateNotPastDate, todayISO } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const StaffInventoryPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const [items, setItems] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,8 +77,19 @@ export const StaffInventoryPage = () => {
 
   const handleAddItemSubmit = async (e) => {
     e.preventDefault();
-    if (!newItemData.name || !newItemData.sku || !newItemData.unit) {
-      showToast('Action Required', 'Item name, SKU, and unit are required.', 'error');
+    const newItemError = check(
+      ['newItemData.name', newItemData.name, validateText(newItemData.name, { label: 'Item name', required: true, min: 2, max: 150 })],
+      ['newItemData.sku', newItemData.sku, validateText(newItemData.sku, { label: 'SKU', required: true, max: 50 })],
+      ['newItemData.unit', newItemData.unit, validateRequired(newItemData.unit, 'Unit')],
+      ['newItemData.currentStock', newItemData.currentStock, validateNumber(newItemData.currentStock, { label: 'Current stock', required: true, min: 0, integer: true })],
+      ['newItemData.minStockThreshold', newItemData.minStockThreshold, validateNumber(newItemData.minStockThreshold, { label: 'Minimum stock threshold', required: true, min: 0, integer: true })],
+      ['newItemData.unitPrice', newItemData.unitPrice, validateNumber(newItemData.unitPrice, { label: 'Unit price', required: true, min: 0 })],
+      ['newItemData.sellingPrice', newItemData.sellingPrice, validateNumber(newItemData.sellingPrice, { label: 'Selling price', required: true, min: 0 })],
+      ['newItemData.sellingPrice', newItemData.sellingPrice, Number(newItemData.sellingPrice) < Number(newItemData.unitPrice) ? 'Selling price cannot be lower than the unit (cost) price' : null],
+      ['newItemData.expiryDate', newItemData.expiryDate, validateNotPastDate(newItemData.expiryDate, { label: 'Expiry date' })],
+    );
+    if (newItemError) {
+      showToast('Please Check the Item Details', newItemError, 'error');
       return;
     }
 
@@ -120,8 +134,18 @@ export const StaffInventoryPage = () => {
 
   const handleEditItemSubmit = async (e) => {
     e.preventDefault();
-    if (!editItem.name || !editItem.sku || !editItem.unit) {
-      showToast('Action Required', 'Item name, SKU, and unit are required.', 'error');
+    const editItemError = check(
+      ['editItem.name', editItem.name, validateText(editItem.name, { label: 'Item name', required: true, min: 2, max: 150 })],
+      ['editItem.sku', editItem.sku, validateText(editItem.sku, { label: 'SKU', required: true, max: 50 })],
+      ['editItem.unit', editItem.unit, validateRequired(editItem.unit, 'Unit')],
+      ['editItem.currentStock', editItem.currentStock, validateNumber(editItem.currentStock, { label: 'Current stock', required: true, min: 0, integer: true })],
+      ['editItem.minStockThreshold', editItem.minStockThreshold, validateNumber(editItem.minStockThreshold, { label: 'Minimum stock threshold', required: true, min: 0, integer: true })],
+      ['editItem.unitPrice', editItem.unitPrice, validateNumber(editItem.unitPrice, { label: 'Unit price', required: true, min: 0 })],
+      ['editItem.sellingPrice', editItem.sellingPrice, validateNumber(editItem.sellingPrice, { label: 'Selling price', required: true, min: 0 })],
+      ['editItem.sellingPrice', editItem.sellingPrice, Number(editItem.sellingPrice) < Number(editItem.unitPrice) ? 'Selling price cannot be lower than the unit (cost) price' : null],
+    );
+    if (editItemError) {
+      showToast('Please Check the Item Details', editItemError, 'error');
       return;
     }
 
@@ -609,6 +633,7 @@ export const StaffInventoryPage = () => {
                 value={newItemData.name}
                 onChange={(e) => setNewItemData({ ...newItemData, name: e.target.value })}
               />
+              {errorFor('newItemData.name', newItemData.name)}
             </div>
             <div>
               <label className="form-label font-bold text-xs">SKU Code *</label>
@@ -620,6 +645,7 @@ export const StaffInventoryPage = () => {
                 value={newItemData.sku}
                 onChange={(e) => setNewItemData({ ...newItemData, sku: e.target.value })}
               />
+              {errorFor('newItemData.sku', newItemData.sku)}
             </div>
           </div>
 
@@ -661,6 +687,7 @@ export const StaffInventoryPage = () => {
                 value={newItemData.currentStock}
                 onChange={(e) => setNewItemData({ ...newItemData, currentStock: e.target.value })}
               />
+              {errorFor('newItemData.currentStock', newItemData.currentStock)}
             </div>
             <div>
               <label className="form-label font-bold text-xs">Min Stock Threshold</label>
@@ -673,6 +700,7 @@ export const StaffInventoryPage = () => {
                   setNewItemData({ ...newItemData, minStockThreshold: e.target.value })
                 }
               />
+              {errorFor('newItemData.minStockThreshold', newItemData.minStockThreshold)}
             </div>
             <div>
               <label className="form-label font-bold text-xs">Unit Type *</label>
@@ -684,6 +712,7 @@ export const StaffInventoryPage = () => {
                 value={newItemData.unit}
                 onChange={(e) => setNewItemData({ ...newItemData, unit: e.target.value })}
               />
+              {errorFor('newItemData.unit', newItemData.unit)}
             </div>
           </div>
 
@@ -698,6 +727,7 @@ export const StaffInventoryPage = () => {
                 value={newItemData.unitPrice}
                 onChange={(e) => setNewItemData({ ...newItemData, unitPrice: e.target.value })}
               />
+              {errorFor('newItemData.unitPrice', newItemData.unitPrice)}
             </div>
             <div>
               <label className="form-label font-bold text-xs">Selling Price ($)</label>
@@ -711,6 +741,7 @@ export const StaffInventoryPage = () => {
                   setNewItemData({ ...newItemData, sellingPrice: e.target.value })
                 }
               />
+              {errorFor('newItemData.sellingPrice', newItemData.sellingPrice)}
             </div>
           </div>
 
@@ -721,8 +752,10 @@ export const StaffInventoryPage = () => {
                 type="date"
                 className="form-input"
                 value={newItemData.expiryDate}
+                min={todayISO()}
                 onChange={(e) => setNewItemData({ ...newItemData, expiryDate: e.target.value })}
               />
+              {errorFor('newItemData.expiryDate', newItemData.expiryDate)}
             </div>
             <div>
               <label className="form-label font-bold text-xs">Supplier</label>
@@ -784,6 +817,7 @@ export const StaffInventoryPage = () => {
                   value={editItem.name}
                   onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
                 />
+                {errorFor('editItem.name', editItem.name)}
               </div>
               <div>
                 <label className="form-label font-bold text-xs">SKU Code *</label>
@@ -794,6 +828,7 @@ export const StaffInventoryPage = () => {
                   value={editItem.sku}
                   onChange={(e) => setEditItem({ ...editItem, sku: e.target.value })}
                 />
+                {errorFor('editItem.sku', editItem.sku)}
               </div>
             </div>
 
@@ -834,6 +869,7 @@ export const StaffInventoryPage = () => {
                   value={editItem.currentStock}
                   onChange={(e) => setEditItem({ ...editItem, currentStock: e.target.value })}
                 />
+                {errorFor('editItem.currentStock', editItem.currentStock)}
               </div>
               <div>
                 <label className="form-label font-bold text-xs">Min Threshold</label>
@@ -846,6 +882,7 @@ export const StaffInventoryPage = () => {
                     setEditItem({ ...editItem, minStockThreshold: e.target.value })
                   }
                 />
+                {errorFor('editItem.minStockThreshold', editItem.minStockThreshold)}
               </div>
               <div>
                 <label className="form-label font-bold text-xs">Unit</label>
@@ -856,6 +893,7 @@ export const StaffInventoryPage = () => {
                   value={editItem.unit}
                   onChange={(e) => setEditItem({ ...editItem, unit: e.target.value })}
                 />
+                {errorFor('editItem.unit', editItem.unit)}
               </div>
             </div>
 
@@ -870,6 +908,7 @@ export const StaffInventoryPage = () => {
                   value={editItem.unitPrice || ''}
                   onChange={(e) => setEditItem({ ...editItem, unitPrice: e.target.value })}
                 />
+                {errorFor('editItem.unitPrice', editItem.unitPrice)}
               </div>
               <div>
                 <label className="form-label font-bold text-xs">Selling Price ($)</label>
@@ -881,6 +920,7 @@ export const StaffInventoryPage = () => {
                   value={editItem.sellingPrice || ''}
                   onChange={(e) => setEditItem({ ...editItem, sellingPrice: e.target.value })}
                 />
+                {errorFor('editItem.sellingPrice', editItem.sellingPrice)}
               </div>
             </div>
 
