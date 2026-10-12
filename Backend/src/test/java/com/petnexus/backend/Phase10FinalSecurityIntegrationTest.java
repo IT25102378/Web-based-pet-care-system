@@ -808,7 +808,7 @@ public class Phase10FinalSecurityIntegrationTest {
                 ownerA.getUserId(),
                 rescueCase.getTemporaryName(),
                 ownerA.getFullName(),
-                "+94 77 111 2222"
+                "0771112222"
         );
 
         mockMvc.perform(post("/api/adoptions/applications").servletPath("/api")

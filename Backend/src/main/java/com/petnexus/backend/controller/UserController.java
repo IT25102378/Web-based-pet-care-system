@@ -111,7 +111,7 @@ public class UserController {
     @PutMapping("/users/{userId}")
     public ResponseEntity<UserResponse> updateUserProfile(
             @PathVariable String userId,
-            @RequestBody UpdateProfileRequest request) {
+            @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userService.updateUserProfile(userId, request));
     }
 

@@ -14,8 +14,11 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
+import { validatePersonName, validateEmail, validatePhone, validateText } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const AboutContactPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,12 +30,14 @@ export const AboutContactPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
-      showToast('Action Required', 'Please complete all required fields.', 'error');
-      return;
-    }
-    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
+    const contactError = check(
+      ['formData.name', formData.name, validatePersonName(formData.name, { label: 'Your name' })],
+      ['formData.email', formData.email, validateEmail(formData.email)],
+      ['formData.phone', formData.phone, validatePhone(formData.phone)],
+      ['formData.message', formData.message, validateText(formData.message, { label: 'Message', required: true, min: 10, max: 2000 })],
+    );
+    if (contactError) {
+      showToast('Please Check Your Details', contactError, 'error');
       return;
     }
     setIsSent(true);
@@ -175,6 +180,7 @@ export const AboutContactPage = () => {
                       placeholder="e.g. John Doe"
                       required
                     />
+                    {errorFor('formData.name', formData.name)}
                   </div>
 
                   <div className="form-group">
@@ -187,6 +193,7 @@ export const AboutContactPage = () => {
                       placeholder="e.g. john@example.com"
                       required
                     />
+                    {errorFor('formData.email', formData.email)}
                   </div>
                 </div>
 
@@ -198,8 +205,11 @@ export const AboutContactPage = () => {
                       className="form-control"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+94 77 123 4567"
+                      placeholder="0771234567"
+                      maxLength={10}
+                      inputMode="numeric"
                     />
+                    {errorFor('formData.phone', formData.phone)}
                   </div>
 
                   <div className="form-group">
@@ -227,6 +237,7 @@ export const AboutContactPage = () => {
                     placeholder="Please specify your pet's age, species, and your inquiry details..."
                     required
                   />
+                  {errorFor('formData.message', formData.message)}
                 </div>
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>

@@ -1,5 +1,9 @@
 package com.petnexus.backend.dto;
 
+
+
+import jakarta.validation.constraints.Pattern;
+import com.petnexus.backend.validation.ValidationRules;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -11,6 +15,6 @@ public class ChangePasswordRequest {
     private String currentPassword;
 
     @NotBlank(message = "New password is required")
-    @Size(min = 6, message = "New password must be at least 6 characters")
+    @Pattern(regexp = ValidationRules.PASSWORD, message = ValidationRules.PASSWORD_MESSAGE)
     private String newPassword;
 }

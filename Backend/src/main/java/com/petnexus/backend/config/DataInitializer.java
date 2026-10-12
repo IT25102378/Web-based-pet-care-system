@@ -118,7 +118,8 @@ public class DataInitializer implements CommandLineRunner {
                         existing.setFullName(fullName);
                         modified = true;
                     }
-                    if (phone != null && existing.getPhone() == null) {
+                    if (phone != null && (existing.getPhone() == null
+                            || !existing.getPhone().matches(com.petnexus.backend.validation.ValidationRules.PHONE))) {
                         existing.setPhone(phone);
                         modified = true;
                     }
@@ -204,54 +205,120 @@ public class DataInitializer implements CommandLineRunner {
                 });
     }
 
+    /** Converts a stored "+94 77 123 4567" style number to the local 10-digit format; returns null if no change is needed. */
+    private String normalizeLegacyPhone(String phone) {
+        if (phone == null) return null;
+        String digits = phone.replaceAll("[^0-9]", "");
+        String fixed;
+        if (digits.matches("0\\d{9}")) {
+            fixed = digits;                         // 077-123 4567, (077) 1234567
+        } else if (digits.matches("94\\d{9}")) {
+            fixed = "0" + digits.substring(2);      // +94 77 123 4567, 94771234567
+        } else if (digits.matches("0094\\d{9}")) {
+            fixed = "0" + digits.substring(4);      // 0094 77 123 4567
+        } else if (digits.matches("[1-9]\\d{8}")) {
+            fixed = "0" + digits;                   // 771234567
+        } else {
+            return null;                            // cannot be converted safely - left for the user to correct
+        }
+        return fixed.equals(phone) ? null : fixed;
+    }
+
+    /** Rewrites a +94 number written inside free text (e.g. "Thilini (Spouse) - +94 77 234 9988"). */
+    private String normalizeLegacyContactText(String text) {
+        if (text == null) return null;
+        String fixed = text.replaceAll("\\+94[\\s-]?(\\d{2})[\\s-]?(\\d{3})[\\s-]?(\\d{4})(?!\\d)", "0$1$2$3");
+        return fixed.equals(text) ? null : fixed;
+    }
+
+    private void normalizeLegacyPhoneNumbers() {
+        userRepository.findAll().forEach(u -> {
+            String fixed = normalizeLegacyPhone(u.getPhone());
+            String fixedContact = normalizeLegacyContactText(u.getEmergencyContact());
+            if (fixed != null) u.setPhone(fixed);
+            if (fixedContact != null) u.setEmergencyContact(fixedContact);
+            if (fixed != null || fixedContact != null) userRepository.save(u);
+        });
+        petRepository.findAll().forEach(p -> {
+            String fixedContact = normalizeLegacyContactText(p.getEmergencyContact());
+            if (fixedContact != null) {
+                p.setEmergencyContact(fixedContact);
+                petRepository.save(p);
+            }
+        });
+        supplierRepository.findAll().forEach(sup -> {
+            String fixed = normalizeLegacyPhone(sup.getPhone());
+            if (fixed != null) {
+                sup.setPhone(fixed);
+                supplierRepository.save(sup);
+            }
+        });
+        fosterRecordRepository.findAll().forEach(fr -> {
+            String fixed = normalizeLegacyPhone(fr.getPhone());
+            if (fixed != null) {
+                fr.setPhone(fixed);
+                fosterRecordRepository.save(fr);
+            }
+        });
+        careProviderRepository.findAll().forEach(cp -> {
+            String fixed = normalizeLegacyPhone(cp.getContactPhone());
+            if (fixed != null) {
+                cp.setContactPhone(fixed);
+                careProviderRepository.save(cp);
+            }
+        });
+    }
+
     @Override
     public void run(String... args) {
+        normalizeLegacyPhoneNumbers();
+
         // Ensure all 6 core Stakeholders and System Administrator exist with Active status and password123
         seedOrUpdateUser(
                 "USR-007", "admin@petnexus.com", "PetNexus System Administrator",
-                "+94 11 234 5678", "Pet Nexus Clinic, Colombo 05", UserRole.Admin,
+                "0112345678", "Pet Nexus Clinic, Colombo 05", UserRole.Admin,
                 "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
                 "Not provided", null, null, null, null, null, null
         );
 
         User owner = seedOrUpdateUser(
                 "USR-001", "owner@petnexus.com", "Kavindu Perera",
-                "+94 77 123 4567", "45/3 Galle Road, Colombo 06", UserRole.PetOwner,
+                "0771234567", "45/3 Galle Road, Colombo 06", UserRole.PetOwner,
                 "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
-                "Thilini Perera (Spouse) - +94 77 234 9988", null, null, null, null, null, null
+                "Thilini Perera (Spouse) - 0772349988", null, null, null, null, null, null
         );
 
         seedOrUpdateUser(
                 "USR-002", "vet@petnexus.com", "Dr. Sachini Wijesinghe, BVSc",
-                "+94 71 234 5678", "12 Wijerama Mawatha, Colombo 07", UserRole.Veterinarian,
+                "0712345678", "12 Wijerama Mawatha, Colombo 07", UserRole.Veterinarian,
                 "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80",
                 "Not provided", "SLVC-VET-2019-0842", "Small Animal Surgery & Internal Medicine", null, null, null, null
         );
 
         seedOrUpdateUser(
                 "USR-003", "staff@petnexus.com", "Nethmi Fernando",
-                "+94 76 345 6789", "22 Nawala Road, Rajagiriya", UserRole.ClinicStaff,
+                "0763456789", "22 Nawala Road, Rajagiriya", UserRole.ClinicStaff,
                 "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
                 "Not provided", null, null, "STF-104", null, null, null
         );
 
         User providerUser = seedOrUpdateUser(
                 "USR-004", "provider@petnexus.com", "Dilshan Bandara",
-                "+94 70 456 7890", "78 High Level Road, Maharagama", UserRole.PetCareProvider,
+                "0704567890", "78 High Level Road, Maharagama", UserRole.PetCareProvider,
                 "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
                 "Not provided", null, null, null, null, null, "Master Groomer & Canine Behaviour Specialist"
         );
 
         User manager = seedOrUpdateUser(
                 "USR-005", "manager@petnexus.com", "Himashi Gunawardena",
-                "+94 77 567 8901", "5/1 Gregory's Road, Colombo 07", UserRole.ClinicManager,
+                "0775678901", "5/1 Gregory's Road, Colombo 07", UserRole.ClinicManager,
                 "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
                 "Not provided", null, null, null, "MGR-001", null, null
         );
 
         seedOrUpdateUser(
                 "USR-006", "rescue@petnexus.com", "Shehan Rajapaksha",
-                "+94 71 678 9012", "33 Baseline Road, Nugegoda", UserRole.RescueOfficer,
+                "0716789012", "33 Baseline Road, Nugegoda", UserRole.RescueOfficer,
                 "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
                 "Not provided", null, null, null, null, "RSC-882", null
         );
@@ -287,7 +354,7 @@ public class DataInitializer implements CommandLineRunner {
 
         seedOrUpdateUser(
                 "USR-017", "ediriweera@petnexus.com", "Ediriweera D.L",
-                "07784521695", "COlombo", UserRole.ClinicManager,
+                "0778452169", "COlombo", UserRole.ClinicManager,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-017",
                 "Not provided", null, null, null, "MGR-PASS-002", null, null
         );
@@ -319,7 +386,7 @@ public class DataInitializer implements CommandLineRunner {
                     .allergies("Chicken protein, Penicillin")
                     .medicalNotes("Mild seasonal allergies in spring. Very friendly with children.")
                     .imageUrl("https://images.unsplash.com/photo-1552053831-71594a27632d?w=500&auto=format&fit=crop&q=80")
-                    .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
+                    .emergencyContact("Thilini Perera (Spouse) - 0772349988")
                     .createdAt(LocalDateTime.of(2026, 1, 12, 10, 0, 0))
                     .build();
 
@@ -338,7 +405,7 @@ public class DataInitializer implements CommandLineRunner {
                     .allergies("None recorded")
                     .medicalNotes("Indoor cat. Spayed. Dental tartar check recommended at next visit.")
                     .imageUrl("https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500&auto=format&fit=crop&q=80")
-                    .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
+                    .emergencyContact("Thilini Perera (Spouse) - 0772349988")
                     .createdAt(LocalDateTime.of(2026, 1, 15, 14, 30, 0))
                     .build();
 
@@ -357,7 +424,7 @@ public class DataInitializer implements CommandLineRunner {
                     .allergies("None")
                     .medicalNotes("Needs Timothy hay rich diet. Teeth checked normal last quarter.")
                     .imageUrl("https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=500&auto=format&fit=crop&q=80")
-                    .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
+                    .emergencyContact("Thilini Perera (Spouse) - 0772349988")
                     .createdAt(LocalDateTime.of(2026, 2, 1, 9, 0, 0))
                     .build();
 
@@ -618,7 +685,7 @@ public class DataInitializer implements CommandLineRunner {
                     .owner(null)
                     .ownerId(null)
                     .ownerName("Dinuka Jayasinghe (Walk-in)")
-                    .ownerPhone("+94 71 777 8899")
+                    .ownerPhone("0717778899")
                     .veterinarian(vetSachini)
                     .vetId(vetSachini != null ? vetSachini.getUserId() : "USR-001")
                     .vetName("Dr. Sachini Wijesinghe, BVSc")
@@ -860,7 +927,7 @@ public class DataInitializer implements CommandLineRunner {
                     .isPublishedForAdoption(false)
                     .reportedByUserId("USR-001")
                     .reportedByUserName("Kavindu Perera")
-                    .reportedByUserPhone("+94 77 123 4567")
+                    .reportedByUserPhone("0771234567")
                     .description("Found limping on left hind leg, sheltering under park bench. Very timid but friendly with treats.")
                     .medicalSummary("Noticeable left rear leg laceration, needs clinical cleaning and x-ray.")
                     .coverPhotoUrl("https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80")
@@ -969,7 +1036,7 @@ public class DataInitializer implements CommandLineRunner {
             fosterRecordRepository.save(FosterRecord.builder()
                     .fosterId("FST-001")
                     .fullName("Piumi Senanayake")
-                    .phone("+94 77 333 7711")
+                    .phone("0773337711")
                     .email("piumi.senanayake@example.com")
                     .address("27/A Havelock Road, Colombo 05")
                     .homeType("Single Family with Walled Garden")
@@ -982,7 +1049,7 @@ public class DataInitializer implements CommandLineRunner {
             fosterRecordRepository.save(FosterRecord.builder()
                     .fosterId("FST-002")
                     .fullName("Chamara & Nadeeka Jayawardena")
-                    .phone("+94 71 444 8822")
+                    .phone("0714448822")
                     .email("jayawardena.family@example.com")
                     .address("8 Torrington Avenue, Colombo 07")
                     .homeType("Spacious Apartment (Cat Friendly)")
@@ -1005,7 +1072,7 @@ public class DataInitializer implements CommandLineRunner {
                             .providerId("PRV-001")
                             .user(providerUser)
                             .providerName("Dilshan Bandara")
-                            .contactPhone("+94 77 987 6543")
+                            .contactPhone("0779876543")
                             .contactEmail("provider@petnexus.com")
                             .active(true)
                             .build();
@@ -1212,7 +1279,7 @@ public class DataInitializer implements CommandLineRunner {
                     .companyName("Zoetis Animal Health Sri Lanka (Pvt) Ltd")
                     .contactPerson("Ruwan Abeysekara")
                     .email("orders@zoetis-sl.com")
-                    .phone("+94 11 234 7700")
+                    .phone("0112347700")
                     .category("Pharmaceuticals & Vaccines")
                     .leadTimeDays(2)
                     .rating(new BigDecimal("4.9"))
@@ -1225,7 +1292,7 @@ public class DataInitializer implements CommandLineRunner {
                     .companyName("Sathosa Veterinary & Medical Supplies (Pvt) Ltd")
                     .contactPerson("Pradeep Kumara")
                     .email("supply@sathosamedicalsupplies.lk")
-                    .phone("+94 11 456 8800")
+                    .phone("0114568800")
                     .category("Surgical & Clinical Equipment")
                     .leadTimeDays(3)
                     .rating(new BigDecimal("4.8"))
@@ -1238,7 +1305,7 @@ public class DataInitializer implements CommandLineRunner {
                     .companyName("Royal Canin Sri Lanka & Hill's Science Nutrition")
                     .contactPerson("Anoma Rajapaksha")
                     .email("vetcare@royalcanin-sl.com")
-                    .phone("+94 11 789 5500")
+                    .phone("0117895500")
                     .category("Prescription Diets & Nutrition")
                     .leadTimeDays(4)
                     .rating(new BigDecimal("4.7"))
@@ -1501,7 +1568,7 @@ public class DataInitializer implements CommandLineRunner {
                     .allergies("None recorded")
                     .medicalNotes("Trained family and protection dog. Active daily exercise regimen.")
                     .imageUrl("https://images.unsplash.com/photo-1589941013453-ec89f33b5455?w=500&auto=format&fit=crop&q=80")
-                    .emergencyContact("Thilini Perera (Spouse) - +94 77 234 9988")
+                    .emergencyContact("Thilini Perera (Spouse) - 0772349988")
                     .createdAt(LocalDateTime.of(2026, 1, 20, 11, 0))
                     .build());
         }

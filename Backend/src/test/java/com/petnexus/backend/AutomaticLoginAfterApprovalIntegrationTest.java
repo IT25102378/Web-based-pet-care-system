@@ -58,7 +58,7 @@ public class AutomaticLoginAfterApprovalIntegrationTest {
         registerRequest.setPassword("SecurePassword123!");
         registerRequest.setFullName("Auto Login Tester");
         registerRequest.setRole(UserRole.PetOwner);
-        registerRequest.setPhone("+94770009988");
+        registerRequest.setPhone("0770009988");
 
         MvcResult regResult = mockMvc.perform(post("/api/auth/register")
                         .servletPath("/api")

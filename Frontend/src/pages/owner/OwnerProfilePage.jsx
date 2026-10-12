@@ -30,8 +30,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+import { validatePersonName, validateEmail, validatePhone, validateText, validatePassword, validatePasswordMatch, validateEmergencyContact } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const OwnerProfilePage = () => {
   const { currentUser, refreshUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
 
   // Profile Form State
@@ -79,7 +82,7 @@ export const OwnerProfilePage = () => {
         email: currentUser.email || '',
         phone: currentUser.phone || '',
         address: currentUser.address || '',
-        emergencyContact: currentUser.emergencyContact || 'Thilini Perera (Spouse) - +94 77 234 9988',
+        emergencyContact: currentUser.emergencyContact || 'Thilini Perera (Spouse) - 0772349988',
         avatarUrl: currentUser.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.fullName || 'Pet Owner')}`,
       });
 
@@ -136,16 +139,15 @@ export const OwnerProfilePage = () => {
   // Save Profile Changes
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    if (!profileForm.fullName.trim()) {
-      showToast('Action Required', 'Full name is required.', 'error');
-      return;
-    }
-    if (!profileForm.email.trim()) {
-      showToast('Action Required', 'Email address is required.', 'error');
-      return;
-    }
-    if (profileForm.phone && !/^\d{10}$/.test(profileForm.phone.replace(/\D/g, ''))) {
-      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
+    const profileError = check(
+      ['profileForm.fullName', profileForm.fullName, validatePersonName(profileForm.fullName)],
+      ['profileForm.email', profileForm.email, validateEmail(profileForm.email)],
+      ['profileForm.phone', profileForm.phone, validatePhone(profileForm.phone)],
+      ['profileForm.address', profileForm.address, validateText(profileForm.address, { label: 'Address', max: 300 })],
+      ['profileForm.emergencyContact', profileForm.emergencyContact, validateEmergencyContact(profileForm.emergencyContact)],
+    );
+    if (profileError) {
+      showToast('Please Check Your Details', profileError, 'error');
       return;
     }
 
@@ -178,12 +180,13 @@ export const OwnerProfilePage = () => {
       showToast('Action Required', 'Please enter your current password.', 'error');
       return;
     }
-    if (!newPassword || newPassword.length < 6) {
-      showToast('Action Required', 'New password must be at least 6 characters long.', 'error');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      showToast('Action Required', 'New password and confirmation do not match.', 'error');
+    const passwordError = check(
+      ['passwordForm.newPassword', passwordForm.newPassword, validatePassword(newPassword, { label: 'New password' })],
+      newPassword === currentPassword ? 'New password must be different from your current password' : null,
+      ['passwordForm.confirmPassword', passwordForm.confirmPassword, validatePasswordMatch(newPassword, confirmPassword)],
+    );
+    if (passwordError) {
+      showToast('Please Check Your Password', passwordError, 'error');
       return;
     }
 
@@ -369,6 +372,7 @@ export const OwnerProfilePage = () => {
                     }}
                   />
                 </div>
+                {errorFor('profileForm.fullName', profileForm.fullName)}
               </div>
 
               <div className="form-row mb-4">
@@ -397,6 +401,7 @@ export const OwnerProfilePage = () => {
                       }}
                     />
                   </div>
+                  {errorFor('profileForm.email', profileForm.email)}
                 </div>
 
                 <div className="form-group">
@@ -407,7 +412,9 @@ export const OwnerProfilePage = () => {
                       className="form-control"
                       value={profileForm.phone}
                       onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                      placeholder="e.g. +94 77 123 4567"
+                      placeholder="e.g. 0771234567"
+                      maxLength={10}
+                      inputMode="numeric"
                       style={{ paddingLeft: '2.5rem' }}
                     />
                     <Phone
@@ -421,6 +428,7 @@ export const OwnerProfilePage = () => {
                       }}
                     />
                   </div>
+                  {errorFor('profileForm.phone', profileForm.phone)}
                 </div>
               </div>
 
@@ -446,6 +454,7 @@ export const OwnerProfilePage = () => {
                     }}
                   />
                 </div>
+                {errorFor('profileForm.address', profileForm.address)}
               </div>
 
               <div className="form-group mb-5">
@@ -458,7 +467,8 @@ export const OwnerProfilePage = () => {
                     className="form-control"
                     value={profileForm.emergencyContact}
                     onChange={(e) => setProfileForm({ ...profileForm, emergencyContact: e.target.value })}
-                    placeholder="e.g. Thilini Perera (Spouse) - +94 77 234 9988"
+                    placeholder="e.g. Thilini Perera (Spouse) - 0772349988"
+                    maxLength={200}
                     required
                     style={{ paddingLeft: '2.5rem' }}
                   />
@@ -473,6 +483,7 @@ export const OwnerProfilePage = () => {
                     }}
                   />
                 </div>
+                {errorFor('profileForm.emergencyContact', profileForm.emergencyContact)}
                 <span className="text-xs text-muted mt-1 block">
                   Primary alternative contact used by veterinary triage staff in critical health emergencies.
                 </span>
@@ -566,7 +577,7 @@ export const OwnerProfilePage = () => {
                     className="form-control"
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                    placeholder="At least 6 characters"
+                    placeholder="At least 8 characters, with a letter and a number"
                     required
                     style={{ paddingRight: '2.5rem' }}
                   />
@@ -590,6 +601,7 @@ export const OwnerProfilePage = () => {
                     {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {errorFor('passwordForm.newPassword', passwordForm.newPassword)}
               </div>
 
               <div className="form-group mb-4">
@@ -626,6 +638,7 @@ export const OwnerProfilePage = () => {
                     {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {errorFor('passwordForm.confirmPassword', passwordForm.confirmPassword)}
               </div>
 
               <div
@@ -639,7 +652,7 @@ export const OwnerProfilePage = () => {
               >
                 <span className="text-xs font-bold text-main block mb-1">Password Requirements:</span>
                 <ul className="text-xs text-muted" style={{ paddingLeft: '1.2rem', lineHeight: '1.6' }}>
-                  <li>Minimum 6 alphanumeric characters</li>
+                  <li>At least 8 characters, including a letter and a number</li>
                   <li>Do not reuse previous default passwords</li>
                   <li>Both new password entries must match exactly</li>
                 </ul>

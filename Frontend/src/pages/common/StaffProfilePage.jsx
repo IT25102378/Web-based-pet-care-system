@@ -17,8 +17,11 @@ import {
   Clock
 } from 'lucide-react';
 
+import { validatePersonName, validateEmail, validatePhone, validateText, validatePassword, validatePasswordMatch, validateEmergencyContact } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const StaffProfilePage = () => {
   const { currentUser, refreshUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
 
   const [profileForm, setProfileForm] = useState({
@@ -78,8 +81,15 @@ export const StaffProfilePage = () => {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    if (profileForm.phone && !/^\d{10}$/.test(profileForm.phone.replace(/\D/g, ''))) {
-      showToast('Action Required', 'Phone number must be exactly 10 digits.', 'error');
+    const profileError = check(
+      ['profileForm.fullName', profileForm.fullName, validatePersonName(profileForm.fullName)],
+      ['profileForm.email', profileForm.email, validateEmail(profileForm.email)],
+      ['profileForm.phone', profileForm.phone, validatePhone(profileForm.phone)],
+      ['profileForm.address', profileForm.address, validateText(profileForm.address, { label: 'Address', max: 300 })],
+      ['profileForm.emergencyContact', profileForm.emergencyContact, validateEmergencyContact(profileForm.emergencyContact)],
+    );
+    if (profileError) {
+      showToast('Please Check Your Details', profileError, 'error');
       return;
     }
     setIsSavingProfile(true);
@@ -112,8 +122,14 @@ export const StaffProfilePage = () => {
     e.preventDefault();
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
 
-    if (!currentPassword || !newPassword || newPassword !== confirmPassword) {
-      showToast('Action Required', 'Please check your passwords and try again.', 'error');
+    const passwordError = check(
+      !currentPassword ? 'Please enter your current password' : null,
+      ['passwordForm.newPassword', passwordForm.newPassword, validatePassword(newPassword, { label: 'New password' })],
+      newPassword === currentPassword ? 'New password must be different from your current password' : null,
+      ['passwordForm.confirmPassword', passwordForm.confirmPassword, validatePasswordMatch(newPassword, confirmPassword)],
+    );
+    if (passwordError) {
+      showToast('Please Check Your Password', passwordError, 'error');
       return;
     }
 
@@ -192,6 +208,7 @@ export const StaffProfilePage = () => {
                   <input type="text" className="form-control" value={profileForm.fullName} onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })} required style={{ paddingLeft: '2.5rem' }} />
                   <User size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 </div>
+                {errorFor('profileForm.fullName', profileForm.fullName)}
               </div>
               <div className="form-row mb-4">
                 <div className="form-group">
@@ -200,6 +217,7 @@ export const StaffProfilePage = () => {
                     <input type="email" className="form-control" value={profileForm.email} disabled style={{ paddingLeft: '2.5rem' }} />
                     <Mail size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   </div>
+                  {errorFor('profileForm.email', profileForm.email)}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Phone Number</label>
@@ -207,6 +225,7 @@ export const StaffProfilePage = () => {
                     <input type="text" className="form-control" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} style={{ paddingLeft: '2.5rem' }} />
                     <Phone size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   </div>
+                  {errorFor('profileForm.phone', profileForm.phone)}
                 </div>
               </div>
               <div className="form-group mb-4">
@@ -215,6 +234,7 @@ export const StaffProfilePage = () => {
                   <input type="text" className="form-control" value={profileForm.address} onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })} style={{ paddingLeft: '2.5rem' }} />
                   <MapPin size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 </div>
+                {errorFor('profileForm.address', profileForm.address)}
               </div>
               <div className="form-group mb-4">
                 <label className="form-label">Emergency Contact (Name & Phone)</label>
@@ -222,6 +242,7 @@ export const StaffProfilePage = () => {
                   <input type="text" className="form-control" value={profileForm.emergencyContact} onChange={(e) => setProfileForm({ ...profileForm, emergencyContact: e.target.value })} style={{ paddingLeft: '2.5rem' }} />
                   <ShieldAlert size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 </div>
+                {errorFor('profileForm.emergencyContact', profileForm.emergencyContact)}
               </div>
               
               <hr className="my-5" />
@@ -308,10 +329,12 @@ export const StaffProfilePage = () => {
               <div className="form-group mb-4">
                 <label className="form-label">New Password</label>
                 <input type="password" className="form-control" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} required minLength="6" />
+                {errorFor('passwordForm.newPassword', passwordForm.newPassword)}
               </div>
               <div className="form-group mb-4">
                 <label className="form-label">Confirm New Password</label>
                 <input type="password" className="form-control" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} required minLength="6" />
+                {errorFor('passwordForm.confirmPassword', passwordForm.confirmPassword)}
               </div>
               <div className="flex justify-end">
                 <button type="submit" className="btn btn-primary" disabled={isSavingPassword}>

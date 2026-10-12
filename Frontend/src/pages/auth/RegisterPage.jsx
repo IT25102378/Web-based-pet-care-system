@@ -6,6 +6,7 @@ import { FileUploadField } from '../../components/common/FileUploadField';
 import { UserRole } from '../../types';
 import { Heart, ShieldCheck, Check, ArrowRight, Loader2 } from 'lucide-react';
 
+import { validatePersonName, validateEmail, validatePassword, validatePasswordMatch, validatePhone, validateText, validateEmergencyContact } from '../../utils/validators';
 export const RegisterPage = () => {
   const { register } = useAuth();
   const { showToast } = useToast();
@@ -39,11 +40,20 @@ export const RegisterPage = () => {
 
   const validate = () => {
     const errs = {};
-    if (!formData.fullName.trim()) errs.fullName = 'Full legal name is required';
-    if (!formData.email.trim()) errs.email = 'Valid email is required';
-    if (!formData.password || formData.password.length < 6) errs.password = 'Password must be at least 6 characters';
-    if (formData.password !== formData.confirmPassword) errs.confirmPassword = 'Passwords do not match';
-    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) errs.phone = 'Phone number must be exactly 10 digits';
+    const fullNameError = validatePersonName(formData.fullName, { label: 'Full legal name' });
+    if (fullNameError) errs.fullName = fullNameError;
+    const emailError = validateEmail(formData.email);
+    if (emailError) errs.email = emailError;
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errs.password = passwordError;
+    const confirmError = validatePasswordMatch(formData.password, formData.confirmPassword);
+    if (confirmError) errs.confirmPassword = confirmError;
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) errs.phone = phoneError;
+    const addressError = validateText(formData.address, { label: 'Address', max: 300 });
+    if (addressError) errs.address = addressError;
+    const emergencyError = validateEmergencyContact(formData.emergencyContact);
+    if (emergencyError) errs.emergencyContact = emergencyError;
 
     if (role === UserRole.VETERINARIAN && !formData.licenseNumber.trim()) {
       errs.licenseNumber = 'Veterinary Medical License number is required';
@@ -147,6 +157,7 @@ export const RegisterPage = () => {
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder="e.g. Dr. Sarah Connor"
+                  maxLength={150}
                 />
                 {errors.fullName && <span className="form-error">{errors.fullName}</span>}
               </div>
@@ -159,6 +170,7 @@ export const RegisterPage = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@example.com"
+                  maxLength={255}
                 />
                 {errors.email && <span className="form-error">{errors.email}</span>}
               </div>
@@ -172,7 +184,9 @@ export const RegisterPage = () => {
                   className="form-control"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+94 77 123 4567"
+                  placeholder="0771234567"
+                  maxLength={10}
+                  inputMode="numeric"
                 />
                 {errors.phone && <span className="form-error">{errors.phone}</span>}
               </div>
@@ -198,7 +212,8 @@ export const RegisterPage = () => {
                   className="form-control"
                   value={formData.emergencyContact}
                   onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
-                  placeholder="e.g. +94 77 987 6543 (Partner or Relative)"
+                  placeholder="e.g. Thilini Perera (Spouse) - 0779876543"
+                  maxLength={200}
                 />
               </div>
             )}
@@ -308,7 +323,7 @@ export const RegisterPage = () => {
                   className="form-control"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Minimum 6 characters"
+                  placeholder="At least 8 characters, with a letter and a number"
                 />
                 {errors.password && <span className="form-error">{errors.password}</span>}
               </div>

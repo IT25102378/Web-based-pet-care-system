@@ -4,8 +4,11 @@ import { authApi } from '../../api/authApi';
 import { useToast } from '../../context/ToastContext';
 import { Lock, CheckCircle2, AlertTriangle } from 'lucide-react';
 
+import { validatePassword, validatePasswordMatch } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const ResetPasswordPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const navigate    = useNavigate();
   const location    = useLocation();
 
@@ -18,12 +21,12 @@ export const ResetPasswordPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password.length < 6) {
-      showToast('Action Required', 'Password must be at least 6 characters.', 'error');
-      return;
-    }
-    if (password !== confirmPassword) {
-      showToast('Action Required', 'Passwords do not match.', 'error');
+    const passwordError = check(
+      ['password', password, validatePassword(password, { label: 'New password' })],
+      ['confirmPassword', confirmPassword, validatePasswordMatch(password, confirmPassword)],
+    );
+    if (passwordError) {
+      showToast('Please Check Your Password', passwordError, 'error');
       return;
     }
 
@@ -83,10 +86,11 @@ export const ResetPasswordPage = () => {
                 style={{ paddingLeft: '2.25rem' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 6 characters"
+                placeholder="At least 8 characters, with a letter and a number"
                 required
               />
             </div>
+            {errorFor('password', password)}
           </div>
 
           <div className="form-group">
@@ -103,6 +107,7 @@ export const ResetPasswordPage = () => {
                 required
               />
             </div>
+            {errorFor('confirmPassword', confirmPassword)}
           </div>
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.75rem' }} disabled={loading}>
