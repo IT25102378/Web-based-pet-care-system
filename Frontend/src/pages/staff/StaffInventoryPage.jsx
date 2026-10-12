@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { inventoryApi } from '../../api/inventoryApi';
 import { supplierApi } from '../../api/supplierApi';
 import { DataTable } from '../../components/common/DataTable';
@@ -29,6 +29,19 @@ export const StaffInventoryPage = () => {
   const { check, errorFor } = useFieldErrors();
   const [items, setItems] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const activeSuppliers = useMemo(() => {
+    return Array.isArray(suppliers)
+      ? suppliers.filter(
+          (s) =>
+            s &&
+            s.active !== false &&
+            s.active !== 0 &&
+            !s.disabled &&
+            s.status !== 'Inactive' &&
+            s.status !== 'Disabled'
+        )
+      : [];
+  }, [suppliers]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -60,7 +73,7 @@ export const StaffInventoryPage = () => {
     try {
       const [invList, suppList] = await Promise.allSettled([
         inventoryApi.getInventory(),
-        supplierApi.getSuppliers(),
+        supplierApi.getSuppliers(true),
       ]);
       if (invList.status === 'fulfilled' && invList.value) setItems(invList.value);
       if (suppList.status === 'fulfilled' && suppList.value) setSuppliers(suppList.value);
@@ -97,8 +110,12 @@ export const StaffInventoryPage = () => {
     try {
       let suppName = newItemData.supplierName;
       if (newItemData.supplierId) {
-        const found = suppliers.find((s) => s.supplierId === newItemData.supplierId);
-        if (found) suppName = found.companyName;
+        const found = activeSuppliers.find((s) => s.supplierId === newItemData.supplierId);
+        if (!found) {
+          showToast('Invalid Supplier', 'The selected supplier is inactive or disabled. Please choose an active supplier.', 'error');
+          return;
+        }
+        suppName = found.companyName;
       }
 
       await inventoryApi.addInventoryItem({
@@ -775,7 +792,7 @@ export const StaffInventoryPage = () => {
                 }
               >
                 <option value="">Select Supplier (Optional)</option>
-                {suppliers.map((s) => (
+                {activeSuppliers.map((s) => (
                   <option key={s.supplierId} value={s.supplierId}>
                     {s.supplierId} - {s.companyName} ({s.category})
                   </option>
@@ -951,11 +968,13 @@ export const StaffInventoryPage = () => {
                   onChange={(e) => setEditItem({ ...editItem, supplierId: e.target.value })}
                 >
                   <option value="">Select Supplier (Optional)</option>
-                  {suppliers.map((s) => (
-                    <option key={s.supplierId} value={s.supplierId}>
-                      {s.supplierId} - {s.companyName} ({s.category})
-                    </option>
-                  ))}
+                  {suppliers
+                    .filter((s) => s && (s.active !== false && s.active !== 0 && !s.disabled && s.status !== 'Inactive' && s.status !== 'Disabled' || s.supplierId === editItem.supplierId))
+                    .map((s) => (
+                      <option key={s.supplierId} value={s.supplierId}>
+                        {s.supplierId} - {s.companyName} ({s.category})
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>

@@ -1098,6 +1098,7 @@ export const initialSuppliers = [
     leadTimeDays: 2,
     rating: 4.9,
     address: '117 Sir James Peiris Mawatha, Colombo 02',
+    active: true,
   },
   {
     supplierId: 'SUP-02',
@@ -1109,6 +1110,7 @@ export const initialSuppliers = [
     leadTimeDays: 3,
     rating: 4.8,
     address: '45 Vauxhall Street, Colombo 02',
+    active: true,
   },
   {
     supplierId: 'SUP-03',
@@ -1120,6 +1122,7 @@ export const initialSuppliers = [
     leadTimeDays: 4,
     rating: 4.7,
     address: '23 R.A. De Mel Mawatha, Colombo 04',
+    active: true,
   }
 ];
 

@@ -37,8 +37,9 @@ export const SupplierPage = () => {
 
   const loadSuppliers = async () => {
     try {
-      const list = await supplierApi.getSuppliers();
-      setSuppliers(list);
+      const list = await supplierApi.getSuppliers(true);
+      const activeList = Array.isArray(list) ? list.filter((s) => s.active !== false && s.active !== 0) : [];
+      setSuppliers(activeList);
     } catch (e) {
       console.error(e);
     } finally {

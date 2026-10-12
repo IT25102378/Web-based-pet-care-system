@@ -2,10 +2,14 @@ import { USE_MOCK_DATA, simulateDelay, apiFetch } from './client';
 import { mockStore } from '../data/mockStore';
 
 export const supplierApi = {
-  async getSuppliers() {
-    if (!USE_MOCK_DATA) return await apiFetch('/suppliers');
+  async getSuppliers(activeOnly = false) {
+    if (!USE_MOCK_DATA) {
+      const url = activeOnly ? '/suppliers?active=true' : '/suppliers';
+      return await apiFetch(url);
+    }
     await simulateDelay();
-    return mockStore.getTable('suppliers');
+    const list = mockStore.getTable('suppliers') || [];
+    return activeOnly ? list.filter((s) => s && s.active !== false && s.active !== 0) : list;
   },
 
   async addSupplier(supplierData) {
@@ -25,6 +29,7 @@ export const supplierApi = {
       leadTimeDays: Number(supplierData.leadTimeDays) >= 0 ? Number(supplierData.leadTimeDays) : 2,
       rating: Number(supplierData.rating) >= 0 ? Math.min(5, Number(supplierData.rating)) : 5.0,
       address: supplierData.address || '',
+      active: supplierData.active !== undefined ? supplierData.active : true,
     };
 
     return mockStore.insertItem('suppliers', newSupplier);
