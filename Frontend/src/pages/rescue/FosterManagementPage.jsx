@@ -161,6 +161,12 @@ export const FosterManagementPage = () => {
 
   const columns = [
     {
+      header: 'Foster ID',
+      key: 'fosterId',
+      sortable: true,
+      render: (row) => <span className="font-mono text-xs font-bold text-primary">{row.fosterId}</span>,
+    },
+    {
       header: 'Foster Parent',
       key: 'fullName',
       sortable: true,

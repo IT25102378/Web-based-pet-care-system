@@ -330,6 +330,7 @@ export const BookAppointmentPage = () => {
       render: (row) => (
         <span className="font-bold font-mono text-primary">
           {row.tokenNumber || row.appointmentId}
+          {row.tokenNumber && <span className="block text-xs text-muted font-mono">{row.appointmentId}</span>}
         </span>
       ),
     },

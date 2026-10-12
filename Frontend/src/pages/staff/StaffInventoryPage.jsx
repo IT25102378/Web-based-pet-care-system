@@ -232,6 +232,12 @@ export const StaffInventoryPage = () => {
 
   const columns = [
     {
+      header: 'Item ID',
+      key: 'itemId',
+      sortable: true,
+      render: (row) => <span className="font-mono text-xs font-bold text-primary">{row.itemId}</span>,
+    },
+    {
       header: 'Item SKU',
       key: 'sku',
       sortable: true,

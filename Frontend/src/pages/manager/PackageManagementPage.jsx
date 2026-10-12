@@ -149,6 +149,7 @@ export const PackageManagementPage = () => {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="badge badge-primary">{pkg.badge || 'Wellness Plan'}</span>
+                  {pkg.serviceId && <span className="badge badge-secondary font-mono text-xs">{pkg.serviceId}</span>}
                   <span className={`badge ${pkg.active === false ? 'badge-secondary' : 'badge-success'} text-xs`}>
                     {pkg.active === false ? 'Inactive' : 'Active'}
                   </span>
