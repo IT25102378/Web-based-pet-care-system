@@ -11,6 +11,7 @@ import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.ConsultationRepository;
 import com.petnexus.backend.repository.PetRepository;
+import com.petnexus.backend.repository.PrescriptionItemRepository;
 import com.petnexus.backend.repository.PrescriptionRepository;
 import com.petnexus.backend.repository.UserRepository;
 import com.petnexus.backend.security.SecurityUtils;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 public class PrescriptionService {
 
     private final PrescriptionRepository prescriptionRepository;
+    private final PrescriptionItemRepository prescriptionItemRepository;
     private final PetRepository petRepository;
     private final UserRepository userRepository;
     private final ConsultationRepository consultationRepository;
@@ -246,8 +248,14 @@ public class PrescriptionService {
     @Transactional
     public void deletePrescription(String prescriptionId) {
         Prescription p = findOrThrow(prescriptionId);
+        // Explicitly clear and delete child prescription items first to prevent FK constraint violations
+        if (p.getItems() != null && !p.getItems().isEmpty()) {
+            prescriptionItemRepository.deleteAll(p.getItems());
+            p.getItems().clear();
+        }
+        prescriptionItemRepository.deleteByPrescription_PrescriptionId(p.getPrescriptionId());
         prescriptionRepository.delete(p);
-        log.info("Prescription {} deleted", prescriptionId);
+        log.info("Prescription {} deleted successfully", prescriptionId);
     }
 
     private String generatePrescriptionId() {

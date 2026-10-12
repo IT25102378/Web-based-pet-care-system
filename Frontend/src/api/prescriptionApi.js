@@ -106,7 +106,8 @@ export const prescriptionApi = {
       });
     }
     await simulateDelay(250);
-    mockStore.filterTable('prescriptionItems', (i) => i.prescriptionId !== prescriptionId);
+    const remainingItems = mockStore.filterTable('prescriptionItems', (i) => i.prescriptionId !== prescriptionId);
+    mockStore.setTable('prescriptionItems', remainingItems);
     return mockStore.deleteItem('prescriptions', 'prescriptionId', prescriptionId);
   }
 };

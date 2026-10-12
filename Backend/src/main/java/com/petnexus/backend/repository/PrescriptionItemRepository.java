@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface PrescriptionItemRepository extends JpaRepository<PrescriptionItem, Long> {
     List<PrescriptionItem> findByPrescription_PrescriptionId(String prescriptionId);
+    void deleteByPrescription_PrescriptionId(String prescriptionId);
+    void deleteByPrescription(com.petnexus.backend.entity.Prescription prescription);
 }

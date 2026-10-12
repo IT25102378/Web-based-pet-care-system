@@ -474,7 +474,7 @@ BEGIN
         refills_allowed      INT                   NULL,
         CONSTRAINT pk_prescription_items PRIMARY KEY (id),
         CONSTRAINT uk_prescription_items_item_id UNIQUE (item_id),
-        CONSTRAINT fk_rx_items_prescription FOREIGN KEY (prescription_fk_id) REFERENCES prescriptions (id)
+        CONSTRAINT fk_rx_items_prescription FOREIGN KEY (prescription_fk_id) REFERENCES prescriptions (id) ON DELETE CASCADE
     );
     CREATE INDEX idx_prescription_items_rx_id ON prescription_items (prescription_id);
 END

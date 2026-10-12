@@ -44,11 +44,13 @@ export const DigitalPrescriptionPage = () => {
   const [inventoryMedications, setInventoryMedications] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // Edit / Revoke Modals
+  // Edit / Revoke / Delete Modals
   const [editingRx, setEditingRx] = useState(null);
   const [editInstructionsText, setEditInstructionsText] = useState('');
   const [rxToRevoke, setRxToRevoke] = useState(null);
   const [revokeReason, setRevokeReason] = useState('Clinical response achieved; therapy revised.');
+  const [rxToDelete, setRxToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadData = async () => {
     try {
@@ -221,6 +223,22 @@ export const DigitalPrescriptionPage = () => {
       loadData();
     } catch (err) {
       showToast('Revocation Failed', err.message || 'Could not revoke prescription.', 'error');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!rxToDelete) return;
+    try {
+      setDeleting(true);
+      await prescriptionApi.deletePrescription(rxToDelete.prescriptionId);
+      setPrescriptions((prev) => prev.filter((p) => p.prescriptionId !== rxToDelete.prescriptionId));
+      showToast('Prescription Deleted', `Rx ${rxToDelete.prescriptionId} has been permanently deleted.`, 'success');
+      setRxToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete prescription:', err);
+      showToast('Delete Failed', err.message || 'Could not delete prescription. Please try again.', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -561,6 +579,15 @@ export const DigitalPrescriptionPage = () => {
                         </button>
                       </>
                     )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm text-danger"
+                      style={{ padding: '0.15rem 0.35rem' }}
+                      title="Permanently Delete Prescription"
+                      onClick={() => setRxToDelete(rx)}
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
 
@@ -672,6 +699,46 @@ export const DigitalPrescriptionPage = () => {
               </button>
               <button type="button" className="btn btn-danger" onClick={handleConfirmRevoke}>
                 <XCircle size={16} /> Revoke Prescription
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delete Prescription Permanently Modal */}
+      {rxToDelete && (
+        <Modal
+          isOpen={Boolean(rxToDelete)}
+          onClose={() => !deleting && setRxToDelete(null)}
+          title="Permanently Delete Prescription"
+        >
+          <div className="p-2">
+            <div className="flex items-center gap-3 mb-4 text-danger">
+              <AlertTriangle size={28} />
+              <div>
+                <h4 className="text-base font-bold text-main">Delete Prescription Completely?</h4>
+                <p className="text-xs text-muted">
+                  Are you sure you want to delete Rx <strong>{rxToDelete.prescriptionId}</strong> for <strong>{rxToDelete.petName}</strong>?
+                  This will permanently remove this prescription and its medication items from the database.
+                </p>
+              </div>
+            </div>
+            <div className="modal-actions flex justify-end gap-3 pt-2 border-t">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={deleting}
+                onClick={() => setRxToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={deleting}
+                onClick={handleConfirmDelete}
+              >
+                <Trash2 size={16} /> {deleting ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
           </div>
