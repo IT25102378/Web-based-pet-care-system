@@ -3,7 +3,10 @@ package com.petnexus.backend.service;
 import com.petnexus.backend.dto.PackageBookingCreateRequest;
 import com.petnexus.backend.dto.ServicePackageBookingResponseDto;
 import com.petnexus.backend.entity.ServicePackageBooking;
+import com.petnexus.backend.entity.User;
+import com.petnexus.backend.enums.UserRole;
 import com.petnexus.backend.exception.BadRequestException;
+import com.petnexus.backend.security.SecurityUtils;
 import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.ServicePackageBookingRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,12 @@ public class ServicePackageBookingService {
 
     @Transactional
     public ServicePackageBookingResponseDto createBooking(PackageBookingCreateRequest request) {
+        // A pet owner can only buy a package for themselves, whatever ownerId the request carries
+        User current = SecurityUtils.getCurrentUser();
+        if (current != null && current.getRole() == UserRole.PetOwner) {
+            request.setOwnerId(current.getUserId());
+        }
+
         // Ensure uniqueness: owner cannot have an active booking with same package name
         if (bookingRepository.existsByOwnerIdAndPackageNameAndStatus(request.getOwnerId(), request.getPackageName(), "Active")) {
             throw new BadRequestException("Owner already has an active booking for this package");
@@ -55,6 +64,11 @@ public class ServicePackageBookingService {
 
     @Transactional(readOnly = true)
     public List<ServicePackageBookingResponseDto> listBookings(String ownerId) {
+        // Pet owners only ever see their own bookings; staff roles may list all or filter by owner
+        User current = SecurityUtils.getCurrentUser();
+        if (current != null && current.getRole() == UserRole.PetOwner) {
+            ownerId = current.getUserId();
+        }
         List<ServicePackageBooking> bookings = (ownerId == null) ?
                 bookingRepository.findAll() : bookingRepository.findByOwnerId(ownerId);
         return bookings.stream().map(this::mapToResponse).collect(Collectors.toList());
