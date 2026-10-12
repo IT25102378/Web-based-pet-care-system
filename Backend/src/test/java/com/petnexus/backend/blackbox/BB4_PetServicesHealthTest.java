@@ -169,10 +169,12 @@ class BB4_PetServicesHealthTest extends BlackBoxSupport {
         String vet = login(VET);
         String petId = createPet(owner, "RxBva", 4);
         Map<String, Object> p = prescription(petId, "Meloxicam");
-        ((Map<String, Object>) ((List<?>) p.get("items")).get(0)).put("quantityPrescribed", 0);
+        @SuppressWarnings("unchecked") Map<String, Object> item = (Map<String, Object>) ((List<?>) p.get("items")).get(0);
+        item.put("quantityPrescribed", 0);
         assertEquals(400, status(post("/prescriptions", vet, p)));
         p = prescription(petId, "Meloxicam");
-        ((Map<String, Object>) ((List<?>) p.get("items")).get(0)).put("durationDays", 366);
+        @SuppressWarnings("unchecked") Map<String, Object> item2 = (Map<String, Object>) ((List<?>) p.get("items")).get(0);
+        item2.put("durationDays", 366);
         assertEquals(400, status(post("/prescriptions", vet, p)));
     }
 

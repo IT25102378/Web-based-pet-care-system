@@ -294,7 +294,7 @@ class WB2_WorkflowStateMachinesTest {
     private void poSetUp() {
         orders = mock(PurchaseOrderRepository.class);
         when(orders.save(any(PurchaseOrder.class))).thenAnswer(i -> i.getArgument(0));
-        poService = new PurchaseOrderService(orders, mock(SupplierRepository.class), mock(NotificationService.class), mock(UserRepository.class));
+        poService = new PurchaseOrderService(orders, mock(SupplierRepository.class), mock(NotificationService.class));
     }
 
     private PurchaseOrder orderIn(String status) {
@@ -373,7 +373,7 @@ class WB2_WorkflowStateMachinesTest {
     void purchaseOrderCreateRules() {
         poSetUp();
         SupplierRepository suppliers = mock(SupplierRepository.class);
-        poService = new PurchaseOrderService(orders, suppliers, mock(NotificationService.class), mock(UserRepository.class));
+        poService = new PurchaseOrderService(orders, suppliers, mock(NotificationService.class));
 
         assertThrows(BadRequestException.class, () -> poService.createPurchaseOrder(
                 PurchaseOrderRequest.builder().supplierName(" ").totalAmount(BigDecimal.TEN).build()));

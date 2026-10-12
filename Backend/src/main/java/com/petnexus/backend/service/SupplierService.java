@@ -7,15 +7,12 @@ import com.petnexus.backend.dto.SupplierResponse;
 import com.petnexus.backend.entity.InventoryItem;
 import com.petnexus.backend.entity.PurchaseOrder;
 import com.petnexus.backend.entity.Supplier;
-import com.petnexus.backend.entity.User;
 import com.petnexus.backend.enums.NotificationType;
-import com.petnexus.backend.enums.UserRole;
 import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.InventoryItemRepository;
 import com.petnexus.backend.repository.PurchaseOrderRepository;
 import com.petnexus.backend.repository.SupplierRepository;
-import com.petnexus.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +34,6 @@ public class SupplierService {
     private final InventoryItemRepository inventoryItemRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final NotificationService notificationService;
-    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<SupplierResponse> listSuppliers() {

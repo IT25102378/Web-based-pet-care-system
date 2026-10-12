@@ -4,14 +4,11 @@ import com.petnexus.backend.dto.PurchaseOrderDetailResponse;
 import com.petnexus.backend.dto.PurchaseOrderRequest;
 import com.petnexus.backend.dto.PurchaseOrderUpdateRequest;
 import com.petnexus.backend.entity.PurchaseOrder;
-import com.petnexus.backend.entity.User;
 import com.petnexus.backend.enums.NotificationType;
-import com.petnexus.backend.enums.UserRole;
 import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.PurchaseOrderRepository;
 import com.petnexus.backend.repository.SupplierRepository;
-import com.petnexus.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,7 +35,6 @@ public class PurchaseOrderService {
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final SupplierRepository supplierRepository;
     private final NotificationService notificationService;
-    private final UserRepository userRepository;
 
     /** Valid PO status values */
     private static final Set<String> VALID_STATUSES = Set.of(

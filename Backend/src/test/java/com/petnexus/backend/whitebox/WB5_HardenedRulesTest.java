@@ -2,7 +2,6 @@ package com.petnexus.backend.whitebox;
 
 import com.petnexus.backend.dto.*;
 import com.petnexus.backend.entity.*;
-import com.petnexus.backend.enums.AppointmentStatus;
 import com.petnexus.backend.enums.ServiceStatus;
 import com.petnexus.backend.enums.StockStatus;
 import com.petnexus.backend.enums.UserRole;
@@ -15,7 +14,6 @@ import com.petnexus.backend.service.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
