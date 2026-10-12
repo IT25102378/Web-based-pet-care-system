@@ -9,9 +9,9 @@ non-functional requirement NFR-02 (security / role-based access).
 
 | | Result |
 |---|---|
-| Automated tests | **377** run: 137 black-box, 72 white-box, 6 pattern-wiring and the project's existing `Phase*` / design-pattern suites (re-run as a regression check) |
-| Passed | **376** |
-| Failed | **1** – D6, an open requirement decision (see section 4). Initial run (before fixes): 6 failures, all genuine defects. |
+| Automated tests | **379** run: 139 black-box, 72 white-box, 6 pattern-wiring and the project's existing `Phase*` / design-pattern suites (re-run as a regression check) |
+| Passed | **379** |
+| Failed | **0**. Initial run (before fixes): 6 failures, all genuine defects, now resolved (section 4). |
 | UI smoke test | 55 pages across 7 roles loaded: **0 error screens, 0 failed API calls**, route guards correct |
 | Coverage (JaCoCo) | services 80.8 % line / 53.4 % branch · security 98.9 % / 78.8 % · design patterns 100 % / 100 % · whole backend 60.4 % / 50.1 % |
 
@@ -27,8 +27,8 @@ cd Backend
 ./mvnw org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.14:report
 ```
 
-A test that demonstrates an open defect carries `@Tag("known-defect")`; it is written against the *requirement*,
-so it turns green as soon as the defect is fixed. Only D6 is still open.
+A test that demonstrates an open defect should carry `@Tag("known-defect")`; it is written against the
+*requirement*, so it turns green as soon as the defect is fixed. No defect is open at the moment.
 
 ## 2. Black-box testing
 
@@ -38,7 +38,7 @@ partitioning (EP), boundary-value analysis (BVA), state-transition, access-contr
 
 | Requirement | Suite | Tests | Failed | Highlights |
 |---|---|---|---|---|
-| FR-01 Pet & owner profiles | `BB1_PetOwnerManagementTest` | 25 | 1 | password 7/8 chars, phone 9/10/11 digits, weight 0/0.01, age 11/12 months, DOB vs age, owner isolation |
+| FR-01 Pet & owner profiles | `BB1_PetOwnerManagementTest` | 27 | 0 | password 7/8 chars, phone 9/10/11 digits, weight 0/0.01, age 11/12 months, DOB vs age, owner isolation |
 | FR-02, FR-03 Appointments | `BB2_AppointmentBookingTest` | 20 | 0 | past/today date, vet & pet double-booking, cancelled slot reuse, reschedule audit trail, walk-in, available slots, fee strategies |
 | FR-05, FR-06 Rescue & adoption | `BB3_RescueAdoptionTest` | 17 | 0 | full state machine, publish rule, public gallery, apply → approve → case Adopted, role matrix |
 | FR-04, FR-07 Health & grooming | `BB4_PetServicesHealthTest` | 17 | 0 | temperature 29.9/30/45/45.1, heart rate 19/20/400/401, prescription lifecycle, medical history, care-log lifecycle |
@@ -95,7 +95,7 @@ Lower-covered, not yet exercised in depth: `SupplierService` (60 %), `AdoptionLi
 | D3 | **High** | NFR-02 | Any logged-in user could list every owner's package bookings. | `PK-10`: USR-013 saw a booking of USR-001 | **Fixed** – list is scoped to the caller for `PetOwner` (`?ownerId=` is ignored); staff roles still see all. |
 | D4 | – | FR-09 | *Re-assessed, not a defect.* New purchase orders are created as `Dispatched` by design: the manager UI has a single "place order" action and no approve step, and the existing integration tests assert it. The `Pending → Approved` states are reachable only through the API. The real issue was the second creation path (`POST /suppliers/purchase-orders`) using a time-based id that could collide. | `SU-05` now documents Dispatched → Shipped → Delivered; `SU-07` checks unique ids | **Fixed (id part)** – ids are now sequential and skip taken numbers. Status left unchanged on purpose. |
 | D5 | Medium | Constraint "clinic working hours" | Any time-slot text was accepted (e.g. "03:17 AM"). | `AP-20`: slot "03:17 AM" → 201 | **Fixed** – book and reschedule accept only the 11 published slots. Booking form now also lists 03:30 PM and 04:00 PM, which it was missing. |
-| D6 | Low | FR-01 | Pet owners cannot record vaccinations (vet / staff / manager only), although FR-01 says owners manage "vaccination … details". Owners can view them. | `PO-23`: owner `POST /vaccinations` → 403 | **Open – needs a team decision**: allow owners to add records for their own pets, or reword FR-01 to "view". |
+| D6 | Low | FR-01 | Pet owners could not record vaccinations (vet / staff / manager only), although FR-01 says owners manage "vaccination … details". Related: update and delete of a vaccination had **no authorization check**, so any logged-in user could edit or delete any pet's record. | `PO-23`: owner `POST /vaccinations` → 403 | **Fixed** – an owner can add, edit and delete vaccinations of their own pets; vet, clinic staff, clinic manager and admin can for any pet; other owners and care providers get 403 (`PO-26`, `PO-27`). Backend only: the owner screens do not yet have an "add vaccination" form (vets still use the vet page). |
 
 ## 5. Gaps against the proposal (no failing test – feature not present)
 
@@ -113,6 +113,7 @@ Lower-covered, not yet exercised in depth: `SupplierService` (60 %), `AdoptionLi
 
 All six major functions work end-to-end for their main flows and every page loads for every role.
 The first run found six problems; D1, D2, D3 and D5 are fixed, D4 turned out to be intended behaviour
-(only its id-collision risk was real and is fixed), and D6 is a requirement decision for the team.
-After the fixes the full suite, including the project's existing integration tests, runs 377 tests with
-1 failure (D6). The remaining proposal gaps in section 5 are features that were never built, not bugs.
+(only its id-collision risk was real and is fixed), and D6 is fixed together with a missing authorization
+check on vaccination edit / delete. After the fixes the full suite, including the project's existing
+integration tests, runs 379 tests with 0 failures. The remaining proposal gaps in section 5 are features
+that were never built, not bugs.

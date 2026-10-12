@@ -1,7 +1,6 @@
 package com.petnexus.backend.blackbox;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -279,8 +278,7 @@ class BB1_PetOwnerManagementTest extends BlackBoxSupport {
     }
 
     @Test
-    @Tag("known-defect")
-    @DisplayName("PO-23 [FR-01 gap check] can a PET OWNER record a vaccination on their own pet?")
+    @DisplayName("PO-23 [FR-01] a PET OWNER can record a vaccination on their own pet")
     void ownerRecordsVaccination() throws Exception {
         String owner = login(OWNER);
         String petId = createPet(owner, "OwnerVax", 2);
@@ -289,8 +287,9 @@ class BB1_PetOwnerManagementTest extends BlackBoxSupport {
         v.put("vaccineName", "Rabies");
         v.put("administeredDate", LocalDate.now().minusDays(1).toString());
         // FR-01: "pet owners ... manage pet and owner profiles, including vaccination ... details"
-        assertEquals(201, status(post("/vaccinations", owner, v)),
-                "FR-01 says owners manage vaccination details; backend currently restricts writes to vet/staff");
+        MvcResult res = post("/vaccinations", owner, v);
+        assertEquals(201, status(res), res.getResponse().getContentAsString());
+        assertEquals("Rabies", body(res).get("vaccineName").asText());
     }
 
     // ------------------------------------------------------------------ owner profile
@@ -321,5 +320,59 @@ class BB1_PetOwnerManagementTest extends BlackBoxSupport {
         escalate.put("address", "Same Street");
         put("/users/USR-001", token, escalate);
         assertEquals("PetOwner", body(get("/auth/me", token)).get("role").asText());
+    }
+
+    @Test
+    @DisplayName("PO-26 [FR-01 + access control] owner edits and deletes own vaccination records; strangers and non-clinical roles cannot")
+    void vaccinationWriteAccessMatrix() throws Exception {
+        String owner = login(OWNER);
+        String stranger = login(OTHER_OWNER);
+        String provider = login(PROVIDER);
+        String petId = createPet(owner, "VaxAccess", 2);
+
+        Map<String, Object> v = new LinkedHashMap<>();
+        v.put("petId", petId);
+        v.put("vaccineName", "DHPP");
+        v.put("administeredDate", LocalDate.now().minusDays(3).toString());
+
+        // another owner / a care provider cannot add a record to this pet
+        assertEquals(403, status(post("/vaccinations", stranger, v)));
+        assertEquals(403, status(post("/vaccinations", provider, v)));
+
+        MvcResult added = post("/vaccinations", owner, v);
+        assertEquals(201, status(added));
+        String vaccineId = body(added).get("vaccineId").asText();
+
+        Map<String, Object> change = new LinkedHashMap<>();
+        change.put("batchNumber", "LOT-42");
+        assertEquals(403, status(put("/vaccinations/" + vaccineId, stranger, change)));
+        assertEquals(403, status(delete("/vaccinations/" + vaccineId, stranger)));
+        assertEquals(403, status(delete("/vaccinations/" + vaccineId, provider)));
+
+        MvcResult updated = put("/vaccinations/" + vaccineId, owner, change);
+        assertEquals(200, status(updated));
+        assertEquals("LOT-42", body(updated).get("batchNumber").asText());
+
+        // the clinic can still correct the record
+        assertEquals(200, status(put("/vaccinations/" + vaccineId, login(VET), Map.of("status", "Overdue"))));
+
+        assertTrue(status(delete("/vaccinations/" + vaccineId, owner)) / 100 == 2);
+        assertEquals(0, body(get("/vaccinations?petId=" + petId, owner)).size());
+    }
+
+    @Test
+    @DisplayName("PO-27 [EP invalid] owner vaccination entry is validated like any other (future date, unknown pet)")
+    void ownerVaccinationValidation() throws Exception {
+        String owner = login(OWNER);
+        String petId = createPet(owner, "VaxRules", 2);
+        Map<String, Object> v = new LinkedHashMap<>();
+        v.put("petId", petId);
+        v.put("vaccineName", "Rabies");
+        v.put("administeredDate", LocalDate.now().plusDays(2).toString());
+        assertEquals(400, status(post("/vaccinations", owner, v)));
+
+        v.put("petId", "PET-NOPE");
+        v.put("administeredDate", LocalDate.now().minusDays(2).toString());
+        assertEquals(404, status(post("/vaccinations", owner, v)));
     }
 }

@@ -267,10 +267,11 @@ public class PetService {
 
     @Transactional
     public VaccinationResponse addVaccination(VaccinationRequest request) {
-        SecurityUtils.enforceOwnershipOrRole(null, UserRole.Admin, UserRole.Veterinarian, UserRole.ClinicStaff, UserRole.ClinicManager); // Only Vets/ClinicStaff/Admin can add vaccinations
-
         Pet pet = petRepository.findByPetId(request.getPetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Pet not found with ID: " + request.getPetId()));
+
+        // FR-01: owners manage vaccination details of their OWN pets; clinical roles may record for any pet
+        enforceVaccinationAccess(pet);
 
         validateVaccinationDates(request.getAdministeredDate(), request.getNextDueDate());
 
@@ -301,6 +302,7 @@ public class PetService {
     public VaccinationResponse updateVaccination(String vaccineId, VaccinationRequest request) {
         Vaccination vaccination = vaccinationRepository.findByVaccineId(vaccineId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vaccination record not found with id: " + vaccineId));
+        enforceVaccinationAccess(vaccination.getPet());
 
         validateVaccinationDates(
                 request.getAdministeredDate() != null ? request.getAdministeredDate() : vaccination.getAdministeredDate(),
@@ -337,8 +339,19 @@ public class PetService {
     public void deleteVaccination(String vaccineId) {
         Vaccination vaccination = vaccinationRepository.findByVaccineId(vaccineId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vaccination record not found with id: " + vaccineId));
+        enforceVaccinationAccess(vaccination.getPet());
         vaccinationRepository.delete(vaccination);
         log.info("Vaccination deleted: {}", vaccineId);
+    }
+
+    /**
+     * Vaccination records may be written by the pet's own owner or by clinical roles
+     * (vet, clinic staff, clinic manager, admin). Everyone else is denied.
+     */
+    private void enforceVaccinationAccess(Pet pet) {
+        String ownerId = (pet != null && pet.getOwner() != null) ? pet.getOwner().getUserId() : null;
+        SecurityUtils.enforceOwnershipOrRole(ownerId,
+                UserRole.Admin, UserRole.Veterinarian, UserRole.ClinicStaff, UserRole.ClinicManager);
     }
 
     // =========================================================================
