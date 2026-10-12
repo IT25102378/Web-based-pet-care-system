@@ -718,7 +718,83 @@ CREATE INDEX idx_feedback_user ON feedbacks (user_id);');
         THROW;
     END CATCH
 END
+GO
 
+-- ------------------------------------------------------------------------------
+-- SECTION 0C: Supplier & Inventory Primary Key Alignment
+-- Migrates existing databases where suppliers or inventory_items used surrogate
+-- bigint identity [id] columns so that [supplier_id] and [item_id] are the primary keys,
+-- exactly matching the domain model and website identifiers.
+-- ------------------------------------------------------------------------------
+IF OBJECT_ID(N'dbo.suppliers', N'U') IS NOT NULL
+   AND EXISTS (
+       SELECT 1 FROM sys.key_constraints kc
+       JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id AND kc.unique_index_id = ic.index_id
+       JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+       WHERE kc.parent_object_id = OBJECT_ID(N'dbo.suppliers') AND kc.type = 'PK' AND c.name = 'id'
+   )
+BEGIN
+    PRINT 'Aligning suppliers and inventory_items primary keys to supplier_id and item_id...';
+
+    -- 1. Drop FK from inventory_items to suppliers
+    IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'fk_inventory_items_supplier')
+    BEGIN
+        ALTER TABLE dbo.inventory_items DROP CONSTRAINT fk_inventory_items_supplier;
+    END
+
+    -- 2. Migrate inventory_items: ensure supplier_id column exists and is populated
+    IF COL_LENGTH(N'dbo.inventory_items', 'supplier_fk_id') IS NOT NULL
+    BEGIN
+        IF COL_LENGTH(N'dbo.inventory_items', 'supplier_id') IS NULL
+        BEGIN
+            ALTER TABLE dbo.inventory_items ADD supplier_id VARCHAR(20) NULL;
+        END
+
+        EXEC sp_executesql N'UPDATE i
+            SET i.supplier_id = s.supplier_id
+            FROM dbo.inventory_items i
+            JOIN dbo.suppliers s ON i.supplier_fk_id = s.id
+            WHERE i.supplier_id IS NULL;';
+
+        ALTER TABLE dbo.inventory_items DROP COLUMN supplier_fk_id;
+    END
+
+    -- 3. Drop old PK & unique constraint on inventory_items, drop id column, make item_id PK
+    IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = 'pk_inventory_items')
+    BEGIN
+        ALTER TABLE dbo.inventory_items DROP CONSTRAINT pk_inventory_items;
+    END
+    IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = 'uk_inventory_items_item_id')
+    BEGIN
+        ALTER TABLE dbo.inventory_items DROP CONSTRAINT uk_inventory_items_item_id;
+    END
+    IF COL_LENGTH(N'dbo.inventory_items', 'id') IS NOT NULL
+    BEGIN
+        ALTER TABLE dbo.inventory_items DROP COLUMN id;
+    END
+    ALTER TABLE dbo.inventory_items ADD CONSTRAINT pk_inventory_items PRIMARY KEY (item_id);
+
+    -- 4. Migrate suppliers: drop old PK & unique constraint, drop id column, make supplier_id PK
+    IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = 'pk_suppliers')
+    BEGIN
+        ALTER TABLE dbo.suppliers DROP CONSTRAINT pk_suppliers;
+    END
+    IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = 'uk_suppliers_supplier_id')
+    BEGIN
+        ALTER TABLE dbo.suppliers DROP CONSTRAINT uk_suppliers_supplier_id;
+    END
+    IF COL_LENGTH(N'dbo.suppliers', 'id') IS NOT NULL
+    BEGIN
+        ALTER TABLE dbo.suppliers DROP COLUMN id;
+    END
+    ALTER TABLE dbo.suppliers ADD CONSTRAINT pk_suppliers PRIMARY KEY (supplier_id);
+
+    -- 5. Restore FK from inventory_items(supplier_id) to suppliers(supplier_id)
+    ALTER TABLE dbo.inventory_items ADD CONSTRAINT fk_inventory_items_supplier
+        FOREIGN KEY (supplier_id) REFERENCES dbo.suppliers (supplier_id);
+
+    PRINT 'Suppliers and inventory_items primary keys successfully aligned.';
+END
 GO
 
 
@@ -1445,13 +1521,12 @@ GO
 -- ------------------------------------------------------------------------------
 
 -- Table       : suppliers
--- Primary key : id
+-- Primary key : supplier_id
 -- Foreign keys: none
 IF OBJECT_ID(N'dbo.suppliers', N'U') IS NULL
 BEGIN
     CREATE TABLE suppliers (
-        id              BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
-        supplier_id     VARCHAR(20)           NOT NULL,  -- unique
+        supplier_id     VARCHAR(20)           NOT NULL,  -- PK
         active          BIT                   NOT NULL,
         address         VARCHAR(300)          NULL,
         category        VARCHAR(100)          NULL,
@@ -1463,21 +1538,19 @@ BEGIN
         rating          NUMERIC(3,1)          NOT NULL,
         created_at      DATETIME2(7)          NOT NULL,
         updated_at      DATETIME2(7)          NULL,
-        CONSTRAINT pk_suppliers PRIMARY KEY (id),
-        CONSTRAINT uk_suppliers_supplier_id UNIQUE (supplier_id)
+        CONSTRAINT pk_suppliers PRIMARY KEY (supplier_id)
     );
 END
 GO
 
 -- Table       : inventory_items
--- Primary key : id
--- Foreign keys: supplier_fk_id -> suppliers(id)
+-- Primary key : item_id
+-- Foreign keys: supplier_id -> suppliers(supplier_id)
 IF OBJECT_ID(N'dbo.inventory_items', N'U') IS NULL
 BEGIN
     CREATE TABLE inventory_items (
-        id                   BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
-        item_id              VARCHAR(20)           NOT NULL,  -- unique
-        supplier_fk_id       BIGINT                NULL,      -- FK -> suppliers
+        item_id              VARCHAR(20)           NOT NULL,  -- PK
+        supplier_id          VARCHAR(20)           NULL,      -- FK -> suppliers
         batch_number         VARCHAR(50)           NULL,
         category             VARCHAR(100)          NOT NULL,
         current_stock        INT                   NOT NULL,
@@ -1492,10 +1565,9 @@ BEGIN
         unit_price           NUMERIC(10,2)         NOT NULL,
         created_at           DATETIME2(7)          NOT NULL,
         updated_at           DATETIME2(7)          NULL,
-        CONSTRAINT pk_inventory_items PRIMARY KEY (id),
-        CONSTRAINT uk_inventory_items_item_id UNIQUE (item_id),
+        CONSTRAINT pk_inventory_items PRIMARY KEY (item_id),
         CONSTRAINT uk_inventory_items_sku UNIQUE (sku),
-        CONSTRAINT fk_inventory_items_supplier FOREIGN KEY (supplier_fk_id) REFERENCES suppliers (id),
+        CONSTRAINT fk_inventory_items_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (supplier_id),
         CONSTRAINT ck_inventory_items_status CHECK ([status]='EXPIRED' OR [status]='OUT_OF_STOCK' OR [status]='LOW_STOCK' OR [status]='IN_STOCK')
     );
     CREATE INDEX idx_inventory_items_category ON inventory_items (category);

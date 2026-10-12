@@ -158,7 +158,7 @@ export const DataTable = ({
           <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((row, idx) => (
-                <tr key={row.id || row.userId || row.petId || row.caseId || row.appointmentId || row.itemId || idx}>
+                <tr key={row.id || row.userId || row.petId || row.caseId || row.appointmentId || row.itemId || row.supplierId || idx}>
                   {columns.map((col) => (
                     <td key={col.key || col.header}>
                       {col.render ? col.render(row) : row[col.key]}

@@ -53,8 +53,14 @@ public class Phase10A6ApprovalHistoryIntegrationTest {
     @BeforeEach
     void setUp() {
         approvalHistoryRepository.deleteAll();
-        userRepository.findByUserId("ADM-999").ifPresent(userRepository::delete);
-        userRepository.findByUserId("USR-TEST").ifPresent(userRepository::delete);
+        userRepository.findByUserId("ADM-999").ifPresent(u -> {
+            userRepository.delete(u);
+            userRepository.flush();
+        });
+        userRepository.findByUserId("USR-TEST").ifPresent(u -> {
+            userRepository.delete(u);
+            userRepository.flush();
+        });
 
         // Create an admin user for context
         adminUser = userRepository.save(User.builder()
