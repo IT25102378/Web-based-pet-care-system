@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,6 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @ActiveProfiles("test")
+// Rolled back after each test: the observer test fires real LowStockAlertObserver
+// notifications, which must never be committed to the shared PetNexus database.
+@Transactional
 class DesignPatternsIntegrationTest {
 
     @Autowired
@@ -52,30 +56,30 @@ class DesignPatternsIntegrationTest {
     @Test
     @DisplayName("Strategy Pattern: Standard Consultation computes exact 1.0x rate")
     void testStandardConsultationStrategy() {
-        double fee = feeCalculationContext.computeFee(50.00, 3, false, false);
-        assertEquals(50.00, fee, 0.001);
+        double fee = feeCalculationContext.computeFee(3500.00, 3, false, false);
+        assertEquals(3500.00, fee, 0.001);
     }
 
     @Test
-    @DisplayName("Strategy Pattern: Emergency Triage applies 1.5x multiplier + $20 surcharge")
+    @DisplayName("Strategy Pattern: Emergency Triage applies 1.5x multiplier + Rs. 1,500 surcharge")
     void testEmergencyTriageStrategy() {
-        // Base: $50 -> 50 * 1.5 = 75 + 20 = $95.00
-        double fee = feeCalculationContext.computeFee(50.00, 4, true, false);
-        assertEquals(95.00, fee, 0.001);
+        // Base: Rs. 3,500 -> 3500 * 1.5 = 5250 + 1500 = Rs. 6,750.00
+        double fee = feeCalculationContext.computeFee(3500.00, 4, true, false);
+        assertEquals(6750.00, fee, 0.001);
     }
 
     @Test
     @DisplayName("Strategy Pattern: Senior Pet receives 15% compassionate wellness discount")
     void testSeniorPetDiscountStrategy() {
-        // Base: $50 -> 50 * 0.85 = $42.50
-        double fee = feeCalculationContext.computeFee(50.00, 9, false, false);
-        assertEquals(42.50, fee, 0.001);
+        // Base: Rs. 3,500 -> 3500 * 0.85 = Rs. 2,975.00
+        double fee = feeCalculationContext.computeFee(3500.00, 9, false, false);
+        assertEquals(2975.00, fee, 0.001);
     }
 
     @Test
-    @DisplayName("Strategy Pattern: Rescued Street Animal receives 100% subsidy ($0.00)")
+    @DisplayName("Strategy Pattern: Rescued Street Animal receives 100% subsidy (Rs. 0.00)")
     void testRescueAnimalWelfareStrategy() {
-        double fee = feeCalculationContext.computeFee(50.00, 2, false, true);
+        double fee = feeCalculationContext.computeFee(3500.00, 2, false, true);
         assertEquals(0.00, fee, 0.001);
     }
 

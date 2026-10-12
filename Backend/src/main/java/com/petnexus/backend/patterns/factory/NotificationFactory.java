@@ -10,14 +10,17 @@ import java.util.UUID;
 
 /**
  * ==============================================================================
- * DESIGN PATTERN: FACTORY METHOD / FACTORY PATTERN (GoF Creational Pattern)
+ * DESIGN PATTERN: SIMPLE FACTORY (static-factory style creational pattern)
  * ==============================================================================
  * WHERE USED:
- *   - com.petnexus.backend.service.NotificationService
- *   - com.petnexus.backend.service.AppointmentService
- *   - com.petnexus.backend.service.InventoryService
- *   - com.petnexus.backend.service.RescueCaseService
- *   - com.petnexus.backend.controller.DesignPatternController
+ *   - NotificationService.createNotification()  -> create()  (every service that dispatches a
+ *     notification: Rescue, Feedback, Inventory, PurchaseOrder, Supplier ... goes through it)
+ *   - NotificationService.notifyAppointment()   -> createAppointmentNotification()
+ *     (called by AppointmentService on book / confirm / reschedule / cancel)
+ *   - NotificationService.notifyAdoptionStatus()-> createAdoptionStatusNotification()
+ *     (called by AdoptionApplicationService.reviewApplication)
+ *   - LowStockAlertObserver                     -> createInventoryLowStockNotification()
+ *   - DesignPatternController (live demo metadata)
  *
  * WHY USED:
  *   The PetNexus platform generates multiple distinct categories of domain notifications
@@ -45,97 +48,76 @@ public class NotificationFactory {
     }
 
     /**
-     * Factory method: Creates an Appointment Confirmation or Reschedule Notification.
+     * Generic factory method: the single place where a {@link Notification} is assembled.
+     * Every typed factory method below delegates here, so ID format, defaults
+     * (unread, timestamp) and trimming rules exist exactly once.
+     * The returned entity is NOT persisted; the caller decides when to save it.
      */
-    public Notification createAppointmentNotification(User recipient, String appointmentId, String petName, String appointmentTime, String status) {
-        String title = "Appointment " + status + " – " + petName;
-        String message = String.format("Your consultation for %s (Ref: %s) is scheduled for %s. Current status: %s.",
-                petName, appointmentId, appointmentTime, status);
-
+    public Notification create(User recipient, NotificationType type, String title, String message, String link) {
         return Notification.builder()
                 .notificationId(generateNotificationId())
                 .user(recipient)
-                .type(NotificationType.Appointment)
-                .title(title)
-                .message(message)
+                .type(type != null ? type : NotificationType.System)
+                .title(title != null ? title.trim() : "System Notification")
+                .message(message != null ? message.trim() : "")
+                .link(link != null ? link.trim() : null)
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
 
     /**
-     * Factory method: Creates an Inventory Low-Stock Alert Notification.
+     * Typed factory method: creates an Appointment Confirmation or Reschedule Notification.
+     */
+    public Notification createAppointmentNotification(User recipient, String appointmentId, String petName, String appointmentTime, String status) {
+        String title = "Appointment " + status + " – " + petName;
+        String message = String.format("Your consultation for %s (Ref: %s) on %s is now: %s.",
+                petName, appointmentId, appointmentTime, status);
+
+        return create(recipient, NotificationType.Appointment, title, message, "/owner/appointments");
+    }
+
+    /**
+     * Typed factory method: creates an Inventory Low-Stock Alert Notification.
      */
     public Notification createInventoryLowStockNotification(User manager, String itemName, String sku, int currentStock, int threshold) {
         String title = "CRITICAL INVENTORY ALERT: " + itemName;
         String message = String.format("Stock for '%s' (SKU: %s) has depleted to %d units, below safety threshold of %d. Immediate reorder recommended.",
                 itemName, sku, currentStock, threshold);
 
-        return Notification.builder()
-                .notificationId(generateNotificationId())
-                .user(manager)
-                .type(NotificationType.Inventory)
-                .title(title)
-                .message(message)
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        return create(manager, NotificationType.Inventory, title, message, "/manager/inventory");
     }
 
     /**
-     * Factory method: Creates a Vaccination Health Booster Reminder.
+     * Typed factory method: creates a Vaccination Health Booster Reminder.
      */
     public Notification createVaccinationReminderNotification(User owner, String petName, String vaccineName, String dueDate) {
         String title = "Immunization Due: " + petName;
         String message = String.format("%s is due for the '%s' booster on %s. Please book an appointment to keep immunity active.",
                 petName, vaccineName, dueDate);
 
-        return Notification.builder()
-                .notificationId(generateNotificationId())
-                .user(owner)
-                .type(NotificationType.Health)
-                .title(title)
-                .message(message)
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        return create(owner, NotificationType.Health, title, message, "/owner/medical-history");
     }
 
     /**
-     * Factory method: Creates a Community Rescue Case Intake Alert.
+     * Typed factory method: creates a Community Rescue Case Intake Alert.
      */
     public Notification createRescueIntakeNotification(User officer, String caseNumber, String location, String severity) {
         String title = "Rescue Alert: New Incident [" + severity.toUpperCase() + "]";
         String message = String.format("Incident %s reported at %s with severity '%s'. Field dispatch and intake triage required.",
                 caseNumber, location, severity);
 
-        return Notification.builder()
-                .notificationId(generateNotificationId())
-                .user(officer)
-                .type(NotificationType.Rescue)
-                .title(title)
-                .message(message)
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        return create(officer, NotificationType.Rescue, title, message, "/rescue/cases");
     }
 
     /**
-     * Factory method: Creates an Adoption Application Status Notification.
+     * Typed factory method: creates an Adoption Application Status Notification.
      */
     public Notification createAdoptionStatusNotification(User applicant, String applicationId, String petName, String status, String reviewNotes) {
         String title = "Adoption Application " + status + " – " + petName;
         String message = String.format("Your adoption request (Ref: %s) for %s has been %s. Notes: %s",
                 applicationId, petName, status.toLowerCase(), reviewNotes);
 
-        return Notification.builder()
-                .notificationId(generateNotificationId())
-                .user(applicant)
-                .type(NotificationType.Adoption)
-                .title(title)
-                .message(message)
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        return create(applicant, NotificationType.Adoption, title, message, "/owner/adopt");
     }
 }

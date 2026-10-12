@@ -4,13 +4,13 @@ import org.springframework.stereotype.Component;
 
 /**
  * Concrete Strategy: Emergency Urgent Care / Critical Triage Fee Calculation.
- * Implements a 1.5x urgent care multiplier plus a standardized trauma triage surcharge ($20).
+ * Implements a 1.5x urgent care multiplier plus a standardized trauma triage surcharge (Rs. 1,500).
  */
 @Component
 public class EmergencyTriageStrategy implements FeeCalculationStrategy {
 
     private static final double EMERGENCY_MULTIPLIER = 1.50;
-    private static final double TRIAGE_SURCHARGE = 20.00;
+    private static final double TRIAGE_SURCHARGE = 1500.00;
 
     @Override
     public String getStrategyName() {
@@ -19,7 +19,7 @@ public class EmergencyTriageStrategy implements FeeCalculationStrategy {
 
     @Override
     public String getDescription() {
-        return "Urgent triage consultation with 1.5x priority diagnostic multiplier + $20.00 emergency facility fee.";
+        return "Urgent triage consultation with 1.5x priority diagnostic multiplier + Rs. 1,500.00 emergency facility fee.";
     }
 
     @Override

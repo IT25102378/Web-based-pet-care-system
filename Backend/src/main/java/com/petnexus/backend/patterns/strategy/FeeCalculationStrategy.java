@@ -6,7 +6,6 @@ package com.petnexus.backend.patterns.strategy;
  * ==============================================================================
  * WHERE USED:
  *   - com.petnexus.backend.service.AppointmentService
- *   - com.petnexus.backend.service.ConsultationService
  *   - com.petnexus.backend.controller.DesignPatternController
  *
  * WHY USED:

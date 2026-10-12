@@ -50,14 +50,13 @@ public class DesignPatternController {
         strategy.put("interface", "FeeCalculationStrategy.java");
         strategy.put("concreteClasses", List.of(
                 "StandardConsultationStrategy (1.0x standard examination)",
-                "EmergencyTriageStrategy (1.5x trauma priority multiplier + $20 triage surcharge)",
+                "EmergencyTriageStrategy (1.5x trauma priority multiplier + Rs. 1,500 triage surcharge)",
                 "SeniorPetDiscountStrategy (15% compassionate geriatric wellness discount)",
-                "RescueAnimalWelfareStrategy (100% subsidized $0.00 non-profit shelter welfare)"
+                "RescueAnimalWelfareStrategy (100% subsidized Rs. 0.00 non-profit shelter welfare)"
         ));
         strategy.put("contextClass", "FeeCalculationContext.java");
         strategy.put("whereUsed", List.of(
                 "com.petnexus.backend.service.AppointmentService",
-                "com.petnexus.backend.service.ConsultationService",
                 "com.petnexus.backend.controller.DesignPatternController"
         ));
         strategy.put("whyUsed", "Eliminates rigid if-else / switch ladders across clinical services by encapsulating dynamic triage pricing and compassionate welfare discounts into interchangeable strategy objects.");
@@ -70,14 +69,14 @@ public class DesignPatternController {
 
         // 2. FACTORY METHOD PATTERN
         Map<String, Object> factory = new LinkedHashMap<>();
-        factory.put("patternName", "Factory Pattern (GoF Creational)");
+        factory.put("patternName", "Simple Factory Pattern (Creational)");
         factory.put("implementedPackage", "com.petnexus.backend.patterns.factory");
         factory.put("factoryClass", "NotificationFactory.java");
         factory.put("factoryInstanceActive", notificationFactory != null);
         factory.put("whereUsed", List.of(
-                "com.petnexus.backend.service.NotificationService",
+                "com.petnexus.backend.service.NotificationService (single dispatch path for all notifications)",
                 "com.petnexus.backend.service.AppointmentService",
-                "com.petnexus.backend.service.InventoryService",
+                "com.petnexus.backend.service.AdoptionApplicationService (via NotificationService.notifyAdoptionStatus)",
                 "com.petnexus.backend.patterns.observer.LowStockAlertObserver"
         ));
         factory.put("whyUsed", "Centralizes the instantiation and standardized formatting of heterogeneous alert notifications (Appointments, Low-Stock Alerts, Vaccination Due Dates, Rescue Reports).");
@@ -115,7 +114,7 @@ public class DesignPatternController {
 
     @PostMapping("/calculate-fee")
     public ResponseEntity<Map<String, Object>> calculateConsultationFee(@RequestBody FeeCalculationRequest request) {
-        double baseFee = request.getBaseFee() != null ? request.getBaseFee() : 50.00;
+        double baseFee = request.getBaseFee() != null ? request.getBaseFee() : 3500.00;
         int petAgeYears = request.getPetAgeYears() != null ? request.getPetAgeYears() : 3;
         boolean isEmergency = Boolean.TRUE.equals(request.getIsEmergency());
         boolean isRescueAnimal = Boolean.TRUE.equals(request.getIsRescueAnimal());
@@ -141,9 +140,9 @@ public class DesignPatternController {
         result.put("isEmergency", isEmergency);
         result.put("isRescueAnimal", isRescueAnimal);
         result.put("finalFee", finalFee);
-        result.put("currency", "USD ($)");
+        result.put("currency", "LKR (Rs.)");
         result.put("appliedRule", isRescueAnimal ? "100% Non-Profit Subsidy"
-                : isEmergency ? "Emergency Triage (1.5x + $20 Surcharge)"
+                : isEmergency ? "Emergency Triage (1.5x + Rs. 1,500 Surcharge)"
                 : petAgeYears >= 8 ? "Senior Pet Compassionate Discount (15% Off)"
                 : "Standard Outpatient Consultation Fee");
 

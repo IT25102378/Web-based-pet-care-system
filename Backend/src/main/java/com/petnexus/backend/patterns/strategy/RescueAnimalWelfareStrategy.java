@@ -17,7 +17,7 @@ public class RescueAnimalWelfareStrategy implements FeeCalculationStrategy {
 
     @Override
     public String getDescription() {
-        return "100% subsidized welfare rate ($0.00) for admitted street rescues and foster companions.";
+        return "100% subsidized welfare rate (Rs. 0.00) for admitted street rescues and foster companions.";
     }
 
     @Override

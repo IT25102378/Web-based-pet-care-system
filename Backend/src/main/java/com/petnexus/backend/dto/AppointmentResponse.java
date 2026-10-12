@@ -33,6 +33,8 @@ public class AppointmentResponse {
     private String reason;
     private String symptoms;
     private String notes;
+    private java.math.BigDecimal consultationFee;
+    private String feeStrategy;
     private String cancellationReason;
     private LocalDateTime cancelledAt;
     private RescheduledFromDto rescheduledFrom;
@@ -71,6 +73,8 @@ public class AppointmentResponse {
                 .reason(a.getReason())
                 .symptoms(a.getSymptoms())
                 .notes(a.getNotes())
+                .consultationFee(a.getConsultationFee())
+                .feeStrategy(a.getFeeStrategy())
                 .cancellationReason(a.getCancellationReason())
                 .cancelledAt(a.getCancelledAt())
                 .rescheduledFrom(resched)

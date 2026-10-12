@@ -35,6 +35,7 @@ public class AdoptionApplicationService {
     private final UserRepository userRepository;
     private final com.petnexus.backend.repository.AdoptionListingRepository adoptionListingRepository;
     private final com.petnexus.backend.repository.AdoptionApplicationDocumentRepository documentRepository;
+    private final NotificationService notificationService;
 
 
     @Transactional(readOnly = true)
@@ -206,6 +207,7 @@ public class AdoptionApplicationService {
         }
 
         AdoptionApplication saved = applicationRepository.save(app);
+        notificationService.notifyAdoptionStatus(saved, saved.getStatus().getValue());
         return toDto(saved);
     }
 

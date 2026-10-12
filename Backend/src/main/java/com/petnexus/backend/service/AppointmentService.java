@@ -10,6 +10,8 @@ import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.AppointmentRepository;
 import com.petnexus.backend.repository.PetRepository;
 import com.petnexus.backend.repository.UserRepository;
+import com.petnexus.backend.patterns.strategy.FeeCalculationContext;
+import com.petnexus.backend.patterns.strategy.FeeCalculationStrategy;
 import com.petnexus.backend.security.SecurityUtils;
 import com.petnexus.backend.enums.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,8 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final PetRepository petRepository;
     private final UserRepository userRepository;
+    private final FeeCalculationContext feeCalculationContext;
+    private final NotificationService notificationService;
 
     private static final List<AppointmentStatus> EXCLUDED_CONFLICT_STATUSES = List.of(
             AppointmentStatus.Cancelled,
@@ -126,6 +130,7 @@ public class AppointmentService {
         if (request.getAppointmentDate().isBefore(LocalDate.now())) {
             throw new BadRequestException("Cannot book an appointment for a date in the past.");
         }
+        validateClinicSlot(request.getTimeSlot());
 
         // 5. Double-Booking Prevention: Check if Vet is already booked for date & time slot
         List<Appointment> vetConflicts = appointmentRepository.findVetConflicts(
@@ -162,6 +167,7 @@ public class AppointmentService {
         // 8. Generate unique IDs and build appointment
         String newAppointmentId = generateAppointmentId();
         String token = generateScheduledToken();
+        FeeQuote quote = quoteFee(request.getServiceType(), pet, owner, null);
 
         Appointment appt = Appointment.builder()
                 .appointmentId(newAppointmentId)
@@ -185,10 +191,14 @@ public class AppointmentService {
                 .reason(request.getReason())
                 .symptoms(request.getSymptoms() != null ? request.getSymptoms() : "Normal energy levels")
                 .notes(request.getNotes() != null ? request.getNotes() : "")
+                .consultationFee(quote.fee())
+                .feeStrategy(quote.strategyName())
                 .build();
 
         Appointment saved = appointmentRepository.save(appt);
-        log.info("Appointment booked: {} for pet {} with vet {}", saved.getAppointmentId(), saved.getPetId(), saved.getVetName());
+        log.info("Appointment booked: {} for pet {} with vet {} (fee {} via {})",
+                saved.getAppointmentId(), saved.getPetId(), saved.getVetName(), quote.fee(), quote.strategyName());
+        notificationService.notifyAppointment(saved, saved.getStatus().name());
         return AppointmentResponse.from(saved);
     }
 
@@ -230,6 +240,8 @@ public class AppointmentService {
             owner = pet.getOwner();
         }
 
+        FeeQuote quote = quoteFee(request.getServiceType(), pet, owner, request.getSeverity());
+
         Appointment appt = Appointment.builder()
                 .appointmentId(newAppointmentId)
                 .pet(pet)
@@ -252,10 +264,14 @@ public class AppointmentService {
                 .reason(request.getReason())
                 .symptoms(request.getSymptoms())
                 .notes(notes)
+                .consultationFee(quote.fee())
+                .feeStrategy(quote.strategyName())
                 .build();
 
         Appointment saved = appointmentRepository.save(appt);
-        log.info("Walk-in appointment registered: {} (Token: {}) for {}", saved.getAppointmentId(), token, saved.getPetName());
+        log.info("Walk-in appointment registered: {} (Token: {}) for {} (fee {} via {})",
+                saved.getAppointmentId(), token, saved.getPetName(), quote.fee(), quote.strategyName());
+        notificationService.notifyAppointment(saved, saved.getStatus().name());
         return AppointmentResponse.from(saved);
     }
 
@@ -269,7 +285,8 @@ public class AppointmentService {
 
         Appointment appt = findByAppointmentIdOrThrow(appointmentId);
 
-        if (appt.getStatus() != AppointmentStatus.Pending) {
+        // New bookings start as Scheduled; Pending covers requests created by other channels.
+        if (appt.getStatus() != AppointmentStatus.Pending && appt.getStatus() != AppointmentStatus.Scheduled) {
             throw new BadRequestException("Appointments with status \"" + appt.getStatus() + "\" cannot be confirmed.");
         }
 
@@ -277,6 +294,7 @@ public class AppointmentService {
         appt.setUpdatedAt(LocalDateTime.now());
         Appointment saved = appointmentRepository.save(appt);
         log.info("Appointment confirmed: {}", appointmentId);
+        notificationService.notifyAppointment(saved, saved.getStatus().name());
         return AppointmentResponse.from(saved);
     }
 
@@ -337,6 +355,7 @@ public class AppointmentService {
         if (request.getAppointmentDate().isBefore(LocalDate.now())) {
             throw new BadRequestException("Cannot reschedule an appointment to a date in the past.");
         }
+        validateClinicSlot(request.getTimeSlot());
 
         String effectiveVetName = (request.getVetName() != null && !request.getVetName().trim().isEmpty())
                 ? request.getVetName().trim()
@@ -391,6 +410,7 @@ public class AppointmentService {
 
         Appointment saved = appointmentRepository.save(appt);
         log.info("Appointment {} rescheduled to {} at {} with {}", appointmentId, request.getAppointmentDate(), request.getTimeSlot(), effectiveVetName);
+        notificationService.notifyAppointment(saved, "Rescheduled");
         return AppointmentResponse.from(saved);
     }
 
@@ -431,6 +451,7 @@ public class AppointmentService {
 
         Appointment saved = appointmentRepository.save(appt);
         log.info("Appointment {} cancelled. Reason: {}", appointmentId, reason);
+        notificationService.notifyAppointment(saved, saved.getStatus().name());
         return AppointmentResponse.from(saved);
     }
 
@@ -459,6 +480,59 @@ public class AppointmentService {
     // =========================================================================
     // Helpers
     // =========================================================================
+
+    // =========================================================================
+    // Fee calculation (Strategy pattern)
+    // =========================================================================
+
+    /** Fee plus the name of the strategy that produced it, stored on the appointment. */
+    private record FeeQuote(java.math.BigDecimal fee, String strategyName) {}
+
+    /**
+     * Quotes the consultation fee by delegating to {@link FeeCalculationContext}.
+     * This service only gathers the facts (base price, pet age, emergency, rescue);
+     * choosing and applying the pricing rule is the strategy's job.
+     */
+    private FeeQuote quoteFee(String serviceType, Pet pet, User owner, String severity) {
+        String type = serviceType != null ? serviceType.toLowerCase() : "";
+
+        boolean emergency = type.contains("emergency")
+                || (severity != null && (severity.equalsIgnoreCase("High") || severity.equalsIgnoreCase("Critical")));
+        // Animals registered to the rescue organisation are covered by the welfare subsidy
+        boolean rescueAnimal = type.contains("rescue")
+                || (owner != null && owner.getRole() == UserRole.RescueOfficer);
+
+        int ageYears = 0;
+        if (pet != null) {
+            if (pet.getAgeYears() != null) {
+                ageYears = pet.getAgeYears();
+            } else if (pet.getDateOfBirth() != null) {
+                ageYears = java.time.Period.between(pet.getDateOfBirth(), LocalDate.now()).getYears();
+            }
+        }
+
+        FeeCalculationStrategy strategy = feeCalculationContext.resolveStrategy(ageYears, emergency, rescueAnimal);
+        double fee = strategy.calculateFee(baseFeeFor(type), ageYears, emergency, rescueAnimal);
+        return new FeeQuote(java.math.BigDecimal.valueOf(fee).setScale(2, java.math.RoundingMode.HALF_UP),
+                strategy.getStrategyName());
+    }
+
+    /** Clinic price list: base fee in LKR before any strategy adjustment. */
+    private double baseFeeFor(String lowerCaseServiceType) {
+        if (lowerCaseServiceType.contains("surgery")) return 25000.00;
+        if (lowerCaseServiceType.contains("dental")) return 7500.00;
+        if (lowerCaseServiceType.contains("emergency")) return 5000.00;
+        if (lowerCaseServiceType.contains("vaccin")) return 2500.00;
+        return 3500.00;
+    }
+
+    /** Appointments can only be placed on the clinic's published working-hour slots. */
+    private void validateClinicSlot(String timeSlot) {
+        if (timeSlot == null || !STANDARD_SLOTS.contains(timeSlot.trim())) {
+            throw new BadRequestException("Time slot \"" + timeSlot + "\" is outside clinic hours. Available slots: "
+                    + String.join(", ", STANDARD_SLOTS));
+        }
+    }
 
     private Appointment findByAppointmentIdOrThrow(String appointmentId) {
         return appointmentRepository.findByAppointmentId(appointmentId.trim())

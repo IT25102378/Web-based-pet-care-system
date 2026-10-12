@@ -1,7 +1,10 @@
 package com.petnexus.backend.service;
 
 import com.petnexus.backend.dto.NotificationResponse;
+import com.petnexus.backend.entity.Appointment;
+import com.petnexus.backend.entity.AdoptionApplication;
 import com.petnexus.backend.entity.Notification;
+import com.petnexus.backend.patterns.factory.NotificationFactory;
 import com.petnexus.backend.entity.User;
 import com.petnexus.backend.enums.NotificationType;
 import com.petnexus.backend.enums.UserRole;
@@ -29,6 +32,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final NotificationFactory notificationFactory;
 
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(String userId) {
@@ -93,8 +97,10 @@ public class NotificationService {
         return true;
     }
 
-    private static final java.util.concurrent.atomic.AtomicLong NOTIF_COUNTER = new java.util.concurrent.atomic.AtomicLong(1);
-
+    /**
+     * Dispatches a notification. Construction is delegated to {@link NotificationFactory}
+     * so every notification in the system shares one ID scheme and set of defaults.
+     */
     @Transactional
     public NotificationResponse createNotification(String userId, NotificationType type, String title, String message, String link) {
         if (userId == null || userId.isBlank()) {
@@ -103,22 +109,46 @@ public class NotificationService {
         User user = userRepository.findByUserId(userId.trim())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
-        String notificationId = String.format("NTF-%d-%04d", System.currentTimeMillis(), NOTIF_COUNTER.getAndIncrement() % 10000);
-
-        Notification notification = Notification.builder()
-                .notificationId(notificationId)
-                .user(user)
-                .type(type != null ? type : NotificationType.System)
-                .title(title != null ? title.trim() : "System Notification")
-                .message(message != null ? message.trim() : "")
-                .isRead(false)
-                .link(link != null ? link.trim() : null)
-                .createdAt(LocalDateTime.now())
-                .build();
-
+        Notification notification = notificationFactory.create(user, type, title, message, link);
         notificationRepository.save(notification);
-        log.info("Dispatched notification {} to user {} [{}]: {}", notificationId, userId, type, title);
+        log.info("Dispatched notification {} to user {} [{}]: {}", notification.getNotificationId(), userId, notification.getType(), notification.getTitle());
         return toResponse(notification);
+    }
+
+    /**
+     * Notifies the owner of an appointment about a booking / confirmation / reschedule / cancellation.
+     * Never throws: a notification problem must not break the appointment transaction.
+     */
+    public void notifyAppointment(Appointment appointment, String status) {
+        try {
+            User owner = appointment.getOwner();
+            if (owner == null) {
+                return;
+            }
+            String when = appointment.getAppointmentDate() + " " + appointment.getTimeSlot();
+            notificationRepository.save(notificationFactory.createAppointmentNotification(
+                    owner, appointment.getAppointmentId(), appointment.getPetName(), when, status));
+        } catch (Exception e) {
+            log.warn("Could not dispatch appointment notification for {}: {}", appointment.getAppointmentId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Notifies an adoption applicant that their application changed status.
+     */
+    public void notifyAdoptionStatus(AdoptionApplication application, String status) {
+        try {
+            User applicant = application.getApplicant();
+            if (applicant == null) {
+                return;
+            }
+            String notes = (application.getReviewNotes() != null && !application.getReviewNotes().isBlank())
+                    ? application.getReviewNotes().trim() : "No additional notes.";
+            notificationRepository.save(notificationFactory.createAdoptionStatusNotification(
+                    applicant, application.getApplicationId(), application.getPetName(), status, notes));
+        } catch (Exception e) {
+            log.warn("Could not dispatch adoption notification for {}: {}", application.getApplicationId(), e.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)

@@ -131,6 +131,18 @@ public class Appointment {
     private String notes;
 
     // -----------------------------------------------------------------------
+    // Consultation Fee (resolved by the Strategy pattern: FeeCalculationContext)
+    // -----------------------------------------------------------------------
+
+    /** Fee quoted at booking time; null for appointments created before fee support. */
+    @Column(precision = 10, scale = 2)
+    private java.math.BigDecimal consultationFee;
+
+    /** Name of the FeeCalculationStrategy that produced the fee (STANDARD, EMERGENCY_TRIAGE, ...). */
+    @Column(length = 40)
+    private String feeStrategy;
+
+    // -----------------------------------------------------------------------
     // Cancellation & Rescheduling History
     // -----------------------------------------------------------------------
 

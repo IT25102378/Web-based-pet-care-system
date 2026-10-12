@@ -578,6 +578,8 @@ export const BookAppointmentPage = () => {
                   <option value="02:00 PM">02:00 PM</option>
                   <option value="02:30 PM">02:30 PM</option>
                   <option value="03:00 PM">03:00 PM</option>
+                  <option value="03:30 PM">03:30 PM</option>
+                  <option value="04:00 PM">04:00 PM</option>
                   <option value="04:30 PM">04:30 PM</option>
                 </select>
               </div>
