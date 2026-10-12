@@ -13,12 +13,7 @@ import java.time.LocalDateTime;
  * Supplier entity — persisted to [PetNexus].[dbo].[suppliers].
  */
 @Entity
-@Table(
-    name = "suppliers",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_suppliers_supplier_id", columnNames = "supplierId")
-    }
-)
+@Table(name = "suppliers")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,10 +21,7 @@ import java.time.LocalDateTime;
 public class Supplier {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, length = 20)
+    @Column(name = "supplier_id", nullable = false, length = 20)
     private String supplierId; // e.g., SUP-01
 
     @Column(nullable = false, length = 150)

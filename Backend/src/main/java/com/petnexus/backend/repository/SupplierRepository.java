@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface SupplierRepository extends JpaRepository<Supplier, Long> {
+public interface SupplierRepository extends JpaRepository<Supplier, String> {
     Optional<Supplier> findBySupplierId(String supplierId);
     boolean existsBySupplierId(String supplierId);
     boolean existsByCompanyNameIgnoreCase(String companyName);
