@@ -60,1124 +60,832 @@ GO
 
 -- ==============================================================================
 -- SECTION 1: Core PetNexus Application Schema (31 Tables & Relations)
+--
+-- Layout of every table: primary key first, then its business ID, then the
+-- foreign key columns, then the remaining attributes, with created_at /
+-- updated_at last. Tables are created parent-first so every foreign key is
+-- declared inside its own table.
+--
+-- Constraint names: pk_<table>, uk_<table>_<column>, fk_<table>_<parent>,
+--                   ck_<table>_<column>, idx_<table>_<column>
 -- ==============================================================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'USER')
+-- ------------------------------------------------------------------------------
+-- Accounts and Roles
+-- ------------------------------------------------------------------------------
+
+-- Table       : USER
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.USER', N'U') IS NULL
 BEGIN
-    create table [USER](
-        created_at datetime2(7) not null,
-        updated_at datetime2(7),
-        id bigint identity not null,
-        user_id varchar(20) not null,
-        phone varchar(30),
-        role varchar(30) not null check ((role in ('PetOwner','Veterinarian','ClinicStaff','PetCareProvider','ClinicManager','RescueOfficer','Admin'))),
-        status varchar(40) not null check ((status in ('PendingApproval','Active','Rejected','Suspended'))),
-        approval_token varchar(100),
-        password_reset_token varchar(100),
-        full_name varchar(150) not null,
-        emergency_contact varchar(200),
-        address varchar(300),
-        rejection_reason varchar(500),
-        suspension_reason varchar(500),
-        avatar_url VARCHAR(MAX),
-        email varchar(255) not null,
-        password_hash varchar(255) not null,
-        primary key (id),
-        constraint uk_users_user_id unique (user_id)
+    CREATE TABLE [USER] (
+        id                    BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        user_id               VARCHAR(20)           NOT NULL,  -- unique
+        address               VARCHAR(300)          NULL,
+        approval_token        VARCHAR(100)          NULL,
+        avatar_url            VARCHAR(MAX)          NULL,
+        email                 VARCHAR(255)          NOT NULL,  -- unique
+        emergency_contact     VARCHAR(200)          NULL,
+        full_name             VARCHAR(150)          NOT NULL,
+        password_hash         VARCHAR(255)          NOT NULL,
+        password_reset_token  VARCHAR(100)          NULL,
+        phone                 VARCHAR(30)           NULL,
+        rejection_reason      VARCHAR(500)          NULL,
+        role                  VARCHAR(30)           NOT NULL,
+        status                VARCHAR(40)           NOT NULL,
+        suspension_reason     VARCHAR(500)          NULL,
+        created_at            DATETIME2(7)          NOT NULL,
+        updated_at            DATETIME2(7)          NULL,
+        CONSTRAINT pk_users PRIMARY KEY (id),
+        CONSTRAINT uk_users_email UNIQUE (email),
+        CONSTRAINT uk_users_user_id UNIQUE (user_id),
+        CONSTRAINT ck_users_role CHECK ([role]='Admin' OR [role]='RescueOfficer' OR [role]='ClinicManager' OR [role]='PetCareProvider' OR [role]='ClinicStaff' OR [role]='Veterinarian' OR [role]='PetOwner'),
+        CONSTRAINT ck_users_status CHECK ([status]='Suspended' OR [status]='Rejected' OR [status]='Active' OR [status]='PendingApproval' OR [status]='PendingEmailVerification')
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'adoption_application_documents')
+-- Table       : pet_owner
+-- Primary key : user_id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.pet_owner', N'U') IS NULL
 BEGIN
-    create table adoption_application_documents (
-        id bigint identity not null,
-        uploaded_at datetime2(7) not null,
-        application_id varchar(255) not null,
-        document_type varchar(255) not null,
-        file_name varchar(255) not null,
-        file_size varchar(255),
-        file_url varchar(255) not null,
-        status varchar(255),
-        primary key (id)
+    CREATE TABLE pet_owner (
+        user_id  BIGINT  NOT NULL,  -- PK, FK -> USER
+        CONSTRAINT pk_pet_owner PRIMARY KEY (user_id),
+        CONSTRAINT fk_pet_owner_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'adoption_applications')
+-- Table       : veterinarian
+-- Primary key : user_id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.veterinarian', N'U') IS NULL
 BEGIN
-    create table adoption_applications (
-        applicant_id bigint not null,
-        case_id bigint not null,
-        created_at datetime2(7) not null,
-        reviewed_at datetime2(7),
-        reviewed_by bigint,
-        applicant_name varchar(255) not null,
-        applicant_phone varchar(255) not null,
-        application_id varchar(255) not null,
-        pet_name varchar(255) not null,
-        review_notes varchar(255),
-        status varchar(255) not null check ((status in ('SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED','CANCELLED'))),
-        primary key (application_id)
+    CREATE TABLE veterinarian (
+        user_id         BIGINT        NOT NULL,  -- PK, FK -> USER
+        license_number  VARCHAR(50)   NULL,
+        specialization  VARCHAR(150)  NULL,
+        CONSTRAINT pk_veterinarian PRIMARY KEY (user_id),
+        CONSTRAINT fk_veterinarian_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'adoption_listings')
+-- Table       : clinic_staff
+-- Primary key : user_id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.clinic_staff', N'U') IS NULL
 BEGIN
-    create table adoption_listings (
-        is_published_for_adoption bit not null,
-        case_id bigint not null,
-        created_at datetime2(7) not null,
-        updated_at datetime2(7) not null,
-        listing_id varchar(255) not null,
-        primary key (listing_id)
+    CREATE TABLE clinic_staff (
+        user_id   BIGINT       NOT NULL,  -- PK, FK -> USER
+        staff_id  VARCHAR(30)  NULL,
+        CONSTRAINT pk_clinic_staff PRIMARY KEY (user_id),
+        CONSTRAINT fk_clinic_staff_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'appointments')
+-- Table       : clinic_manager
+-- Primary key : user_id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.clinic_manager', N'U') IS NULL
 BEGIN
-    create table appointments (
-        appointment_date date not null,
-        rescheduled_from_date date,
-        cancelled_at datetime2(7),
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        owner_fk_id bigint,
-        pet_fk_id bigint,
-        updated_at datetime2(7),
-        vet_fk_id bigint,
-        appointment_id varchar(20) not null,
-        owner_id varchar(20),
-        pet_id varchar(20),
-        token_number varchar(20),
-        vet_id varchar(20),
-        rescheduled_from_time_slot varchar(30),
-        status varchar(30) not null check ((status in ('Scheduled','Pending','Confirmed','CheckedIn','InRoom','Completed','Cancelled','NoShow'))),
-        time_slot varchar(30) not null,
-        owner_phone varchar(50),
-        species varchar(50),
-        breed varchar(100),
-        pet_name varchar(100) not null,
-        service_type varchar(100) not null,
-        owner_name varchar(150) not null,
-        rescheduled_from_vet_name varchar(150),
-        vet_name varchar(150) not null,
-        cancellation_reason varchar(500),
-        reschedule_reason varchar(500),
-        reason varchar(1000),
-        symptoms varchar(1000),
-        notes varchar(2000),
-        primary key (id)
+    CREATE TABLE clinic_manager (
+        user_id       BIGINT       NOT NULL,  -- PK, FK -> USER
+        manager_code  VARCHAR(30)  NULL,
+        CONSTRAINT pk_clinic_manager PRIMARY KEY (user_id),
+        CONSTRAINT fk_clinic_manager_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'approval_history')
+-- Table       : rescue_officer
+-- Primary key : user_id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.rescue_officer', N'U') IS NULL
 BEGIN
-    create table approval_history (
-        id bigint identity not null,
-        timestamp datetime2(7) not null,
-        admin_id varchar(20) not null,
-        user_id varchar(20) not null,
-        history_id varchar(30) not null,
-        action varchar(50) not null,
-        user_full_name varchar(150) not null,
-        reason varchar(500),
-        primary key (id)
+    CREATE TABLE rescue_officer (
+        user_id       BIGINT       NOT NULL,  -- PK, FK -> USER
+        badge_number  VARCHAR(30)  NULL,
+        CONSTRAINT pk_rescue_officer PRIMARY KEY (user_id),
+        CONSTRAINT fk_rescue_officer_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'care_providers')
+-- Table       : pet_care_provider
+-- Primary key : user_id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.pet_care_provider', N'U') IS NULL
 BEGIN
-    create table care_providers (
-        active bit not null,
-        id bigint identity not null,
-        user_id bigint not null,
-        contact_phone varchar(20),
-        provider_id varchar(20) not null,
-        contact_email varchar(100),
-        provider_name varchar(100) not null,
-        primary key (id)
+    CREATE TABLE pet_care_provider (
+        user_id            BIGINT        NOT NULL,  -- PK, FK -> USER
+        service_specialty  VARCHAR(150)  NULL,
+        CONSTRAINT pk_pet_care_provider PRIMARY KEY (user_id),
+        CONSTRAINT fk_pet_care_provider_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'care_service_logs')
+-- Table       : approval_history
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.approval_history', N'U') IS NULL
 BEGIN
-    create table care_service_logs (
-        created_at date not null,
-        return_to_rescue bit not null,
-        service_date date not null,
-        id bigint identity not null,
-        case_id varchar(20),
-        owner_id varchar(20),
-        pet_id varchar(20),
-        provider_id varchar(20),
-        service_log_id varchar(20) not null,
-        status varchar(30) not null check ((status in ('SCHEDULED','CHECKED_IN','IN_PROGRESS','READY_FOR_PICKUP','COMPLETED'))),
-        owner_name varchar(100),
-        pet_name varchar(100),
-        provider_name varchar(100),
-        service_type varchar(100) not null,
-        intake_condition varchar(500),
-        notes varchar(1000),
-        services_performed varchar(1000),
-        primary key (id)
+    CREATE TABLE approval_history (
+        id              BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        action          VARCHAR(50)           NOT NULL,
+        admin_id        VARCHAR(20)           NOT NULL,
+        history_id      VARCHAR(30)           NOT NULL,
+        reason          VARCHAR(500)          NULL,
+        timestamp       DATETIME2(7)          NOT NULL,
+        user_full_name  VARCHAR(150)          NOT NULL,
+        user_id         VARCHAR(20)           NOT NULL,
+        CONSTRAINT pk_approval_history PRIMARY KEY (id)
+    );
+    CREATE INDEX idx_approval_history_user_id ON approval_history (user_id);
+END
+GO
+
+-- Table       : notifications
+-- Primary key : id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.notifications', N'U') IS NULL
+BEGIN
+    CREATE TABLE notifications (
+        id               BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        notification_id  VARCHAR(40)           NOT NULL,  -- unique
+        user_id          BIGINT                NOT NULL,  -- FK -> USER
+        is_read          BIT                   NOT NULL,
+        link             VARCHAR(300)          NULL,
+        message          VARCHAR(1000)         NOT NULL,
+        title            VARCHAR(200)          NOT NULL,
+        type             VARCHAR(30)           NOT NULL,
+        created_at       DATETIME2(7)          NOT NULL,
+        CONSTRAINT pk_notifications PRIMARY KEY (id),
+        CONSTRAINT uk_notifications_notification_id UNIQUE (notification_id),
+        CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES [USER] (id),
+        CONSTRAINT ck_notifications_type CHECK ([type]='System' OR [type]='Health' OR [type]='Inventory' OR [type]='Approval' OR [type]='Adoption' OR [type]='Rescue' OR [type]='Appointment')
+    );
+    CREATE INDEX idx_notifications_is_read ON notifications (is_read);
+    CREATE INDEX idx_notifications_user ON notifications (user_id);
+END
+GO
+
+-- ------------------------------------------------------------------------------
+-- Pets and Medical Records
+-- ------------------------------------------------------------------------------
+
+-- Table       : pets
+-- Primary key : id
+-- Foreign keys: owner_id -> USER(id)
+IF OBJECT_ID(N'dbo.pets', N'U') IS NULL
+BEGIN
+    CREATE TABLE pets (
+        id                 BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        pet_id             VARCHAR(20)           NOT NULL,  -- unique
+        owner_id           BIGINT                NOT NULL,  -- FK -> USER
+        age_months         INT                   NULL,
+        age_years          INT                   NULL,
+        allergies          VARCHAR(500)          NULL,
+        breed              VARCHAR(100)          NOT NULL,
+        date_of_birth      DATE                  NULL,
+        emergency_contact  VARCHAR(300)          NULL,
+        gender             VARCHAR(30)           NULL,
+        image_url          VARCHAR(500)          NULL,
+        medical_notes      VARCHAR(2000)         NULL,
+        microchip_id       VARCHAR(20)           NULL,
+        name               VARCHAR(100)          NOT NULL,
+        species            VARCHAR(50)           NOT NULL,
+        weight_kg          NUMERIC(5,2)          NULL,
+        created_at         DATETIME2(7)          NOT NULL,
+        updated_at         DATETIME2(7)          NULL,
+        CONSTRAINT pk_pets PRIMARY KEY (id),
+        CONSTRAINT uk_pets_pet_id UNIQUE (pet_id),
+        CONSTRAINT fk_pets_owner FOREIGN KEY (owner_id) REFERENCES [USER] (id)
+    );
+    CREATE INDEX idx_pets_owner ON pets (owner_id);
+END
+GO
+
+-- Table       : pet_documents
+-- Primary key : id
+-- Foreign keys: pet_id -> pets(id)
+IF OBJECT_ID(N'dbo.pet_documents', N'U') IS NULL
+BEGIN
+    CREATE TABLE pet_documents (
+        id             BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        document_id    VARCHAR(20)           NOT NULL,  -- unique
+        pet_id         BIGINT                NOT NULL,  -- FK -> pets
+        document_type  VARCHAR(100)          NOT NULL,
+        file_name      VARCHAR(255)          NOT NULL,
+        file_size      VARCHAR(50)           NULL,
+        file_url       VARCHAR(1000)         NULL,
+        notes          VARCHAR(2000)         NULL,
+        owner_id       VARCHAR(20)           NOT NULL,
+        pet_name       VARCHAR(100)          NULL,
+        uploaded_at    DATETIME2(7)          NOT NULL,
+        CONSTRAINT pk_pet_documents PRIMARY KEY (id),
+        CONSTRAINT uk_pet_documents_document_id UNIQUE (document_id),
+        CONSTRAINT fk_pet_documents_pet FOREIGN KEY (pet_id) REFERENCES pets (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'care_services')
+-- Table       : vaccinations
+-- Primary key : id
+-- Foreign keys: pet_id -> pets(id)
+IF OBJECT_ID(N'dbo.vaccinations', N'U') IS NULL
 BEGIN
-    create table care_services (
-        discount_percent int,
-        duration_minutes int not null,
-        original_value numeric(10,2),
-        price numeric(10,2) not null,
-        created_by_user_id bigint not null,
-        id bigint identity not null,
-        service_id varchar(20) not null,
-        status varchar(30) not null check ((status in ('SCHEDULED','CHECKED_IN','IN_PROGRESS','READY_FOR_PICKUP','COMPLETED'))),
-        badge varchar(50),
-        name varchar(100) not null,
-        recommended_for varchar(100),
-        tagline varchar(300),
-        description varchar(2000),
-        primary key (id)
+    CREATE TABLE vaccinations (
+        id                 BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        vaccine_id         VARCHAR(20)           NOT NULL,  -- unique
+        pet_id             BIGINT                NOT NULL,  -- FK -> pets
+        administered_by    VARCHAR(150)          NULL,
+        administered_date  DATE                  NULL,
+        batch_number       VARCHAR(50)           NULL,
+        next_due_date      DATE                  NULL,
+        pet_name           VARCHAR(100)          NULL,
+        status             VARCHAR(30)           NULL,
+        vaccine_name       VARCHAR(200)          NOT NULL,
+        CONSTRAINT pk_vaccinations PRIMARY KEY (id),
+        CONSTRAINT uk_vaccinations_vaccine_id UNIQUE (vaccine_id),
+        CONSTRAINT fk_vaccinations_pet FOREIGN KEY (pet_id) REFERENCES pets (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'clinic_manager')
+-- Table       : appointments
+-- Primary key : id
+-- Foreign keys: owner_fk_id -> USER(id)
+--               pet_fk_id -> pets(id)
+--               vet_fk_id -> USER(id)
+IF OBJECT_ID(N'dbo.appointments', N'U') IS NULL
 BEGIN
-    create table clinic_manager (
-        [user_id] bigint not null,
-        manager_code varchar(30),
-        primary key ([user_id])
+    CREATE TABLE appointments (
+        id                          BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        appointment_id              VARCHAR(20)           NOT NULL,  -- unique
+        owner_fk_id                 BIGINT                NULL,      -- FK -> USER
+        pet_fk_id                   BIGINT                NULL,      -- FK -> pets
+        vet_fk_id                   BIGINT                NULL,      -- FK -> USER
+        appointment_date            DATE                  NOT NULL,
+        breed                       VARCHAR(100)          NULL,
+        cancellation_reason         VARCHAR(500)          NULL,
+        cancelled_at                DATETIME2(7)          NULL,
+        notes                       VARCHAR(2000)         NULL,
+        owner_id                    VARCHAR(20)           NULL,
+        owner_name                  VARCHAR(150)          NOT NULL,
+        owner_phone                 VARCHAR(50)           NULL,
+        pet_id                      VARCHAR(20)           NULL,
+        pet_name                    VARCHAR(100)          NOT NULL,
+        reason                      VARCHAR(1000)         NULL,
+        reschedule_reason           VARCHAR(500)          NULL,
+        rescheduled_from_date       DATE                  NULL,
+        rescheduled_from_time_slot  VARCHAR(30)           NULL,
+        rescheduled_from_vet_name   VARCHAR(150)          NULL,
+        service_type                VARCHAR(100)          NOT NULL,
+        species                     VARCHAR(50)           NULL,
+        status                      VARCHAR(30)           NOT NULL,
+        symptoms                    VARCHAR(1000)         NULL,
+        time_slot                   VARCHAR(30)           NOT NULL,
+        token_number                VARCHAR(20)           NULL,
+        vet_id                      VARCHAR(20)           NULL,
+        vet_name                    VARCHAR(150)          NOT NULL,
+        created_at                  DATETIME2(7)          NOT NULL,
+        updated_at                  DATETIME2(7)          NULL,
+        CONSTRAINT pk_appointments PRIMARY KEY (id),
+        CONSTRAINT uk_appointments_appointment_id UNIQUE (appointment_id),
+        CONSTRAINT fk_appointments_owner FOREIGN KEY (owner_fk_id) REFERENCES [USER] (id),
+        CONSTRAINT fk_appointments_pet FOREIGN KEY (pet_fk_id) REFERENCES pets (id),
+        CONSTRAINT fk_appointments_vet FOREIGN KEY (vet_fk_id) REFERENCES [USER] (id),
+        CONSTRAINT ck_appointments_status CHECK ([status]='NoShow' OR [status]='Cancelled' OR [status]='Completed' OR [status]='InRoom' OR [status]='CheckedIn' OR [status]='Confirmed' OR [status]='Pending' OR [status]='Scheduled')
+    );
+    CREATE INDEX idx_appointments_date_slot ON appointments (appointment_date, time_slot);
+    CREATE INDEX idx_appointments_owner ON appointments (owner_id);
+    CREATE INDEX idx_appointments_pet ON appointments (pet_id);
+    CREATE INDEX idx_appointments_vet_date ON appointments (vet_id, appointment_date);
+END
+GO
+
+-- Table       : consultations
+-- Primary key : id
+-- Foreign keys: appointment_fk_id -> appointments(id)
+--               pet_fk_id -> pets(id)
+--               vet_fk_id -> USER(id)
+IF OBJECT_ID(N'dbo.consultations', N'U') IS NULL
+BEGIN
+    CREATE TABLE consultations (
+        id                      BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        consultation_id         VARCHAR(30)           NOT NULL,  -- unique
+        appointment_fk_id       BIGINT                NULL,      -- FK -> appointments
+        pet_fk_id               BIGINT                NULL,      -- FK -> pets
+        vet_fk_id               BIGINT                NULL,      -- FK -> USER
+        appointment_id          VARCHAR(20)           NULL,
+        assessment_diagnosis    VARCHAR(2000)         NOT NULL,
+        case_id                 VARCHAR(30)           NULL,
+        consultation_date       DATETIME2(7)          NOT NULL,
+        follow_up_date          DATE                  NULL,
+        heart_rate_bpm          INT                   NULL,
+        objective_findings      VARCHAR(2000)         NULL,
+        pass_to_provider        BIT                   NULL,
+        pet_id                  VARCHAR(20)           NULL,
+        pet_name                VARCHAR(100)          NOT NULL,
+        rescue_medical_summary  VARCHAR(2000)         NULL,
+        respiratory_rate_bpm    INT                   NULL,
+        status                  VARCHAR(30)           NULL,
+        subjective_notes        VARCHAR(2000)         NULL,
+        temperaturec            NUMERIC(4,1)          NULL,
+        treatment_plan          VARCHAR(2000)         NOT NULL,
+        vet_id                  VARCHAR(20)           NULL,
+        vet_name                VARCHAR(150)          NOT NULL,
+        weight_kg               NUMERIC(5,2)          NULL,
+        created_at              DATETIME2(7)          NOT NULL,
+        updated_at              DATETIME2(7)          NULL,
+        CONSTRAINT pk_consultations PRIMARY KEY (id),
+        CONSTRAINT uk_consultations_consultation_id UNIQUE (consultation_id),
+        CONSTRAINT fk_consultations_appointment FOREIGN KEY (appointment_fk_id) REFERENCES appointments (id),
+        CONSTRAINT fk_consultations_pet FOREIGN KEY (pet_fk_id) REFERENCES pets (id),
+        CONSTRAINT fk_consultations_vet FOREIGN KEY (vet_fk_id) REFERENCES [USER] (id)
+    );
+    CREATE INDEX idx_consultations_appointment_id ON consultations (appointment_id);
+    CREATE INDEX idx_consultations_case_id ON consultations (case_id);
+    CREATE INDEX idx_consultations_pet_id ON consultations (pet_id);
+    CREATE INDEX idx_consultations_vet_id ON consultations (vet_id);
+END
+GO
+
+-- Table       : prescriptions
+-- Primary key : id
+-- Foreign keys: consultation_fk_id -> consultations(id)
+--               pet_fk_id -> pets(id)
+--               vet_fk_id -> USER(id)
+IF OBJECT_ID(N'dbo.prescriptions', N'U') IS NULL
+BEGIN
+    CREATE TABLE prescriptions (
+        id                  BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        prescription_id     VARCHAR(30)           NOT NULL,  -- unique
+        consultation_fk_id  BIGINT                NULL,      -- FK -> consultations
+        pet_fk_id           BIGINT                NULL,      -- FK -> pets
+        vet_fk_id           BIGINT                NULL,      -- FK -> USER
+        consultation_id     VARCHAR(30)           NULL,
+        digital_signature   VARCHAR(300)          NULL,
+        instructions        VARCHAR(1000)         NULL,
+        issue_date          DATE                  NOT NULL,
+        owner_name          VARCHAR(150)          NULL,
+        pet_id              VARCHAR(20)           NULL,
+        pet_name            VARCHAR(100)          NOT NULL,
+        status              VARCHAR(30)           NOT NULL,
+        valid_until         DATE                  NULL,
+        vet_id              VARCHAR(20)           NULL,
+        vet_license         VARCHAR(50)           NULL,
+        vet_name            VARCHAR(150)          NOT NULL,
+        created_at          DATETIME2(7)          NOT NULL,
+        updated_at          DATETIME2(7)          NULL,
+        CONSTRAINT pk_prescriptions PRIMARY KEY (id),
+        CONSTRAINT uk_prescriptions_rx_id UNIQUE (prescription_id),
+        CONSTRAINT fk_prescriptions_consultation FOREIGN KEY (consultation_fk_id) REFERENCES consultations (id),
+        CONSTRAINT fk_prescriptions_pet FOREIGN KEY (pet_fk_id) REFERENCES pets (id),
+        CONSTRAINT fk_prescriptions_vet FOREIGN KEY (vet_fk_id) REFERENCES [USER] (id)
+    );
+    CREATE INDEX idx_prescriptions_consultation_id ON prescriptions (consultation_id);
+    CREATE INDEX idx_prescriptions_pet_id ON prescriptions (pet_id);
+    CREATE INDEX idx_prescriptions_vet_id ON prescriptions (vet_id);
+END
+GO
+
+-- Table       : prescription_items
+-- Primary key : id
+-- Foreign keys: prescription_fk_id -> prescriptions(id)
+IF OBJECT_ID(N'dbo.prescription_items', N'U') IS NULL
+BEGIN
+    CREATE TABLE prescription_items (
+        id                   BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        item_id              VARCHAR(50)           NOT NULL,  -- unique
+        prescription_fk_id   BIGINT                NOT NULL,  -- FK -> prescriptions
+        dosage               VARCHAR(100)          NULL,
+        duration_days        INT                   NULL,
+        frequency            VARCHAR(100)          NULL,
+        medication_name      VARCHAR(200)          NOT NULL,
+        prescription_id      VARCHAR(30)           NULL,
+        quantity_prescribed  INT                   NULL,
+        refills_allowed      INT                   NULL,
+        CONSTRAINT pk_prescription_items PRIMARY KEY (id),
+        CONSTRAINT uk_prescription_items_item_id UNIQUE (item_id),
+        CONSTRAINT fk_rx_items_prescription FOREIGN KEY (prescription_fk_id) REFERENCES prescriptions (id)
+    );
+    CREATE INDEX idx_prescription_items_rx_id ON prescription_items (prescription_id);
+END
+GO
+
+-- ------------------------------------------------------------------------------
+-- Rescue, Foster and Adoption
+-- ------------------------------------------------------------------------------
+
+-- Table       : rescue_cases
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.rescue_cases', N'U') IS NULL
+BEGIN
+    CREATE TABLE rescue_cases (
+        id                         BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        case_id                    VARCHAR(30)           NOT NULL,  -- unique
+        assigned_officer_id        VARCHAR(50)           NULL,
+        assigned_officer_name      VARCHAR(150)          NULL,
+        assigned_provider_id       VARCHAR(50)           NULL,
+        assigned_provider_name     VARCHAR(150)          NULL,
+        assigned_vet_id            VARCHAR(50)           NULL,
+        assigned_vet_name          VARCHAR(150)          NULL,
+        breed                      VARCHAR(100)          NULL,
+        case_number                VARCHAR(20)           NULL,
+        condition_severity         VARCHAR(50)           NULL,
+        cover_photo_url            NVARCHAR(MAX)         NULL,
+        description                VARCHAR(2000)         NULL,
+        estimated_age              VARCHAR(50)           NULL,
+        foster_parent_id           VARCHAR(30)           NULL,
+        foster_parent_name         VARCHAR(150)          NULL,
+        gender                     VARCHAR(20)           NULL,
+        intake_date                DATE                  NOT NULL,
+        intake_officer             VARCHAR(150)          NULL,
+        is_published_for_adoption  BIT                   NOT NULL,
+        medical_summary            VARCHAR(2000)         NULL,
+        microchip_id               VARCHAR(50)           NULL,
+        reported_by_user_id        VARCHAR(50)           NULL,
+        reported_by_user_name      VARCHAR(150)          NULL,
+        reported_by_user_phone     VARCHAR(50)           NULL,
+        rescue_location            VARCHAR(500)          NOT NULL,
+        species                    VARCHAR(50)           NULL,
+        status                     VARCHAR(30)           NOT NULL,
+        temporary_name             VARCHAR(100)          NOT NULL,
+        created_at                 DATETIME2(7)          NOT NULL,
+        updated_at                 DATETIME2(7)          NULL,
+        CONSTRAINT pk_rescue_cases PRIMARY KEY (id),
+        CONSTRAINT uk_rescue_cases_case_id UNIQUE (case_id)
+    );
+    CREATE INDEX idx_rescue_cases_published ON rescue_cases (is_published_for_adoption);
+    CREATE INDEX idx_rescue_cases_status ON rescue_cases (status);
+END
+GO
+
+-- Table       : rescue_photos
+-- Primary key : id
+-- Foreign keys: rescue_case_fk_id -> rescue_cases(id)
+IF OBJECT_ID(N'dbo.rescue_photos', N'U') IS NULL
+BEGIN
+    CREATE TABLE rescue_photos (
+        id                 BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        photo_id           VARCHAR(30)           NOT NULL,  -- unique
+        rescue_case_fk_id  BIGINT                NOT NULL,  -- FK -> rescue_cases
+        caption            VARCHAR(300)          NULL,
+        case_id            VARCHAR(30)           NOT NULL,
+        photo_url          NVARCHAR(MAX)         NULL,
+        tag                VARCHAR(50)           NULL,
+        uploaded_at        DATETIME2(7)          NULL,
+        CONSTRAINT pk_rescue_photos PRIMARY KEY (id),
+        CONSTRAINT uk_rescue_photos_photo_id UNIQUE (photo_id),
+        CONSTRAINT fk_rescue_photos_case FOREIGN KEY (rescue_case_fk_id) REFERENCES rescue_cases (id)
+    );
+    CREATE INDEX idx_rescue_photos_case_id ON rescue_photos (case_id);
+END
+GO
+
+-- Table       : rescue_progress_logs
+-- Primary key : id
+-- Foreign keys: rescue_case_fk_id -> rescue_cases(id)
+IF OBJECT_ID(N'dbo.rescue_progress_logs', N'U') IS NULL
+BEGIN
+    CREATE TABLE rescue_progress_logs (
+        id                 BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        log_id             VARCHAR(30)           NOT NULL,  -- unique
+        rescue_case_fk_id  BIGINT                NOT NULL,  -- FK -> rescue_cases
+        case_id            VARCHAR(30)           NOT NULL,
+        log_date           DATETIME2(7)          NOT NULL,
+        log_type           VARCHAR(30)           NULL,
+        logged_by          VARCHAR(150)          NOT NULL,
+        notes              VARCHAR(2000)         NULL,
+        title              VARCHAR(200)          NOT NULL,
+        created_at         DATETIME2(7)          NOT NULL,
+        CONSTRAINT pk_rescue_progress_logs PRIMARY KEY (id),
+        CONSTRAINT uk_rescue_progress_logs_log_id UNIQUE (log_id),
+        CONSTRAINT fk_rescue_logs_case FOREIGN KEY (rescue_case_fk_id) REFERENCES rescue_cases (id)
+    );
+    CREATE INDEX idx_rescue_logs_case_id ON rescue_progress_logs (case_id);
+    CREATE INDEX idx_rescue_logs_log_date ON rescue_progress_logs (log_date);
+END
+GO
+
+-- Table       : foster_records
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.foster_records', N'U') IS NULL
+BEGIN
+    CREATE TABLE foster_records (
+        id                 BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        foster_id          VARCHAR(30)           NOT NULL,  -- unique
+        active_placements  INT                   NULL,
+        address            VARCHAR(300)          NULL,
+        email              VARCHAR(150)          NULL,
+        full_name          VARCHAR(150)          NOT NULL,
+        home_type          VARCHAR(200)          NULL,
+        max_capacity       INT                   NULL,
+        phone              VARCHAR(30)           NULL,
+        rating             NUMERIC(3,1)          NULL,
+        status             VARCHAR(20)           NULL,
+        created_at         DATETIME2(7)          NOT NULL,
+        updated_at         DATETIME2(7)          NULL,
+        CONSTRAINT pk_foster_records PRIMARY KEY (id),
+        CONSTRAINT uk_foster_records_foster_id UNIQUE (foster_id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'clinic_staff')
+-- Table       : adoption_listings
+-- Primary key : listing_id
+-- Foreign keys: case_id -> rescue_cases(id)
+IF OBJECT_ID(N'dbo.adoption_listings', N'U') IS NULL
 BEGIN
-    create table clinic_staff (
-        [user_id] bigint not null,
-        staff_id varchar(30),
-        primary key ([user_id])
+    CREATE TABLE adoption_listings (
+        listing_id                 VARCHAR(255)  NOT NULL,  -- PK
+        case_id                    BIGINT        NOT NULL,  -- FK -> rescue_cases, unique
+        is_published_for_adoption  BIT           NOT NULL,
+        created_at                 DATETIME2(7)  NOT NULL,
+        updated_at                 DATETIME2(7)  NOT NULL,
+        CONSTRAINT pk_adoption_listings PRIMARY KEY (listing_id),
+        CONSTRAINT uk_adoption_listings_case_id UNIQUE (case_id),
+        CONSTRAINT fk_adoption_listings_case FOREIGN KEY (case_id) REFERENCES rescue_cases (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'consultations')
+-- Table       : adoption_applications
+-- Primary key : application_id
+-- Foreign keys: applicant_id -> USER(id)
+--               case_id -> rescue_cases(id)
+--               reviewed_by -> USER(id)
+IF OBJECT_ID(N'dbo.adoption_applications', N'U') IS NULL
 BEGIN
-    create table consultations (
-        follow_up_date date,
-        heart_rate_bpm int,
-        pass_to_provider bit,
-        respiratory_rate_bpm int,
-        temperaturec numeric(4,1),
-        weight_kg numeric(5,2),
-        appointment_fk_id bigint,
-        consultation_date datetime2(7) not null,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        pet_fk_id bigint,
-        updated_at datetime2(7),
-        vet_fk_id bigint,
-        appointment_id varchar(20),
-        pet_id varchar(20),
-        vet_id varchar(20),
-        case_id varchar(30),
-        consultation_id varchar(30) not null,
-        status varchar(30),
-        pet_name varchar(100) not null,
-        vet_name varchar(150) not null,
-        assessment_diagnosis varchar(2000) not null,
-        objective_findings varchar(2000),
-        rescue_medical_summary varchar(2000),
-        subjective_notes varchar(2000),
-        treatment_plan varchar(2000) not null,
-        primary key (id)
+    CREATE TABLE adoption_applications (
+        application_id    VARCHAR(255)  NOT NULL,  -- PK
+        applicant_id      BIGINT        NOT NULL,  -- FK -> USER
+        case_id           BIGINT        NOT NULL,  -- FK -> rescue_cases
+        reviewed_by       BIGINT        NULL,      -- FK -> USER
+        applicant_name    VARCHAR(255)  NOT NULL,
+        applicant_phone   VARCHAR(255)  NOT NULL,
+        application_type  VARCHAR(255)  NOT NULL,
+        pet_name          VARCHAR(255)  NOT NULL,
+        review_notes      VARCHAR(255)  NULL,
+        reviewed_at       DATETIME2(7)  NULL,
+        status            VARCHAR(255)  NOT NULL,
+        created_at        DATETIME2(7)  NOT NULL,
+        CONSTRAINT pk_adoption_applications PRIMARY KEY (application_id),
+        CONSTRAINT fk_adoption_applications_applicant FOREIGN KEY (applicant_id) REFERENCES [USER] (id),
+        CONSTRAINT fk_adoption_applications_case FOREIGN KEY (case_id) REFERENCES rescue_cases (id),
+        CONSTRAINT fk_adoption_applications_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES [USER] (id),
+        CONSTRAINT ck_adoption_applications_status CHECK ([status]='CANCELLED' OR [status]='REJECTED' OR [status]='APPROVED' OR [status]='UNDER_REVIEW' OR [status]='SUBMITTED')
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'feedbacks')
+-- Table       : adoption_application_documents
+-- Primary key : id
+-- Foreign keys: application_id -> adoption_applications(application_id)
+IF OBJECT_ID(N'dbo.adoption_application_documents', N'U') IS NULL
 BEGIN
-    create table feedbacks (
-        rating int not null,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        manager_responded_at datetime2(7),
-        updated_at datetime2(7),
-        user_id bigint not null,
-        feedback_id varchar(30) not null,
-        service_category varchar(100) not null,
-        staff_mentioned varchar(150),
-        user_name varchar(150) not null,
-        title varchar(200) not null,
-        comments varchar(2000) not null,
-        manager_response varchar(2000),
-        primary key (id)
+    CREATE TABLE adoption_application_documents (
+        id              BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        application_id  VARCHAR(255)          NOT NULL,  -- FK -> adoption_applications
+        document_type   VARCHAR(255)          NOT NULL,
+        file_name       VARCHAR(255)          NOT NULL,
+        file_size       VARCHAR(255)          NULL,
+        file_url        VARCHAR(255)          NOT NULL,
+        status          VARCHAR(255)          NULL,
+        uploaded_at     DATETIME2(7)          NOT NULL,
+        CONSTRAINT pk_adoption_application_documents PRIMARY KEY (id),
+        CONSTRAINT fk_adoption_application_documents_application FOREIGN KEY (application_id) REFERENCES adoption_applications (application_id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'foster_records')
+-- ------------------------------------------------------------------------------
+-- Pet Care Services
+-- ------------------------------------------------------------------------------
+
+-- Table       : care_providers
+-- Primary key : id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.care_providers', N'U') IS NULL
 BEGIN
-    create table foster_records (
-        active_placements int,
-        max_capacity int,
-        rating numeric(3,1),
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        updated_at datetime2(7),
-        status varchar(20),
-        foster_id varchar(30) not null,
-        phone varchar(30),
-        email varchar(150),
-        full_name varchar(150) not null,
-        home_type varchar(200),
-        address varchar(300),
-        primary key (id)
+    CREATE TABLE care_providers (
+        id             BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        user_id        BIGINT                NOT NULL,  -- FK -> USER, unique
+        active         BIT                   NOT NULL,
+        contact_email  VARCHAR(100)          NULL,
+        contact_phone  VARCHAR(20)           NULL,
+        provider_id    VARCHAR(20)           NOT NULL,
+        provider_name  VARCHAR(100)          NOT NULL,
+        CONSTRAINT pk_care_providers PRIMARY KEY (id),
+        CONSTRAINT uk_care_provider_user UNIQUE (user_id),
+        CONSTRAINT fk_care_provider_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'inventory_items')
+-- Table       : care_services
+-- Primary key : id
+-- Foreign keys: created_by_user_id -> USER(id)
+IF OBJECT_ID(N'dbo.care_services', N'U') IS NULL
 BEGIN
-    create table inventory_items (
-        current_stock int not null,
-        expiry_date date,
-        min_stock_threshold int not null,
-        selling_price numeric(10,2) not null,
-        unit_price numeric(10,2) not null,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        supplier_fk_id bigint,
-        updated_at datetime2(7),
-        item_id varchar(20) not null,
-        status varchar(30) not null check ((status in ('IN_STOCK','LOW_STOCK','OUT_OF_STOCK','EXPIRED'))),
-        batch_number varchar(50),
-        sku varchar(50) not null,
-        unit varchar(50) not null,
-        category varchar(100) not null,
-        name varchar(150) not null,
-        supplier_name varchar(150),
-        primary key (id)
+    CREATE TABLE care_services (
+        id                  BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        created_by_user_id  BIGINT                NOT NULL,  -- FK -> USER
+        badge               VARCHAR(50)           NULL,
+        description         VARCHAR(2000)         NULL,
+        discount_percent    INT                   NULL,
+        duration_minutes    INT                   NOT NULL,
+        name                VARCHAR(100)          NOT NULL,  -- unique
+        original_value      NUMERIC(10,2)         NULL,
+        price               NUMERIC(10,2)         NOT NULL,
+        recommended_for     VARCHAR(100)          NULL,
+        service_id          VARCHAR(20)           NOT NULL,
+        status              VARCHAR(30)           NOT NULL,
+        tagline             VARCHAR(300)          NULL,
+        CONSTRAINT pk_care_services PRIMARY KEY (id),
+        CONSTRAINT uk_care_service_name UNIQUE (name),
+        CONSTRAINT fk_care_service_user FOREIGN KEY (created_by_user_id) REFERENCES [USER] (id),
+        CONSTRAINT ck_care_services_status CHECK ([status]='COMPLETED' OR [status]='READY_FOR_PICKUP' OR [status]='IN_PROGRESS' OR [status]='CHECKED_IN' OR [status]='SCHEDULED')
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'notifications')
+-- Table       : care_service_logs
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.care_service_logs', N'U') IS NULL
 BEGIN
-    create table notifications (
-        is_read bit not null,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        user_id bigint not null,
-        type varchar(30) not null check ((type in ('Appointment','Rescue','Adoption','Approval','Inventory','Health','System'))),
-        notification_id varchar(40) not null,
-        title varchar(200) not null,
-        link varchar(300),
-        message varchar(1000) not null,
-        primary key (id)
+    CREATE TABLE care_service_logs (
+        id                  BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        service_log_id      VARCHAR(20)           NOT NULL,  -- unique
+        case_id             VARCHAR(20)           NULL,
+        intake_condition    VARCHAR(500)          NULL,
+        notes               VARCHAR(1000)         NULL,
+        owner_id            VARCHAR(20)           NULL,
+        owner_name          VARCHAR(100)          NULL,
+        pet_id              VARCHAR(20)           NULL,
+        pet_name            VARCHAR(100)          NULL,
+        provider_id         VARCHAR(20)           NULL,
+        provider_name       VARCHAR(100)          NULL,
+        return_to_rescue    BIT                   NOT NULL,
+        service_date        DATE                  NOT NULL,
+        service_type        VARCHAR(100)          NOT NULL,
+        services_performed  VARCHAR(1000)         NULL,
+        status              VARCHAR(30)           NOT NULL,
+        created_at          DATE                  NOT NULL,
+        CONSTRAINT pk_care_service_logs PRIMARY KEY (id),
+        CONSTRAINT uk_care_service_log_id UNIQUE (service_log_id),
+        CONSTRAINT ck_care_service_logs_status CHECK ([status]='COMPLETED' OR [status]='READY_FOR_PICKUP' OR [status]='IN_PROGRESS' OR [status]='CHECKED_IN' OR [status]='SCHEDULED')
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'pet_care_provider')
+-- Table       : service_package_bookings
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.service_package_bookings', N'U') IS NULL
 BEGIN
-    create table pet_care_provider (
-        [user_id] bigint not null,
-        service_specialty varchar(150),
-        primary key ([user_id])
+    CREATE TABLE service_package_bookings (
+        id                  BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        booking_id          VARCHAR(20)           NOT NULL,  -- unique
+        completed_sessions  INT                   NOT NULL,
+        expiry_date         DATE                  NOT NULL,
+        owner_id            VARCHAR(20)           NOT NULL,
+        owner_name          VARCHAR(100)          NULL,
+        package_id          VARCHAR(50)           NULL,
+        package_name        VARCHAR(100)          NOT NULL,
+        pet_id              VARCHAR(20)           NULL,
+        pet_name            VARCHAR(100)          NULL,
+        purchase_date       DATE                  NOT NULL,
+        remaining_sessions  INT                   NOT NULL,
+        status              VARCHAR(30)           NOT NULL,
+        total_sessions      INT                   NOT NULL,
+        created_at          DATE                  NOT NULL,
+        CONSTRAINT pk_service_package_bookings PRIMARY KEY (id),
+        CONSTRAINT uk_service_package_booking_id UNIQUE (booking_id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'pet_documents')
+-- ------------------------------------------------------------------------------
+-- Inventory, Suppliers and Feedback
+-- ------------------------------------------------------------------------------
+
+-- Table       : suppliers
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.suppliers', N'U') IS NULL
 BEGIN
-    create table pet_documents (
-        id bigint identity not null,
-        pet_id bigint not null,
-        uploaded_at datetime2(7) not null,
-        document_id varchar(20) not null,
-        owner_id varchar(20) not null,
-        file_size varchar(50),
-        document_type varchar(100) not null,
-        pet_name varchar(100),
-        file_url varchar(1000),
-        notes varchar(2000),
-        file_name varchar(255) not null,
-        primary key (id)
+    CREATE TABLE suppliers (
+        id              BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        supplier_id     VARCHAR(20)           NOT NULL,  -- unique
+        active          BIT                   NOT NULL,
+        address         VARCHAR(300)          NULL,
+        category        VARCHAR(100)          NULL,
+        company_name    VARCHAR(150)          NOT NULL,
+        contact_person  VARCHAR(100)          NULL,
+        email           VARCHAR(100)          NOT NULL,
+        lead_time_days  INT                   NOT NULL,
+        phone           VARCHAR(30)           NULL,
+        rating          NUMERIC(3,1)          NOT NULL,
+        created_at      DATETIME2(7)          NOT NULL,
+        updated_at      DATETIME2(7)          NULL,
+        CONSTRAINT pk_suppliers PRIMARY KEY (id),
+        CONSTRAINT uk_suppliers_supplier_id UNIQUE (supplier_id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'pet_owner')
+-- Table       : inventory_items
+-- Primary key : id
+-- Foreign keys: supplier_fk_id -> suppliers(id)
+IF OBJECT_ID(N'dbo.inventory_items', N'U') IS NULL
 BEGIN
-    create table pet_owner (
-        [user_id] bigint not null,
-        primary key ([user_id])
+    CREATE TABLE inventory_items (
+        id                   BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        item_id              VARCHAR(20)           NOT NULL,  -- unique
+        supplier_fk_id       BIGINT                NULL,      -- FK -> suppliers
+        batch_number         VARCHAR(50)           NULL,
+        category             VARCHAR(100)          NOT NULL,
+        current_stock        INT                   NOT NULL,
+        expiry_date          DATE                  NULL,
+        min_stock_threshold  INT                   NOT NULL,
+        name                 VARCHAR(150)          NOT NULL,
+        selling_price        NUMERIC(10,2)         NOT NULL,
+        sku                  VARCHAR(50)           NOT NULL,  -- unique
+        status               VARCHAR(30)           NOT NULL,
+        supplier_name        VARCHAR(150)          NULL,
+        unit                 VARCHAR(50)           NOT NULL,
+        unit_price           NUMERIC(10,2)         NOT NULL,
+        created_at           DATETIME2(7)          NOT NULL,
+        updated_at           DATETIME2(7)          NULL,
+        CONSTRAINT pk_inventory_items PRIMARY KEY (id),
+        CONSTRAINT uk_inventory_items_item_id UNIQUE (item_id),
+        CONSTRAINT uk_inventory_items_sku UNIQUE (sku),
+        CONSTRAINT fk_inventory_items_supplier FOREIGN KEY (supplier_fk_id) REFERENCES suppliers (id),
+        CONSTRAINT ck_inventory_items_status CHECK ([status]='EXPIRED' OR [status]='OUT_OF_STOCK' OR [status]='LOW_STOCK' OR [status]='IN_STOCK')
+    );
+    CREATE INDEX idx_inventory_items_category ON inventory_items (category);
+    CREATE INDEX idx_inventory_items_status ON inventory_items (status);
+END
+GO
+
+-- Table       : purchase_orders
+-- Primary key : id
+-- Foreign keys: none
+IF OBJECT_ID(N'dbo.purchase_orders', N'U') IS NULL
+BEGIN
+    CREATE TABLE purchase_orders (
+        id                 BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        order_id           VARCHAR(30)           NOT NULL,  -- unique
+        items_description  VARCHAR(1000)         NULL,
+        notes              VARCHAR(500)          NULL,
+        status             VARCHAR(30)           NOT NULL,
+        supplier_id        VARCHAR(20)           NULL,
+        supplier_name      VARCHAR(150)          NOT NULL,
+        total_amount       NUMERIC(12,2)         NOT NULL,
+        created_at         DATETIME2(7)          NOT NULL,
+        updated_at         DATETIME2(7)          NULL,
+        CONSTRAINT pk_purchase_orders PRIMARY KEY (id),
+        CONSTRAINT uk_purchase_orders_order_id UNIQUE (order_id)
     );
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'pets')
+-- Table       : feedbacks
+-- Primary key : id
+-- Foreign keys: user_id -> USER(id)
+IF OBJECT_ID(N'dbo.feedbacks', N'U') IS NULL
 BEGIN
-    create table pets (
-        age_months int,
-        age_years int,
-        date_of_birth date,
-        weight_kg numeric(5,2),
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        owner_id bigint not null,
-        updated_at datetime2(7),
-        microchip_id varchar(20),
-        pet_id varchar(20) not null,
-        gender varchar(30),
-        species varchar(50) not null,
-        breed varchar(100) not null,
-        name varchar(100) not null,
-        emergency_contact varchar(300),
-        allergies varchar(500),
-        image_url varchar(500),
-        medical_notes varchar(2000),
-        primary key (id)
+    CREATE TABLE feedbacks (
+        id                    BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
+        feedback_id           VARCHAR(30)           NOT NULL,  -- unique
+        user_id               BIGINT                NOT NULL,  -- FK -> USER
+        comments              VARCHAR(2000)         NOT NULL,
+        manager_responded_at  DATETIME2(7)          NULL,
+        manager_response      VARCHAR(2000)         NULL,
+        rating                INT                   NOT NULL,
+        service_category      VARCHAR(100)          NOT NULL,
+        staff_mentioned       VARCHAR(150)          NULL,
+        title                 VARCHAR(200)          NOT NULL,
+        user_name             VARCHAR(150)          NOT NULL,
+        created_at            DATETIME2(7)          NOT NULL,
+        updated_at            DATETIME2(7)          NULL,
+        CONSTRAINT pk_feedbacks PRIMARY KEY (id),
+        CONSTRAINT uk_feedback_feedback_id UNIQUE (feedback_id),
+        CONSTRAINT fk_feedback_user FOREIGN KEY (user_id) REFERENCES [USER] (id)
     );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'prescription_items')
-BEGIN
-    create table prescription_items (
-        duration_days int,
-        quantity_prescribed int,
-        refills_allowed int,
-        id bigint identity not null,
-        prescription_fk_id bigint not null,
-        prescription_id varchar(30),
-        item_id varchar(50) not null,
-        dosage varchar(100),
-        frequency varchar(100),
-        medication_name varchar(200) not null,
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'prescriptions')
-BEGIN
-    create table prescriptions (
-        issue_date date not null,
-        valid_until date,
-        consultation_fk_id bigint,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        pet_fk_id bigint,
-        updated_at datetime2(7),
-        vet_fk_id bigint,
-        pet_id varchar(20),
-        vet_id varchar(20),
-        consultation_id varchar(30),
-        prescription_id varchar(30) not null,
-        status varchar(30) not null,
-        vet_license varchar(50),
-        pet_name varchar(100) not null,
-        owner_name varchar(150),
-        vet_name varchar(150) not null,
-        digital_signature varchar(300),
-        instructions varchar(1000),
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'purchase_orders')
-BEGIN
-    create table purchase_orders (
-        total_amount numeric(12,2) not null,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        updated_at datetime2(7),
-        supplier_id varchar(20),
-        order_id varchar(30) not null,
-        status varchar(30) not null,
-        supplier_name varchar(150) not null,
-        notes varchar(500),
-        items_description varchar(1000),
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'rescue_cases')
-BEGIN
-    create table rescue_cases (
-        intake_date date not null,
-        is_published_for_adoption bit not null,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        updated_at datetime2(7),
-        case_number varchar(20),
-        gender varchar(20),
-        case_id varchar(30) not null,
-        foster_parent_id varchar(30),
-        status varchar(30) not null,
-        condition_severity varchar(50),
-        estimated_age varchar(50),
-        microchip_id varchar(50),
-        reported_by_user_id varchar(50),
-        reported_by_user_phone varchar(50),
-        species varchar(50),
-        breed varchar(100),
-        temporary_name varchar(100) not null,
-        foster_parent_name varchar(150),
-        intake_officer varchar(150),
-        reported_by_user_name varchar(150),
-        rescue_location varchar(500) not null,
-        description varchar(2000),
-        medical_summary varchar(2000),
-        cover_photo_url NVARCHAR(MAX),
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'rescue_officer')
-BEGIN
-    create table rescue_officer (
-        [user_id] bigint not null,
-        badge_number varchar(30),
-        primary key ([user_id])
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'rescue_photos')
-BEGIN
-    create table rescue_photos (
-        id bigint identity not null,
-        rescue_case_fk_id bigint not null,
-        uploaded_at datetime2(7),
-        case_id varchar(30) not null,
-        photo_id varchar(30) not null,
-        tag varchar(50),
-        caption varchar(300),
-        photo_url NVARCHAR(MAX) not null,
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'rescue_progress_logs')
-BEGIN
-    create table rescue_progress_logs (
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        log_date datetime2(7) not null,
-        rescue_case_fk_id bigint not null,
-        case_id varchar(30) not null,
-        log_id varchar(30) not null,
-        log_type varchar(30),
-        logged_by varchar(150) not null,
-        title varchar(200) not null,
-        notes varchar(2000),
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'service_package_bookings')
-BEGIN
-    create table service_package_bookings (
-        completed_sessions int not null,
-        created_at date not null,
-        expiry_date date not null,
-        purchase_date date not null,
-        remaining_sessions int not null,
-        total_sessions int not null,
-        id bigint identity not null,
-        booking_id varchar(20) not null,
-        owner_id varchar(20) not null,
-        pet_id varchar(20),
-        status varchar(30) not null,
-        package_id varchar(50),
-        owner_name varchar(100),
-        package_name varchar(100) not null,
-        pet_name varchar(100),
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'suppliers')
-BEGIN
-    create table suppliers (
-        active bit not null,
-        lead_time_days int not null,
-        rating numeric(3,1) not null,
-        created_at datetime2(7) not null,
-        id bigint identity not null,
-        updated_at datetime2(7),
-        supplier_id varchar(20) not null,
-        phone varchar(30),
-        category varchar(100),
-        contact_person varchar(100),
-        email varchar(100) not null,
-        company_name varchar(150) not null,
-        address varchar(300),
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'vaccinations')
-BEGIN
-    create table vaccinations (
-        administered_date date,
-        next_due_date date,
-        id bigint identity not null,
-        pet_id bigint not null,
-        vaccine_id varchar(20) not null,
-        status varchar(30),
-        batch_number varchar(50),
-        pet_name varchar(100),
-        administered_by varchar(150),
-        vaccine_name varchar(200) not null,
-        primary key (id)
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'veterinarian')
-BEGIN
-    create table veterinarian (
-        [user_id] bigint not null,
-        license_number varchar(50),
-        specialization varchar(150),
-        primary key ([user_id])
-    );
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_users_email')
-BEGIN
-    alter table [USER] 
-       add constraint uk_users_email unique (email);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'UKs3837mck1g3sg5akv9orth206')
-BEGIN
-    alter table adoption_listings 
-       add constraint UKs3837mck1g3sg5akv9orth206 unique (case_id);
-
-    create index idx_appointments_date_slot 
-       on appointments (appointment_date, time_slot);
-
-    create index idx_appointments_vet_date 
-       on appointments (vet_id, appointment_date);
-
-    create index idx_appointments_owner 
-       on appointments (owner_id);
-
-    create index idx_appointments_pet 
-       on appointments (pet_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_appointments_appointment_id')
-BEGIN
-    alter table appointments 
-       add constraint uk_appointments_appointment_id unique (appointment_id);
-
-    create index idx_approval_history_user_id 
-       on approval_history (user_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_care_provider_user')
-BEGIN
-    alter table care_providers 
-       add constraint uk_care_provider_user unique (user_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_care_service_log_id')
-BEGIN
-    alter table care_service_logs 
-       add constraint uk_care_service_log_id unique (service_log_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_care_service_name')
-BEGIN
-    alter table care_services 
-       add constraint uk_care_service_name unique (name);
-
-    create index idx_consultations_pet_id 
-       on consultations (pet_id);
-
-    create index idx_consultations_case_id 
-       on consultations (case_id);
-
-    create index idx_consultations_vet_id 
-       on consultations (vet_id);
-
-    create index idx_consultations_appointment_id 
-       on consultations (appointment_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_consultations_consultation_id')
-BEGIN
-    alter table consultations 
-       add constraint uk_consultations_consultation_id unique (consultation_id);
-
-    create index idx_feedback_user 
-       on feedbacks (user_id);
-
-    create index idx_feedback_category 
-       on feedbacks (service_category);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_feedback_feedback_id')
-BEGIN
-    alter table feedbacks 
-       add constraint uk_feedback_feedback_id unique (feedback_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_foster_records_foster_id')
-BEGIN
-    alter table foster_records 
-       add constraint uk_foster_records_foster_id unique (foster_id);
-
-    create index idx_inventory_items_category 
-       on inventory_items (category);
-
-    create index idx_inventory_items_status 
-       on inventory_items (status);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_inventory_items_item_id')
-BEGIN
-    alter table inventory_items 
-       add constraint uk_inventory_items_item_id unique (item_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_inventory_items_sku')
-BEGIN
-    alter table inventory_items 
-       add constraint uk_inventory_items_sku unique (sku);
-
-    create index idx_notifications_user 
-       on notifications (user_id);
-
-    create index idx_notifications_is_read 
-       on notifications (is_read);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_notifications_notification_id')
-BEGIN
-    alter table notifications 
-       add constraint uk_notifications_notification_id unique (notification_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_pet_documents_document_id')
-BEGIN
-    alter table pet_documents 
-       add constraint uk_pet_documents_document_id unique (document_id);
-
-    create index idx_pets_owner 
-       on pets (owner_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_pets_pet_id')
-BEGIN
-    alter table pets 
-       add constraint uk_pets_pet_id unique (pet_id);
-
-    create index idx_prescription_items_rx_id 
-       on prescription_items (prescription_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_prescription_items_item_id')
-BEGIN
-    alter table prescription_items 
-       add constraint uk_prescription_items_item_id unique (item_id);
-
-    create index idx_prescriptions_pet_id 
-       on prescriptions (pet_id);
-
-    create index idx_prescriptions_vet_id 
-       on prescriptions (vet_id);
-
-    create index idx_prescriptions_consultation_id 
-       on prescriptions (consultation_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_prescriptions_rx_id')
-BEGIN
-    alter table prescriptions 
-       add constraint uk_prescriptions_rx_id unique (prescription_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_purchase_orders_order_id')
-BEGIN
-    alter table purchase_orders 
-       add constraint uk_purchase_orders_order_id unique (order_id);
-
-    create index idx_rescue_cases_status 
-       on rescue_cases (status);
-
-    create index idx_rescue_cases_published 
-       on rescue_cases (is_published_for_adoption);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_rescue_cases_case_id')
-BEGIN
-    alter table rescue_cases 
-       add constraint uk_rescue_cases_case_id unique (case_id);
-
-    create index idx_rescue_photos_case_id 
-       on rescue_photos (case_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_rescue_photos_photo_id')
-BEGIN
-    alter table rescue_photos 
-       add constraint uk_rescue_photos_photo_id unique (photo_id);
-
-    create index idx_rescue_logs_case_id 
-       on rescue_progress_logs (case_id);
-
-    create index idx_rescue_logs_log_date 
-       on rescue_progress_logs (log_date);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_rescue_progress_logs_log_id')
-BEGIN
-    alter table rescue_progress_logs 
-       add constraint uk_rescue_progress_logs_log_id unique (log_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_service_package_booking_id')
-BEGIN
-    alter table service_package_bookings 
-       add constraint uk_service_package_booking_id unique (booking_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_suppliers_supplier_id')
-BEGIN
-    alter table suppliers 
-       add constraint uk_suppliers_supplier_id unique (supplier_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'uk_vaccinations_vaccine_id')
-BEGIN
-    alter table vaccinations 
-       add constraint uk_vaccinations_vaccine_id unique (vaccine_id);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK3jo8h5ahulhqt4d6x5ixcn5i3')
-BEGIN
-    alter table adoption_application_documents 
-       add constraint FK3jo8h5ahulhqt4d6x5ixcn5i3 
-       foreign key (application_id) 
-       references adoption_applications;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKb5etb1yh4xuroa6vjxcf74gcy')
-BEGIN
-    alter table adoption_applications 
-       add constraint FKb5etb1yh4xuroa6vjxcf74gcy 
-       foreign key (applicant_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKpssmak6donrlh7l463qtlkxx4')
-BEGIN
-    alter table adoption_applications 
-       add constraint FKpssmak6donrlh7l463qtlkxx4 
-       foreign key (case_id) 
-       references rescue_cases;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKcnot1ki3bb5ctfyqdkj0193j')
-BEGIN
-    alter table adoption_applications 
-       add constraint FKcnot1ki3bb5ctfyqdkj0193j 
-       foreign key (reviewed_by) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKcdr2kc9eruujmg8y53jjuub2g')
-BEGIN
-    alter table adoption_listings 
-       add constraint FKcdr2kc9eruujmg8y53jjuub2g 
-       foreign key (case_id) 
-       references rescue_cases;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_appointments_owner')
-BEGIN
-    alter table appointments 
-       add constraint fk_appointments_owner 
-       foreign key (owner_fk_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_appointments_pet')
-BEGIN
-    alter table appointments 
-       add constraint fk_appointments_pet 
-       foreign key (pet_fk_id) 
-       references pets;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_appointments_vet')
-BEGIN
-    alter table appointments 
-       add constraint fk_appointments_vet 
-       foreign key (vet_fk_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_care_provider_user')
-BEGIN
-    alter table care_providers 
-       add constraint fk_care_provider_user 
-       foreign key (user_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_care_service_user')
-BEGIN
-    alter table care_services 
-       add constraint fk_care_service_user 
-       foreign key (created_by_user_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKl58g8y53c6g2epjlwt8myg0py')
-BEGIN
-    alter table clinic_manager 
-       add constraint FKl58g8y53c6g2epjlwt8myg0py 
-       foreign key ([user_id]) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKjfj0whfl4fiaigow2v9d8ytag')
-BEGIN
-    alter table clinic_staff 
-       add constraint FKjfj0whfl4fiaigow2v9d8ytag 
-       foreign key ([user_id]) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_consultations_appointment')
-BEGIN
-    alter table consultations 
-       add constraint fk_consultations_appointment 
-       foreign key (appointment_fk_id) 
-       references appointments;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_consultations_pet')
-BEGIN
-    alter table consultations 
-       add constraint fk_consultations_pet 
-       foreign key (pet_fk_id) 
-       references pets;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_consultations_vet')
-BEGIN
-    alter table consultations 
-       add constraint fk_consultations_vet 
-       foreign key (vet_fk_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_feedback_user')
-BEGIN
-    alter table feedbacks 
-       add constraint fk_feedback_user 
-       foreign key (user_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_inventory_items_supplier')
-BEGIN
-    alter table inventory_items 
-       add constraint fk_inventory_items_supplier 
-       foreign key (supplier_fk_id) 
-       references suppliers;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_notifications_user')
-BEGIN
-    alter table notifications 
-       add constraint fk_notifications_user 
-       foreign key (user_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKgjgihcuus0ff732cogsl3qxmn')
-BEGIN
-    alter table pet_care_provider 
-       add constraint FKgjgihcuus0ff732cogsl3qxmn 
-       foreign key ([user_id]) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_pet_documents_pet')
-BEGIN
-    alter table pet_documents 
-       add constraint fk_pet_documents_pet 
-       foreign key (pet_id) 
-       references pets;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKnkltcsoswsbtcj6bxvrqthera')
-BEGIN
-    alter table pet_owner 
-       add constraint FKnkltcsoswsbtcj6bxvrqthera 
-       foreign key ([user_id]) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_pets_owner')
-BEGIN
-    alter table pets 
-       add constraint fk_pets_owner 
-       foreign key (owner_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_rx_items_prescription')
-BEGIN
-    alter table prescription_items 
-       add constraint fk_rx_items_prescription 
-       foreign key (prescription_fk_id) 
-       references prescriptions;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_prescriptions_consultation')
-BEGIN
-    alter table prescriptions 
-       add constraint fk_prescriptions_consultation 
-       foreign key (consultation_fk_id) 
-       references consultations;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_prescriptions_pet')
-BEGIN
-    alter table prescriptions 
-       add constraint fk_prescriptions_pet 
-       foreign key (pet_fk_id) 
-       references pets;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_prescriptions_vet')
-BEGIN
-    alter table prescriptions 
-       add constraint fk_prescriptions_vet 
-       foreign key (vet_fk_id) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKlxgd2xvqhjbmy46pg99dbnxh2')
-BEGIN
-    alter table rescue_officer 
-       add constraint FKlxgd2xvqhjbmy46pg99dbnxh2 
-       foreign key ([user_id]) 
-       references [USER];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_rescue_photos_case')
-BEGIN
-    alter table rescue_photos 
-       add constraint fk_rescue_photos_case 
-       foreign key (rescue_case_fk_id) 
-       references rescue_cases;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_rescue_logs_case')
-BEGIN
-    alter table rescue_progress_logs 
-       add constraint fk_rescue_logs_case 
-       foreign key (rescue_case_fk_id) 
-       references rescue_cases;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_vaccinations_pet')
-BEGIN
-    alter table vaccinations 
-       add constraint fk_vaccinations_pet 
-       foreign key (pet_id) 
-       references pets;
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FKraaddf3y5vfvqd8xr2g899omb')
-BEGIN
-    alter table veterinarian 
-       add constraint FKraaddf3y5vfvqd8xr2g899omb 
-       foreign key ([user_id]) 
-       references [USER];
+    CREATE INDEX idx_feedback_category ON feedbacks (service_category);
+    CREATE INDEX idx_feedback_user ON feedbacks (user_id);
 END
 GO
 
@@ -1626,7 +1334,10 @@ GO
 
 -- Part 3: Sample Data
 INSERT INTO [USER] (id, user_id, full_name, email) VALUES (3, 'USR-003', 'Officer Jenny', 'jenny@rescue.com');
-INSERT INTO RESCUE_OFFICER (user_id, badge_number) VALUES (3, 'BADGE-999');
+-- Only when account 3 really has this role, so no account ends up with a second role row
+INSERT INTO RESCUE_OFFICER (user_id, badge_number)
+SELECT id, 'BADGE-999' FROM [USER]
+WHERE id = 3 AND role = 'RescueOfficer' AND NOT EXISTS (SELECT 1 FROM RESCUE_OFFICER WHERE user_id = 3);
 GO
 
 INSERT INTO RESCUE_CASE (case_id, location, date, status, animal_condition) VALUES
@@ -1756,7 +1467,10 @@ GO
 
 -- Part 3: Sample Data
 INSERT INTO [USER] (id, user_id, full_name, email) VALUES (4, 'USR-004', 'Dr. Adams', 'adams@vet.com');
-INSERT INTO VETERINARIAN (user_id, license_number) VALUES (4, 'VET-001');
+-- Only when account 4 really has this role, so no account ends up with a second role row
+INSERT INTO VETERINARIAN (user_id, license_number)
+SELECT id, 'VET-001' FROM [USER]
+WHERE id = 4 AND role = 'Veterinarian' AND NOT EXISTS (SELECT 1 FROM VETERINARIAN WHERE user_id = 4);
 INSERT INTO VETERINARIAN_SPECIALIZATION (user_id, specialization) VALUES (4, 'Surgery');
 GO
 
@@ -1849,7 +1563,10 @@ GO
 
 -- Part 3: Sample Data
 INSERT INTO [USER] (id, user_id, full_name, email) VALUES (5, 'USR-005', 'Manager Mike', 'mike@clinic.com');
-INSERT INTO CLINIC_MANAGER (user_id, manager_code) VALUES (5, 'MGR-001');
+-- Only when account 5 really has this role, so no account ends up with a second role row
+INSERT INTO CLINIC_MANAGER (user_id, manager_code)
+SELECT id, 'MGR-001' FROM [USER]
+WHERE id = 5 AND role = 'ClinicManager' AND NOT EXISTS (SELECT 1 FROM CLINIC_MANAGER WHERE user_id = 5);
 GO
 
 INSERT INTO SUPPLIER (supplier_id, supplier_name, contact_email, manager_user_id) VALUES
