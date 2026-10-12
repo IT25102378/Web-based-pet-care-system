@@ -308,10 +308,10 @@ class BB2_AppointmentBookingTest extends BlackBoxSupport {
         boolean sawFree = false;
         for (var n : body(res)) {
             if ("04:00 PM".equals(n.get("timeSlot").asText())) {
-                assertFalse(n.get("available").asBoolean());
+                assertFalse(n.get("isAvailable").asBoolean());
                 sawBooked = true;
             } else if ("09:00 AM".equals(n.get("timeSlot").asText())) {
-                assertTrue(n.get("available").asBoolean());
+                assertTrue(n.get("isAvailable").asBoolean());
                 sawFree = true;
             }
         }

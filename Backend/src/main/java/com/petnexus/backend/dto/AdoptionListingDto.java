@@ -1,5 +1,6 @@
 package com.petnexus.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 public class AdoptionListingDto {
     private String listingId;
     private String caseId;
+    @JsonProperty("isPublishedForAdoption")
     private boolean isPublishedForAdoption;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
