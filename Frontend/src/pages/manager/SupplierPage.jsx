@@ -1,3 +1,4 @@
+import { CURRENCY_LABEL } from '../../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { supplierApi } from '../../api/supplierApi';
 import { DataTable } from '../../components/common/DataTable';
@@ -297,7 +298,7 @@ export const SupplierPage = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Estimated Order Value ($) <span className="required">*</span></label>
+              <label className="form-label">Estimated Order Value {CURRENCY_LABEL} <span className="required">*</span></label>
               <input
                 type="number"
                 step="0.01"

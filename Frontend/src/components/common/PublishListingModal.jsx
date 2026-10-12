@@ -1,3 +1,4 @@
+import { formatCurrency, CURRENCY_SYMBOL } from '../../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { StatusBadge } from './StatusBadge';
@@ -13,7 +14,7 @@ export const PublishListingModal = ({ isOpen, onClose, rescueCase, onSuccess }) 
   const { showToast } = useToast();
 
   const [description, setDescription] = useState('');
-  const [adoptionFee, setAdoptionFee] = useState('120');
+  const [adoptionFee, setAdoptionFee] = useState('5000');
   const [isFeeWaived, setIsFeeWaived] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [traits, setTraits] = useState({
@@ -31,7 +32,7 @@ export const PublishListingModal = ({ isOpen, onClose, rescueCase, onSuccess }) 
         `${rescueCase.temporaryName} is a wonderful, healthy ${rescueCase.breed || rescueCase.species} companion who has completed veterinary health clearance and care rehabilitation. Gentle, socialized, and looking for a loving forever home!`;
       setDescription(defaultBio);
       setIsFeeWaived(false);
-      setAdoptionFee('120');
+      setAdoptionFee('5000');
     }
   }, [rescueCase]);
 
@@ -72,7 +73,7 @@ export const PublishListingModal = ({ isOpen, onClose, rescueCase, onSuccess }) 
         title: 'Listed for Public Adoption: Published to Adoptable Pets Gallery',
         logType: 'Milestone',
         notes: `Companion published live to public adoptable gallery. Adoption fee: ${
-          isFeeWaived ? 'Waived (Special Drive)' : `$${adoptionFee}`
+          isFeeWaived ? 'Waived (Special Drive)' : formatCurrency(adoptionFee)
         }. Open for adoption applications.`,
         loggedBy: `${currentUser?.fullName || 'Shehan Rajapaksha'} (Rescue Officer)`,
       });
@@ -246,7 +247,7 @@ export const PublishListingModal = ({ isOpen, onClose, rescueCase, onSuccess }) 
             </label>
             {!isFeeWaived && (
               <div className="flex items-center gap-1">
-                <span className="text-xs font-bold text-main">$</span>
+                <span className="text-xs font-bold text-main">{CURRENCY_SYMBOL}</span>
                 <input
                   type="number"
                   className="form-control"

@@ -134,7 +134,7 @@ public class PurchaseOrderService {
 
         // Notify Clinic Manager
         notifyManager(po, "Purchase Order Created",
-                String.format("PO #%s placed with %s for $%s.",
+                String.format("PO #%s placed with %s for Rs. %s.",
                         orderId.replace("PO-", ""), po.getSupplierName(), po.getTotalAmount()));
 
         return PurchaseOrderDetailResponse.from(po);

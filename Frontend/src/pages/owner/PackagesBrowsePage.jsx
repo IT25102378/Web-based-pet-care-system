@@ -1,3 +1,4 @@
+import { formatCurrency } from '../../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -391,12 +392,12 @@ export const PackagesBrowsePage = () => {
 
                 <div className="flex items-baseline gap-2 mb-6">
                   <span style={{ fontSize: '2rem', fontWeight: 800, color: isCareOnly ? 'var(--primary)' : isMedicalOnly ? 'var(--primary)' : 'var(--primary-dark)' }}>
-                    ${pkg.price.toLocaleString()}
+                    {formatCurrency(pkg.price)}
                   </span>
                   {pkg.originalValue > pkg.price && (
                     <>
                       <span style={{ textDecoration: 'line-through', color: 'var(--text-subtle)', fontSize: '1.1rem' }}>
-                        ${pkg.originalValue.toLocaleString()}
+                        {formatCurrency(pkg.originalValue)}
                       </span>
                       <span className="badge badge-warning text-xs">Save {pkg.discountPercent}%</span>
                     </>
@@ -497,7 +498,7 @@ export const PackagesBrowsePage = () => {
           isOpen={!!bookingPackage}
           onClose={() => setBookingPackage(null)}
           title={`Enroll: ${bookingPackage.name}`}
-          subtitle={`Total Investment: $${bookingPackage.price.toLocaleString()}`}
+          subtitle={`Total Investment: ${formatCurrency(bookingPackage.price)}`}
           size="md"
           footer={
             <div className="flex items-center justify-end gap-2" style={{ width: '100%' }}>

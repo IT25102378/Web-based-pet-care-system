@@ -1,3 +1,4 @@
+import { formatCurrency } from '../../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { adoptionApi } from '../../api/adoptionApi';
 import { DataTable } from '../../components/common/DataTable';
@@ -52,7 +53,7 @@ export const AdoptionHistoryPage = () => {
     {
       header: 'Adoption Fee',
       key: 'adoptionFee',
-      render: (row) => <span className="text-xs font-bold text-main">${Number(row.adoptionFee).toLocaleString()}</span>,
+      render: (row) => <span className="text-xs font-bold text-main">{formatCurrency(row.adoptionFee)}</span>,
     },
     {
       header: 'Post-Adoption Welfare Checkup',

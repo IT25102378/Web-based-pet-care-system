@@ -166,7 +166,12 @@ public class SupplierService {
             throw new BadRequestException("Purchase order total amount must be greater than zero");
         }
 
-        String orderId = String.format("PO-%06d", System.currentTimeMillis() % 1000000);
+        // Sequential id that skips taken numbers (a time-based id could collide and break the unique key)
+        long next = purchaseOrderRepository.count() + 1;
+        String orderId;
+        do {
+            orderId = String.format("PO-%06d", next++);
+        } while (purchaseOrderRepository.existsByOrderId(orderId));
 
         PurchaseOrder po = PurchaseOrder.builder()
                 .orderId(orderId)
@@ -188,7 +193,7 @@ public class SupplierService {
                     managerUserId,
                     NotificationType.Inventory,
                     "Purchase Order Dispatched",
-                    String.format("PO #%s placed with %s for $%s.", orderId.replace("PO-", ""), po.getSupplierName(), po.getTotalAmount()),
+                    String.format("PO #%s placed with %s for Rs. %s.", orderId.replace("PO-", ""), po.getSupplierName(), po.getTotalAmount()),
                     "/manager/inventory"
             );
         } catch (Exception e) {

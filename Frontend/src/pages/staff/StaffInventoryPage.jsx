@@ -1,3 +1,4 @@
+import { formatCurrency, CURRENCY_LABEL } from '../../utils/currency';
 import React, { useState, useEffect, useMemo } from 'react';
 import { inventoryApi } from '../../api/inventoryApi';
 import { supplierApi } from '../../api/supplierApi';
@@ -344,10 +345,10 @@ export const StaffInventoryPage = () => {
       render: (row) => (
         <div>
           <span className="font-semibold text-xs text-gray-800">
-            ${Number(row.unitPrice || 0).toLocaleString()}
+            {formatCurrency(row.unitPrice)}
           </span>
           <div className="text-xs text-muted">
-            Sell: ${Number(row.sellingPrice || 0).toLocaleString()}
+            Sell: {formatCurrency(row.sellingPrice)}
           </div>
         </div>
       ),
@@ -743,7 +744,7 @@ export const StaffInventoryPage = () => {
 
           <div className="grid-2 gap-4">
             <div>
-              <label className="form-label font-bold text-xs">Unit Cost ($)</label>
+              <label className="form-label font-bold text-xs">Unit Cost {CURRENCY_LABEL}</label>
               <input
                 type="number"
                 step="0.01"
@@ -755,7 +756,7 @@ export const StaffInventoryPage = () => {
               {errorFor('newItemData.unitPrice', newItemData.unitPrice)}
             </div>
             <div>
-              <label className="form-label font-bold text-xs">Selling Price ($)</label>
+              <label className="form-label font-bold text-xs">Selling Price {CURRENCY_LABEL}</label>
               <input
                 type="number"
                 step="0.01"
@@ -925,7 +926,7 @@ export const StaffInventoryPage = () => {
 
             <div className="grid-2 gap-4">
               <div>
-                <label className="form-label font-bold text-xs">Unit Cost ($)</label>
+                <label className="form-label font-bold text-xs">Unit Cost {CURRENCY_LABEL}</label>
                 <input
                   type="number"
                   step="0.01"
@@ -937,7 +938,7 @@ export const StaffInventoryPage = () => {
                 {errorFor('editItem.unitPrice', editItem.unitPrice)}
               </div>
               <div>
-                <label className="form-label font-bold text-xs">Selling Price ($)</label>
+                <label className="form-label font-bold text-xs">Selling Price {CURRENCY_LABEL}</label>
                 <input
                   type="number"
                   step="0.01"

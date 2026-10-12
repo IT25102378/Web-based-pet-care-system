@@ -1,3 +1,4 @@
+import { formatCurrency } from '../../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { inventoryApi } from '../../api/inventoryApi';
 import { supplierApi } from '../../api/supplierApi';
@@ -214,10 +215,10 @@ export const InventoryPage = () => {
       render: (row) => (
         <div>
           <div className="font-semibold text-xs text-gray-800">
-            Cost: ${Number(row.unitPrice || 0).toLocaleString()}
+            Cost: {formatCurrency(row.unitPrice)}
           </div>
           <div className="text-xs font-bold" style={{ color: 'var(--primary)' }}>
-            Sell: ${Number(row.sellingPrice || 0).toLocaleString()}
+            Sell: {formatCurrency(row.sellingPrice)}
           </div>
           {row.expiryDate && (
             <div className="text-xs text-muted">

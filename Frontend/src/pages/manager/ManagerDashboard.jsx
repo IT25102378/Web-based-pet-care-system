@@ -117,7 +117,7 @@ export const ManagerDashboard = () => {
         />
         <StatCard
           label="Gross Revenue"
-          value="$132,500"
+          value="Rs. 13,250,000"
           icon={TrendingUp}
           trend="+14.2% YoY"
           trendDirection="up"

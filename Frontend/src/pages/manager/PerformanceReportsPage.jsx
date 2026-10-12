@@ -14,10 +14,10 @@ import {
 
 export const PerformanceReportsPage = () => {
   const revenueStreams = [
-    { label: 'Veterinary Consultations & Triage', amount: '$61,000', pct: '46%', color: 'var(--primary)' },
-    { label: 'Specialist Surgery & Diagnostic Imaging', amount: '$34,500', pct: '26%', color: '#0EA5E9' },
-    { label: 'Pharmacy & Pharmaceutical Dispensing', amount: '$24,000', pct: '18%', color: '#F59E0B' },
-    { label: 'Wellness Packages & Grooming Memberships', amount: '$13,000', pct: '10%', color: 'var(--accent)' },
+    { label: 'Veterinary Consultations & Triage', amount: 'Rs. 6,100,000', pct: '46%', color: 'var(--primary)' },
+    { label: 'Specialist Surgery & Diagnostic Imaging', amount: 'Rs. 3,450,000', pct: '26%', color: '#0EA5E9' },
+    { label: 'Pharmacy & Pharmaceutical Dispensing', amount: 'Rs. 2,400,000', pct: '18%', color: '#F59E0B' },
+    { label: 'Wellness Packages & Grooming Memberships', amount: 'Rs. 1,300,000', pct: '10%', color: 'var(--accent)' },
   ];
 
   const monthlyAdoptions = [
@@ -45,7 +45,7 @@ export const PerformanceReportsPage = () => {
       <div className="grid-4 mb-8">
         <StatCard
           label="Gross Hospital Revenue"
-          value="$132,500"
+          value="Rs. 13,250,000"
           icon={TrendingUp}
           trend="+14.2% YoY"
           trendDirection="up"

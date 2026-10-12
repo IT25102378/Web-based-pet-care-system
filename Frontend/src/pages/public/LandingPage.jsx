@@ -1,3 +1,4 @@
+import { formatCurrency } from '../../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { rescueApi } from '../../api/rescueApi';
@@ -349,8 +350,8 @@ export const LandingPage = () => {
                   <p>{pkg.tagline}</p>
 
                   <div className="lp-price">
-                    <strong>${pkg.price.toLocaleString()}</strong>
-                    {pkg.originalValue > pkg.price && <s>${pkg.originalValue.toLocaleString()}</s>}
+                    <strong>{formatCurrency(pkg.price)}</strong>
+                    {pkg.originalValue > pkg.price && <s>{formatCurrency(pkg.originalValue)}</s>}
                   </div>
 
                   <div className="lp-plan-features">

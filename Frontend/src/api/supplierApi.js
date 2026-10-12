@@ -1,3 +1,4 @@
+import { formatCurrency } from '../utils/currency';
 import { USE_MOCK_DATA, simulateDelay, apiFetch } from './client';
 import { mockStore } from '../data/mockStore';
 
@@ -94,7 +95,7 @@ export const supplierApi = {
       userId: 'USR-005', // Manager
       type: 'Inventory',
       title: 'Purchase Order Dispatched',
-      message: `PO #${Date.now().toString().slice(-6)} placed with ${poData.supplierName} for $${poData.totalAmount}.`,
+      message: `PO #${Date.now().toString().slice(-6)} placed with ${poData.supplierName} for ${formatCurrency(poData.totalAmount)}.`,
       isRead: false,
       link: '/manager/inventory',
       createdAt: new Date().toISOString(),
