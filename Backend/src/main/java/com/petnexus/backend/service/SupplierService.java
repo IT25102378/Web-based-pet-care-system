@@ -47,6 +47,13 @@ public class SupplierService {
     }
 
     @Transactional(readOnly = true)
+    public List<SupplierResponse> listActiveSuppliers() {
+        return supplierRepository.findByActiveTrue().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public SupplierResponse getSupplier(String supplierId) {
         Supplier supplier = supplierRepository.findBySupplierId(supplierId)
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with ID: " + supplierId));

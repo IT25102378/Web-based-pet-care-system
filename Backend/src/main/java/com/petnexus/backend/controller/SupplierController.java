@@ -29,7 +29,10 @@ public class SupplierController {
 
     @PreAuthorize("hasAnyRole('ClinicManager', 'Admin', 'ClinicStaff', 'Veterinarian')")
     @GetMapping
-    public ResponseEntity<List<SupplierResponse>> getSuppliers() {
+    public ResponseEntity<List<SupplierResponse>> getSuppliers(@RequestParam(required = false) Boolean active) {
+        if (Boolean.TRUE.equals(active)) {
+            return ResponseEntity.ok(supplierService.listActiveSuppliers());
+        }
         return ResponseEntity.ok(supplierService.listSuppliers());
     }
 
