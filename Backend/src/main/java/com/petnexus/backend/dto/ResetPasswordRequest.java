@@ -5,7 +5,6 @@ package com.petnexus.backend.dto;
 import jakarta.validation.constraints.Pattern;
 import com.petnexus.backend.validation.ValidationRules;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
