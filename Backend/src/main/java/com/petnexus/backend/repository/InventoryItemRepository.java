@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
+public interface InventoryItemRepository extends JpaRepository<InventoryItem, String> {
     Optional<InventoryItem> findByItemId(String itemId);
     Optional<InventoryItem> findBySku(String sku);
     boolean existsByItemId(String itemId);

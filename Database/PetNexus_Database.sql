@@ -535,8 +535,7 @@ CONSTRAINT pk_service_package_bookings PRIMARY KEY (id),
 CONSTRAINT uk_service_package_booking_id UNIQUE (booking_id)
 );');
     INSERT INTO @tables (name, ddl) VALUES (N'suppliers', N'CREATE TABLE suppliers (
-id              BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
-supplier_id     VARCHAR(20)           NOT NULL,  -- unique
+supplier_id     VARCHAR(20)           NOT NULL,  -- PK
 active          BIT                   NOT NULL,
 address         VARCHAR(300)          NULL,
 category        VARCHAR(100)          NULL,
@@ -548,13 +547,11 @@ phone           VARCHAR(30)           NULL,
 rating          NUMERIC(3,1)          NOT NULL,
 created_at      DATETIME2(7)          NOT NULL,
 updated_at      DATETIME2(7)          NULL,
-CONSTRAINT pk_suppliers PRIMARY KEY (id),
-CONSTRAINT uk_suppliers_supplier_id UNIQUE (supplier_id)
+CONSTRAINT pk_suppliers PRIMARY KEY (supplier_id)
 );');
     INSERT INTO @tables (name, ddl) VALUES (N'inventory_items', N'CREATE TABLE inventory_items (
-id                   BIGINT IDENTITY(1,1)  NOT NULL,  -- PK
-item_id              VARCHAR(20)           NOT NULL,  -- unique
-supplier_fk_id       BIGINT                NULL,      -- FK -> suppliers
+item_id              VARCHAR(20)           NOT NULL,  -- PK
+supplier_id          VARCHAR(20)           NULL,      -- FK -> suppliers
 batch_number         VARCHAR(50)           NULL,
 category             VARCHAR(100)          NOT NULL,
 current_stock        INT                   NOT NULL,
@@ -569,10 +566,9 @@ unit                 VARCHAR(50)           NOT NULL,
 unit_price           NUMERIC(10,2)         NOT NULL,
 created_at           DATETIME2(7)          NOT NULL,
 updated_at           DATETIME2(7)          NULL,
-CONSTRAINT pk_inventory_items PRIMARY KEY (id),
-CONSTRAINT uk_inventory_items_item_id UNIQUE (item_id),
+CONSTRAINT pk_inventory_items PRIMARY KEY (item_id),
 CONSTRAINT uk_inventory_items_sku UNIQUE (sku),
-CONSTRAINT fk_inventory_items_supplier FOREIGN KEY (supplier_fk_id) REFERENCES suppliers (id),
+CONSTRAINT fk_inventory_items_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (supplier_id),
 CONSTRAINT ck_inventory_items_status CHECK ([status]=''EXPIRED'' OR [status]=''OUT_OF_STOCK'' OR [status]=''LOW_STOCK'' OR [status]=''IN_STOCK'')
 );
 CREATE INDEX idx_inventory_items_category ON inventory_items (category);
