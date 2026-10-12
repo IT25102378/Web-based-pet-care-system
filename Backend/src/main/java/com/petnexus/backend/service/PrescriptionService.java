@@ -201,6 +201,55 @@ public class PrescriptionService {
         }
     }
 
+    private Prescription findOrThrow(String prescriptionId) {
+        return prescriptionRepository.findByPrescriptionId(prescriptionId.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Prescription not found with ID: " + prescriptionId));
+    }
+
+    /** Revises the administration instructions of an active prescription. */
+    @Transactional
+    public PrescriptionResponse updateInstructions(String prescriptionId, String instructions) {
+        Prescription p = findOrThrow(prescriptionId);
+        if ("Revoked".equalsIgnoreCase(p.getStatus())) {
+            throw new BadRequestException("A revoked prescription cannot be edited.");
+        }
+        if (instructions == null || instructions.trim().isEmpty()) {
+            throw new BadRequestException("Instructions cannot be empty.");
+        }
+        if (instructions.trim().length() > 1000) {
+            throw new BadRequestException("Instructions cannot be longer than 1000 characters.");
+        }
+        p.setInstructions(instructions.trim());
+        return PrescriptionResponse.from(prescriptionRepository.save(p));
+    }
+
+    /** Cancels a prescription but keeps it on the patient's record. */
+    @Transactional
+    public PrescriptionResponse revokePrescription(String prescriptionId, String reason) {
+        Prescription p = findOrThrow(prescriptionId);
+        if ("Revoked".equalsIgnoreCase(p.getStatus())) {
+            throw new BadRequestException("This prescription has already been revoked.");
+        }
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new BadRequestException("A reason is required to revoke a prescription.");
+        }
+        p.setStatus("Revoked");
+        String note = " [Revoked: " + reason.trim() + "]";
+        String current = p.getInstructions() != null ? p.getInstructions() : "";
+        String combined = current + note;
+        p.setInstructions(combined.length() > 1000 ? combined.substring(0, 1000) : combined);
+        log.info("Prescription {} revoked", p.getPrescriptionId());
+        return PrescriptionResponse.from(prescriptionRepository.save(p));
+    }
+
+    /** Permanently removes a prescription together with its medication lines. */
+    @Transactional
+    public void deletePrescription(String prescriptionId) {
+        Prescription p = findOrThrow(prescriptionId);
+        prescriptionRepository.delete(p);
+        log.info("Prescription {} deleted", prescriptionId);
+    }
+
     private String generatePrescriptionId() {
         long count = prescriptionRepository.count() + 1;
         String candidate;
