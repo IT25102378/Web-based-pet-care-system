@@ -67,6 +67,11 @@ public class SupplierService {
 
         long count = supplierRepository.count() + 1;
         String supplierId = String.format("SUP-%02d", count);
+        // Row count is only a starting point: skip IDs already taken (e.g. after a row was removed)
+        while (supplierRepository.existsBySupplierId(supplierId)) {
+            count++;
+            supplierId = String.format("SUP-%02d", count);
+        }
 
         Integer leadTime = (request.getLeadTimeDays() != null && request.getLeadTimeDays() >= 0)
                 ? request.getLeadTimeDays() : 2;

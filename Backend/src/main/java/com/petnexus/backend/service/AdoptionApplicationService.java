@@ -105,6 +105,10 @@ public class AdoptionApplicationService {
 
         long count = applicationRepository.count() + 1;
         String applicationId = String.format("APP-%04d", count);
+        while (applicationRepository.existsById(applicationId)) {
+            count++;
+            applicationId = String.format("APP-%04d", count);
+        }
 
         String petName = (request.getPetName() != null && !request.getPetName().isBlank())
                 ? request.getPetName().trim() : rescueCase.getTemporaryName();

@@ -52,6 +52,10 @@ public class CareServiceService {
         if (serviceId == null || serviceId.isBlank()) {
             long count = careServiceRepository.count() + 1;
             serviceId = String.format("CSR-%03d", count);
+            while (careServiceRepository.existsByServiceId(serviceId)) {
+                count++;
+                serviceId = String.format("CSR-%03d", count);
+            }
         } else if (careServiceRepository.existsByServiceId(serviceId)) {
             throw new BadRequestException("Service ID already exists: " + serviceId);
         }

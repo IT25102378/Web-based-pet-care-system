@@ -77,6 +77,11 @@ public class InventoryService {
 
         long count = inventoryItemRepository.count() + 1;
         String itemId = String.format("INV-%03d", 100 + count);
+        // Row count is only a starting point: skip IDs already taken (e.g. after an item was deleted)
+        while (inventoryItemRepository.existsByItemId(itemId)) {
+            count++;
+            itemId = String.format("INV-%03d", 100 + count);
+        }
 
         int currentStock = request.getCurrentStock() != null ? request.getCurrentStock() : 0;
         int minThreshold = request.getMinStockThreshold() != null ? request.getMinStockThreshold() : 5;
