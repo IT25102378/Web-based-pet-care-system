@@ -211,7 +211,7 @@ public class DataInitializer implements CommandLineRunner {
                 "USR-007", "admin@petnexus.com", "PetNexus System Administrator",
                 "+94 11 234 5678", "Pet Nexus Clinic, Colombo 05", UserRole.Admin,
                 "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-                null, null, null, null, null, null, null
+                "Not provided", null, null, null, null, null, null
         );
 
         User owner = seedOrUpdateUser(
@@ -225,35 +225,35 @@ public class DataInitializer implements CommandLineRunner {
                 "USR-002", "vet@petnexus.com", "Dr. Sachini Wijesinghe, BVSc",
                 "+94 71 234 5678", "12 Wijerama Mawatha, Colombo 07", UserRole.Veterinarian,
                 "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80",
-                null, "SLVC-VET-2019-0842", "Small Animal Surgery & Internal Medicine", null, null, null, null
+                "Not provided", "SLVC-VET-2019-0842", "Small Animal Surgery & Internal Medicine", null, null, null, null
         );
 
         seedOrUpdateUser(
                 "USR-003", "staff@petnexus.com", "Nethmi Fernando",
                 "+94 76 345 6789", "22 Nawala Road, Rajagiriya", UserRole.ClinicStaff,
                 "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-                null, null, null, "STF-104", null, null, null
+                "Not provided", null, null, "STF-104", null, null, null
         );
 
         User providerUser = seedOrUpdateUser(
                 "USR-004", "provider@petnexus.com", "Dilshan Bandara",
                 "+94 70 456 7890", "78 High Level Road, Maharagama", UserRole.PetCareProvider,
                 "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-                null, null, null, null, null, null, "Master Groomer & Canine Behaviour Specialist"
+                "Not provided", null, null, null, null, null, "Master Groomer & Canine Behaviour Specialist"
         );
 
         User manager = seedOrUpdateUser(
                 "USR-005", "manager@petnexus.com", "Himashi Gunawardena",
                 "+94 77 567 8901", "5/1 Gregory's Road, Colombo 07", UserRole.ClinicManager,
                 "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-                null, null, null, null, "MGR-001", null, null
+                "Not provided", null, null, null, "MGR-001", null, null
         );
 
         seedOrUpdateUser(
                 "USR-006", "rescue@petnexus.com", "Shehan Rajapaksha",
                 "+94 71 678 9012", "33 Baseline Road, Nugegoda", UserRole.RescueOfficer,
                 "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-                null, null, null, null, null, "RSC-882", null
+                "Not provided", null, null, null, null, "RSC-882", null
         );
 
         // User-created stakeholder accounts
@@ -261,41 +261,41 @@ public class DataInitializer implements CommandLineRunner {
                 "USR-013", "ifaza@petnexus.com", "Ifaza Dilshad",
                 "0789984329", "colombo", UserRole.PetOwner,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-013",
-                null, null, null, null, null, null, null
+                "Not provided", null, null, null, null, null, null
         );
 
         seedOrUpdateUser(
                 "USR-014", "oshada@petnexus.com", "Oshada",
                 "0704685236", "Rajagiriya", UserRole.Veterinarian,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-014",
-                null, "VET-NY-765", "Clinical Veterinarian", null, null, null, null
+                "Not provided", "VET-NY-765", "Clinical Veterinarian", null, null, null, null
         );
 
         seedOrUpdateUser(
                 "USR-015", "lakdin@petnexus.com", "Lakdin",
                 "0705896156", "Colombo", UserRole.ClinicStaff,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-015",
-                null, null, null, "STF-098", null, null, null
+                "Not provided", null, null, "STF-098", null, null, null
         );
 
         User eshaniUser = seedOrUpdateUser(
                 "USR-016", "eshani@petnexus.com", "Eshani",
                 "0704564985", "Colombo", UserRole.PetCareProvider,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-016",
-                null, null, null, null, null, null, "Master Groomer"
+                "Not provided", null, null, null, null, null, "Master Groomer"
         );
 
         seedOrUpdateUser(
                 "USR-017", "ediriweera@petnexus.com", "Ediriweera D.L",
                 "07784521695", "COlombo", UserRole.ClinicManager,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-017",
-                null, null, null, null, "MGR-PASS-002", null, null
+                "Not provided", null, null, null, "MGR-PASS-002", null, null
         );
         seedOrUpdateUser(
                 "USR-018", "avijeeva6@gmail.com", "Avinash",
                 "0712345678", "Colombo", UserRole.RescueOfficer,
                 "https://api.dicebear.com/7.x/bottts/svg?seed=USR-018",
-                null, null, null, null, null, "RSC-018", null
+                "Not provided", null, null, null, null, "RSC-018", null
         );
 
 
@@ -1033,6 +1033,11 @@ public class DataInitializer implements CommandLineRunner {
                     .name("Deluxe Spa & Hydrotherapy Grooming Plan")
                     .description("Full grooming with hydrobath, coat conditioning, ear cleaning, and paw pad trim")
                     .price(new BigDecimal("15000.00"))
+                    .originalValue(new BigDecimal("15000.00"))
+                    .discountPercent(0)
+                    .badge("Premium Grooming")
+                    .tagline("Full spa grooming and hydrotherapy for a healthy, conditioned coat")
+                    .recommendedFor("All breeds and coat types")
                     .durationMinutes(90)
                     .status(ServiceStatus.SCHEDULED)
                     .createdBy(providerUser)
@@ -1043,6 +1048,11 @@ public class DataInitializer implements CommandLineRunner {
                     .name("De-Shedding & Blowout Treatment")
                     .description("Deep brush out, de-shedding shampoo, and high-velocity blowout")
                     .price(new BigDecimal("8500.00"))
+                    .originalValue(new BigDecimal("8500.00"))
+                    .discountPercent(0)
+                    .badge("Coat Care")
+                    .tagline("Deep de-shedding and blowout to keep heavy coats under control")
+                    .recommendedFor("Double-coated and heavy-shedding breeds")
                     .durationMinutes(60)
                     .status(ServiceStatus.SCHEDULED)
                     .createdBy(providerUser)
@@ -1053,6 +1063,11 @@ public class DataInitializer implements CommandLineRunner {
                     .name("Puppy Spa & Gentle Bath")
                     .description("Tearless shampoo, gentle warm water rinse, light brush, and nail trim")
                     .price(new BigDecimal("5500.00"))
+                    .originalValue(new BigDecimal("5500.00"))
+                    .discountPercent(0)
+                    .badge("Puppy Friendly")
+                    .tagline("A gentle first bath and brush for young puppies")
+                    .recommendedFor("Puppies under 12 months")
                     .durationMinutes(45)
                     .status(ServiceStatus.SCHEDULED)
                     .createdBy(providerUser)
