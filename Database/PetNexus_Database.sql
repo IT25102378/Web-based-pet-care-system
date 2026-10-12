@@ -18,21 +18,31 @@ GO
 
 -- ==============================================================================
 -- SECTION 0: Legacy Schema Reset
--- Older copies of this database used INT ids, which the current backend cannot
--- migrate in place. If one is detected, every table is dropped so the sections
--- below rebuild the schema from scratch. WARNING: this deletes the local data.
+-- Older copies of this database (INT ids, or a USER table missing the current
+-- columns) cannot be migrated in place by the backend. If one is detected, every
+-- table is dropped so the sections below rebuild the schema from scratch.
+-- WARNING: this deletes the local data.
 -- ==============================================================================
 
-IF EXISTS (
-    SELECT 1
-    FROM sys.columns c
-    JOIN sys.types t ON c.user_type_id = t.user_type_id
-    WHERE c.object_id = OBJECT_ID(N'dbo.[USER]')
-      AND c.name = 'id'
-      AND t.name <> 'bigint'
-)
+IF OBJECT_ID(N'dbo.[USER]') IS NOT NULL
+   AND (
+        EXISTS (
+            SELECT 1
+            FROM sys.columns c
+            JOIN sys.types t ON c.user_type_id = t.user_type_id
+            WHERE c.object_id = OBJECT_ID(N'dbo.[USER]')
+              AND c.name = 'id'
+              AND t.name <> 'bigint'
+        )
+        OR COL_LENGTH(N'dbo.[USER]', 'id') IS NULL
+        OR COL_LENGTH(N'dbo.[USER]', 'password_hash') IS NULL
+        OR COL_LENGTH(N'dbo.[USER]', 'role') IS NULL
+        OR COL_LENGTH(N'dbo.[USER]', 'created_at') IS NULL
+        OR (OBJECT_ID(N'dbo.pet_care_provider') IS NOT NULL
+            AND COL_LENGTH(N'dbo.pet_care_provider', 'service_specialty') IS NULL)
+   )
 BEGIN
-    PRINT 'Legacy PetNexus schema detected (USER.id is not BIGINT). Dropping all tables for a clean rebuild...';
+    PRINT 'Legacy PetNexus schema detected. Dropping all tables for a clean rebuild...';
 
     DECLARE @sql NVARCHAR(MAX) = N'';
 
