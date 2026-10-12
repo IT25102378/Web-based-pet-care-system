@@ -36,6 +36,10 @@ public class SupplierController {
         return ResponseEntity.ok(supplierService.listSuppliers());
     }
 
+    public ResponseEntity<List<SupplierResponse>> getSuppliers() {
+        return getSuppliers(null);
+    }
+
     @PreAuthorize("hasAnyRole('ClinicManager', 'Admin', 'ClinicStaff', 'Veterinarian')")
     @GetMapping("/{supplierId}")
     public ResponseEntity<SupplierResponse> getSupplier(@PathVariable String supplierId) {

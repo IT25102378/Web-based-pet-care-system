@@ -376,6 +376,29 @@ public class Phase8InventorySupplierIntegrationTest {
         assertThrows(ResourceNotFoundException.class, () -> inventoryController.addInventoryItem(itemReq));
     }
 
+    @Test
+    @DisplayName("11b. Inactive Supplier Reference Rejection")
+    void testInactiveSupplierReference() {
+        Supplier disabled = supplierRepository.save(Supplier.builder()
+                .supplierId("SUP-DIS-01")
+                .companyName("Disabled Supplier Co")
+                .email("disabled@supplier.com")
+                .active(false)
+                .build());
+
+        InventoryItemRequest itemReq = InventoryItemRequest.builder()
+                .name("Item With Disabled Supplier")
+                .category("Pharmaceuticals")
+                .sku("DIS-SUP-001")
+                .unit("Bottles")
+                .unitPrice(new BigDecimal("500.00"))
+                .sellingPrice(new BigDecimal("800.00"))
+                .supplierId(disabled.getSupplierId())
+                .build();
+
+        assertThrows(BadRequestException.class, () -> inventoryController.addInventoryItem(itemReq));
+    }
+
     // -------------------------------------------------------------
     // 12. Create Supplier
     // -------------------------------------------------------------
@@ -421,6 +444,15 @@ public class Phase8InventorySupplierIntegrationTest {
         ResponseEntity<List<SupplierResponse>> response = supplierController.getSuppliers();
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
+    }
+
+    @Test
+    @DisplayName("14b. List Active Suppliers - Success")
+    void testListActiveSuppliers() {
+        ResponseEntity<List<SupplierResponse>> response = supplierController.getSuppliers(true);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertFalse(response.getBody().isEmpty());
+        assertTrue(response.getBody().stream().allMatch(SupplierResponse::isActive));
     }
 
     // -------------------------------------------------------------
