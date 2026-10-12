@@ -102,7 +102,7 @@ public class Phase7PetCareIntegrationTest {
                         .email("test-provider@petnexus.com")
                         .passwordHash("hashed")
                         .fullName("Test Care Provider")
-                        .phone("+94 77 111 2233")
+                        .phone("0771112233")
                         .address("Colombo")
                         .role(UserRole.PetCareProvider)
                         .status(UserStatus.Active)
@@ -114,7 +114,7 @@ public class Phase7PetCareIntegrationTest {
                         .email("test-owner@petnexus.com")
                         .passwordHash("hashed")
                         .fullName("Test Owner")
-                        .phone("+94 77 444 5566")
+                        .phone("0774445566")
                         .address("Colombo")
                         .role(UserRole.PetOwner)
                         .status(UserStatus.Active)
@@ -150,7 +150,7 @@ public class Phase7PetCareIntegrationTest {
         req.setProviderId("PRV-TEST-01");
         req.setUserId(testProviderUser.getUserId());
         req.setProviderName("Test Grooming Studio");
-        req.setContactPhone("+94 77 999 8888");
+        req.setContactPhone("0779998888");
         req.setContactEmail("studio@petnexus.com");
         req.setActive(true);
 

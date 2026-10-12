@@ -12,6 +12,8 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
+import { validateDateWithin, isoDaysFromToday } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 import {
   FileText,
   Plus,
@@ -55,6 +57,7 @@ export const isHandedOff = (log) => {
 export const ServiceLogsPage = () => {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const location = useLocation();
   const navigate = useNavigate();
   const inboundHandledRef = useRef(false);
@@ -444,6 +447,13 @@ export const ServiceLogsPage = () => {
       showToast('Action Required', 'Please fill in all service details (Intake Condition, Services Performed, and Notes).', 'error');
       return;
     }
+    const dateError = check(
+      ['formData.serviceDate', formData.serviceDate, validateDateWithin(formData.serviceDate, { label: 'Service date', required: true })],
+    );
+    if (dateError) {
+      showToast('Please Check the Service Date', dateError, 'error');
+      return;
+    }
 
     try {
       if (patientType === 'rescue') {
@@ -575,6 +585,16 @@ export const ServiceLogsPage = () => {
     if (!editingLog) return;
     if (!editFormData.serviceType.trim()) {
       showToast('Action Required', 'Please specify the service type.', 'error');
+      return;
+    }
+    const dateError = check(
+      ['editFormData.serviceDate', editFormData.serviceDate,
+        editFormData.serviceDate === editingLog.serviceDate
+          ? null
+          : validateDateWithin(editFormData.serviceDate, { label: 'Service date', required: true })],
+    );
+    if (dateError) {
+      showToast('Please Check the Service Date', dateError, 'error');
       return;
     }
 
@@ -964,9 +984,12 @@ export const ServiceLogsPage = () => {
                   type="date"
                   className="form-control"
                   value={formData.serviceDate}
+                  min={isoDaysFromToday(-365)}
+                  max={isoDaysFromToday(365)}
                   onChange={(e) => setFormData({ ...formData, serviceDate: e.target.value })}
                   required
                 />
+                {errorFor('formData.serviceDate', formData.serviceDate)}
               </div>
             </div>
 
@@ -1274,9 +1297,11 @@ export const ServiceLogsPage = () => {
                   type="date"
                   className="form-control"
                   value={editFormData.serviceDate}
+                  max={isoDaysFromToday(365)}
                   onChange={(e) => setEditFormData({ ...editFormData, serviceDate: e.target.value })}
                   required
                 />
+                {errorFor('editFormData.serviceDate', editFormData.serviceDate)}
               </div>
             </div>
 

@@ -1,30 +1,35 @@
 package com.petnexus.backend.dto;
 
+
+
+import jakarta.validation.constraints.Pattern;
+import com.petnexus.backend.validation.ValidationRules;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class CreateCareProviderRequest {
 
-    @NotBlank
-    @Size(max = 20)
+    @NotBlank(message = "Provider ID is required")
+    @Size(max = 20, message = "Provider ID cannot be longer than 20 characters")
     private String providerId;
 
-    @NotBlank
-    @Size(max = 20)
+    @NotBlank(message = "User ID is required")
+    @Size(max = 20, message = "User ID cannot be longer than 20 characters")
     private String userId; // references existing User
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "Provider name is required")
+    @Size(max = 100, message = "Provider name cannot be longer than 100 characters")
     private String providerName;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Contact phone cannot be longer than 20 characters")
+    @Pattern(regexp = ValidationRules.OPTIONAL_PHONE, message = ValidationRules.PHONE_MESSAGE)
     private String contactPhone;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "Contact email cannot be longer than 100 characters")
     private String contactEmail;
 
-    @NotNull
+    @NotNull(message = "Active is required")
     private Boolean active;
 
     // getters and setters

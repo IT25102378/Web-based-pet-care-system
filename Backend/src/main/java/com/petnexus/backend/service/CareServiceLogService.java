@@ -42,6 +42,7 @@ public class CareServiceLogService {
 
     @Transactional
     public CareServiceLogResponseDto createLog(CareServiceLogCreateRequest request) {
+        validateServiceDate(request.getServiceDate());
         LocalDate serviceDate = request.getServiceDate() != null ? request.getServiceDate() : LocalDate.now();
         ServiceStatus status = request.getStatus() != null ? request.getStatus() : ServiceStatus.CHECKED_IN;
 
@@ -190,6 +191,9 @@ public class CareServiceLogService {
             serviceLog.setNotes(request.getNotes().trim());
         }
         if (request.getServiceDate() != null) {
+            if (!request.getServiceDate().equals(serviceLog.getServiceDate())) {
+                validateServiceDate(request.getServiceDate());
+            }
             serviceLog.setServiceDate(request.getServiceDate());
         }
         if (request.getStatus() != null) {
@@ -302,5 +306,17 @@ public class CareServiceLogService {
         dto.setProviderName(serviceLog.getProviderName());
         dto.setCreatedAt(serviceLog.getCreatedAt());
         return dto;
+    }
+
+    /** A service log records recent or upcoming work: at most one year back or one year ahead. */
+    private void validateServiceDate(LocalDate serviceDate) {
+        if (serviceDate == null) return;
+        LocalDate today = LocalDate.now();
+        if (serviceDate.isBefore(today.minusYears(1))) {
+            throw new BadRequestException("Service date cannot be more than 1 year in the past.");
+        }
+        if (serviceDate.isAfter(today.plusYears(1))) {
+            throw new BadRequestException("Service date cannot be more than 1 year in the future.");
+        }
     }
 }

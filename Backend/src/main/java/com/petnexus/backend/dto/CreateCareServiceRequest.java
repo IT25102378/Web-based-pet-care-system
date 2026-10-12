@@ -1,5 +1,11 @@
 package com.petnexus.backend.dto;
 
+
+
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -8,42 +14,47 @@ import java.math.BigDecimal;
 
 public class CreateCareServiceRequest {
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Service ID cannot be longer than 20 characters")
     private String serviceId;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "Name is required")
+    @Size(max = 100, message = "Name cannot be longer than 100 characters")
     private String name;
 
-    @Size(max = 2000)
+    @Size(max = 2000, message = "Description cannot be longer than 2000 characters")
     private String description;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "Price is required")
+    @Positive(message = "Price must be greater than zero")
     private BigDecimal price;
 
     /** Original full-value price for strike-through display (optional) */
+    @PositiveOrZero(message = "Original value cannot be negative")
     private BigDecimal originalValue;
 
     /** Discount percentage 0-100 (optional) */
+    @Min(value = 0, message = "Discount must be between 0 and 100 percent")
+    @Max(value = 100, message = "Discount must be between 0 and 100 percent")
     private Integer discountPercent;
 
     /** Marketing badge text (e.g. "Popular") */
-    @Size(max = 50)
+    @Size(max = 50, message = "Badge cannot be longer than 50 characters")
     private String badge;
 
     /** One-line marketing tagline */
-    @Size(max = 300)
+    @Size(max = 300, message = "Tagline cannot be longer than 300 characters")
     private String tagline;
 
     /** Recommended pet type */
-    @Size(max = 100)
+    @Size(max = 100, message = "Recommended for cannot be longer than 100 characters")
     private String recommendedFor;
 
     /** Duration in minutes — optional, defaults to 60 */
+    @Min(value = 1, message = "Duration must be between 1 and 1440 minutes")
+    @Max(value = 1440, message = "Duration must be between 1 and 1440 minutes")
     private Integer durationMinutes;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Created by user ID cannot be longer than 20 characters")
     private String createdByUserId;
 
     // getters and setters

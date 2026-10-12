@@ -4,8 +4,11 @@ import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
 import { Layers, Plus, Edit2, CheckCircle, Check, Tag, Power } from 'lucide-react';
 
+import { validateText, validateNumber } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const PackageManagementPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const [packages, setPackages] = useState([]);
   const [editingPackage, setEditingPackage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,8 +74,20 @@ export const PackageManagementPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.price) {
-      showToast('Action Required', 'Package name and price are required.', 'error');
+    const packageError = check(
+      ['formData.name', formData.name, validateText(formData.name, { label: 'Package name', required: true, min: 3, max: 100 })],
+      ['formData.tagline', formData.tagline, validateText(formData.tagline, { label: 'Tagline', max: 300 })],
+      ['formData.price', formData.price, validateNumber(formData.price, { label: 'Price', required: true, greaterThanZero: true })],
+      ['formData.originalValue', formData.originalValue, validateNumber(formData.originalValue, { label: 'Original value', min: 0 })],
+      Number(formData.originalValue) > 0 && Number(formData.originalValue) < Number(formData.price)
+        ? 'Original value cannot be less than the package price'
+        : null,
+      ['formData.discountPercent', formData.discountPercent, validateNumber(formData.discountPercent, { label: 'Discount', min: 0, max: 100, integer: true, unit: 'percent' })],
+      ['formData.badge', formData.badge, validateText(formData.badge, { label: 'Badge', max: 50 })],
+      ['formData.recommendedFor', formData.recommendedFor, validateText(formData.recommendedFor, { label: 'Recommended for', max: 100 })],
+    );
+    if (packageError) {
+      showToast('Please Check the Package Details', packageError, 'error');
       return;
     }
 
@@ -208,6 +223,7 @@ export const PackageManagementPage = () => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
+              {errorFor('formData.name', formData.name)}
             </div>
 
             <div className="form-group">
@@ -218,6 +234,7 @@ export const PackageManagementPage = () => {
                 value={formData.tagline}
                 onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
               />
+              {errorFor('formData.tagline', formData.tagline)}
             </div>
 
             <div className="form-row">
@@ -231,6 +248,7 @@ export const PackageManagementPage = () => {
                   onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                   required
                 />
+                {errorFor('formData.price', formData.price)}
               </div>
 
               <div className="form-group">
@@ -242,6 +260,7 @@ export const PackageManagementPage = () => {
                   value={formData.originalValue}
                   onChange={(e) => setFormData({ ...formData, originalValue: Number(e.target.value) })}
                 />
+                {errorFor('formData.originalValue', formData.originalValue)}
               </div>
             </div>
 
@@ -253,6 +272,7 @@ export const PackageManagementPage = () => {
                 value={formData.badge}
                 onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
               />
+              {errorFor('formData.badge', formData.badge)}
             </div>
 
             <div className="form-group">

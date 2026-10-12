@@ -1,5 +1,9 @@
 package com.petnexus.backend.dto;
 
+
+
+import jakarta.validation.constraints.Pattern;
+import com.petnexus.backend.validation.ValidationRules;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -15,6 +19,7 @@ public class CareProviderUpdateRequest {
     private String providerName;
 
     @Size(max = 20, message = "Contact phone must not exceed 20 characters")
+    @Pattern(regexp = ValidationRules.OPTIONAL_PHONE, message = ValidationRules.PHONE_MESSAGE)
     private String contactPhone;
 
     @Email(message = "Contact email must be a valid email address")

@@ -54,7 +54,7 @@ public class CareServiceLogController {
     // ------------------- CREATE -------------------
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('PetCareProvider', 'ClinicManager', 'Admin', 'Veterinarian')")
     @PostMapping
-    public ResponseEntity<CareServiceLogResponseDto> createLog(@RequestBody CareServiceLogCreateRequest request) {
+    public ResponseEntity<CareServiceLogResponseDto> createLog(@Valid @RequestBody CareServiceLogCreateRequest request) {
         CareServiceLogResponseDto created = logService.createLog(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

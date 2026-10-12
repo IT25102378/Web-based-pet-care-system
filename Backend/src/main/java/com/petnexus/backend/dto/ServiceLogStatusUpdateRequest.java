@@ -8,7 +8,7 @@ import com.petnexus.backend.enums.ServiceStatus;
  */
 public class ServiceLogStatusUpdateRequest {
 
-    @NotNull
+    @NotNull(message = "Status is required")
     private ServiceStatus status;
 
     // Optional notes to accompany the status change

@@ -10,50 +10,50 @@ import java.time.LocalDate;
  */
 public class CareServiceLogCreateRequest {
 
-    @Size(max = 100)
+    @Size(max = 100, message = "Service type cannot be longer than 100 characters")
     private String serviceType;
 
-    @Size(max = 50)
+    @Size(max = 50, message = "Service ID cannot be longer than 50 characters")
     private String serviceId;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Appointment ID cannot be longer than 20 characters")
     private String appointmentId;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Pet ID cannot be longer than 20 characters")
     private String petId;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "Pet name cannot be longer than 100 characters")
     private String petName;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Owner ID cannot be longer than 20 characters")
     private String ownerId;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "Owner name cannot be longer than 100 characters")
     private String ownerName;
 
-    @Size(max = 30)
+    @Size(max = 30, message = "Provider ID cannot be longer than 30 characters")
     private String providerId;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "Provider name cannot be longer than 100 characters")
     private String providerName;
 
     private LocalDate serviceDate;
 
     private ServiceStatus status;
 
-    @Size(max = 1000)
+    @Size(max = 1000, message = "Intake condition cannot be longer than 1000 characters")
     private String intakeCondition;
 
-    @Size(max = 1000)
+    @Size(max = 1000, message = "Services performed cannot be longer than 1000 characters")
     private String servicesPerformed;
 
-    @Size(max = 1000)
+    @Size(max = 1000, message = "Notes cannot be longer than 1000 characters")
     private String notes;
 
     private boolean returnToRescue;
 
     // Optional caseId for rescue animals
-    @Size(max = 30)
+    @Size(max = 30, message = "Case ID cannot be longer than 30 characters")
     private String caseId;
 
     // getters and setters

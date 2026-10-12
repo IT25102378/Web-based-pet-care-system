@@ -1,5 +1,13 @@
 package com.petnexus.backend.dto;
 
+
+
+
+
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
@@ -9,28 +17,34 @@ import java.math.BigDecimal;
  */
 public class CareServiceUpdateRequest {
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Service ID cannot be longer than 20 characters")
     private String serviceId;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "Name cannot be longer than 100 characters")
     private String name;
 
-    @Size(max = 2000)
+    @Size(max = 2000, message = "Description cannot be longer than 2000 characters")
     private String description;
 
+    @Positive(message = "Price must be greater than zero")
     private BigDecimal price;
+    @PositiveOrZero(message = "Original value cannot be negative")
     private BigDecimal originalValue;
+    @Min(value = 0, message = "Discount must be between 0 and 100 percent")
+    @Max(value = 100, message = "Discount must be between 0 and 100 percent")
     private Integer discountPercent;
 
-    @Size(max = 50)
+    @Size(max = 50, message = "Badge cannot be longer than 50 characters")
     private String badge;
 
-    @Size(max = 300)
+    @Size(max = 300, message = "Tagline cannot be longer than 300 characters")
     private String tagline;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "Recommended for cannot be longer than 100 characters")
     private String recommendedFor;
 
+    @Min(value = 1, message = "Duration must be between 1 and 1440 minutes")
+    @Max(value = 1440, message = "Duration must be between 1 and 1440 minutes")
     private Integer durationMinutes;
 
     // active flag: if set, toggles between SCHEDULED (true) and COMPLETED/inactive (false)
