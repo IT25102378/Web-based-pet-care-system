@@ -59,9 +59,8 @@ export const VetDashboard = () => {
     loadVetData();
   }, []);
 
-  const waitingPatients = (appointments || []).filter(
-    (a) => a.status === 'CheckedIn' || a.status === 'InRoom'
-  );
+  // A patient reaches the veterinarian only once clinic staff have sent it to the exam room
+  const waitingPatients = (appointments || []).filter((a) => a.status === 'InRoom');
 
   return (
     <div style={{ color: 'var(--text-main)' }}>
@@ -102,7 +101,7 @@ export const VetDashboard = () => {
       {/* Metrics Row */}
       <div className="grid-4 mb-8">
         <StatCard
-          label="Patients Waiting"
+          label="Patients in Exam Room"
           value={waitingPatients.length}
           icon={Clock}
           iconBg="rgba(245, 158, 11, 0.15)"
@@ -295,8 +294,8 @@ export const VetDashboard = () => {
       {/* Current Waiting Patients Grid */}
       <div className="grid-2">
         <Card
-          title="Today's Consultation Schedule"
-          subtitle="Waiting and active patients"
+          title="Patients in Your Exam Room"
+          subtitle="Sent to the room by clinic staff and ready for consultation"
           icon={Calendar}
           actions={
             <Link to="/vet/schedule" className="text-xs text-primary font-semibold flex items-center gap-1">
@@ -305,7 +304,12 @@ export const VetDashboard = () => {
           }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {appointments.map((a) => (
+            {waitingPatients.length === 0 && (
+              <p className="text-sm text-muted">
+                No patients in the exam room yet. An appointment appears here once clinic staff send the patient to the room.
+              </p>
+            )}
+            {waitingPatients.map((a) => (
               <div
                 key={a.appointmentId}
                 style={{
