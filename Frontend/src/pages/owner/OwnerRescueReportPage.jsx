@@ -18,8 +18,11 @@ import {
   HeartHandshake,
 } from 'lucide-react';
 
+import { validateText, validatePhone } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const OwnerRescueReportPage = () => {
   const { currentUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
 
   const [myReports, setMyReports] = useState([]);
@@ -65,8 +68,14 @@ export const OwnerRescueReportPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.rescueLocation.trim()) {
-      showToast('Action Required', 'Please specify the location where the animal was sighted.', 'error');
+    const reportError = check(
+      ['formData.rescueLocation', formData.rescueLocation, validateText(formData.rescueLocation, { label: 'Location where the animal was sighted', required: true, min: 5, max: 500 })],
+      ['formData.temporaryName', formData.temporaryName, validateText(formData.temporaryName, { label: 'Animal name', max: 100 })],
+      ['formData.description', formData.description, validateText(formData.description, { label: 'Description', max: 2000 })],
+      ['formData.reportedByUserPhone', formData.reportedByUserPhone, validatePhone(formData.reportedByUserPhone, { label: 'Contact phone number' })],
+    );
+    if (reportError) {
+      showToast('Please Check the Report', reportError, 'error');
       return;
     }
 
@@ -211,6 +220,7 @@ export const OwnerRescueReportPage = () => {
                   required
                 />
               </div>
+              {errorFor('formData.rescueLocation', formData.rescueLocation)}
               <span className="text-xs text-muted mt-1 block">
                 Include nearby landmarks, cross streets, or building names to guide rescue officers.
               </span>
@@ -229,6 +239,7 @@ export const OwnerRescueReportPage = () => {
                   value={formData.temporaryName}
                   onChange={handleChange}
                 />
+                {errorFor('formData.temporaryName', formData.temporaryName)}
               </div>
 
               <div className="form-group">
@@ -272,11 +283,14 @@ export const OwnerRescueReportPage = () => {
                     name="reportedByUserPhone"
                     className="form-input"
                     style={{ paddingLeft: '2.4rem' }}
-                    placeholder="e.g., +94 77 123 4567"
+                    placeholder="e.g., 0771234567"
+                    maxLength={10}
+                    inputMode="numeric"
                     value={formData.reportedByUserPhone}
                     onChange={handleChange}
                   />
                 </div>
+                {errorFor('formData.reportedByUserPhone', formData.reportedByUserPhone)}
               </div>
             </div>
 
@@ -292,6 +306,7 @@ export const OwnerRescueReportPage = () => {
                 value={formData.description}
                 onChange={handleChange}
               />
+              {errorFor('formData.description', formData.description)}
             </div>
 
             <div className="form-group">

@@ -1,5 +1,7 @@
 package com.petnexus.backend.controller;
 
+
+import jakarta.validation.Valid;
 import com.petnexus.backend.dto.AdoptionApplicationDto;
 import com.petnexus.backend.dto.CreateApplicationRequest;
 import com.petnexus.backend.dto.ReviewApplicationRequest;
@@ -35,7 +37,7 @@ public class AdoptionApplicationController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping
-    public ResponseEntity<AdoptionApplicationDto> submitApplication(@RequestBody CreateApplicationRequest request) {
+    public ResponseEntity<AdoptionApplicationDto> submitApplication(@Valid @RequestBody CreateApplicationRequest request) {
         AdoptionApplicationDto response = applicationService.submitApplication(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

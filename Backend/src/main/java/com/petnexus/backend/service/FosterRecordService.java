@@ -47,6 +47,8 @@ public class FosterRecordService {
         }
 
         String fullName = req.getFullName() != null ? req.getFullName().trim() : "Foster Family";
+        validateCapacity(req.getActivePlacements() != null ? req.getActivePlacements() : 0,
+                req.getMaxCapacity() != null ? req.getMaxCapacity() : 2);
 
         FosterRecord fr = FosterRecord.builder()
                 .fosterId(fosterId)
@@ -70,6 +72,9 @@ public class FosterRecordService {
         FosterRecord fr = fosterRecordRepository.findByFosterId(fosterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Foster record not found with ID: " + fosterId));
 
+        validateCapacity(req.getActivePlacements() != null ? req.getActivePlacements() : fr.getActivePlacements(),
+                req.getMaxCapacity() != null ? req.getMaxCapacity() : fr.getMaxCapacity());
+
         if (req.getFullName() != null && !req.getFullName().isBlank()) {
             fr.setFullName(req.getFullName().trim());
         }
@@ -84,6 +89,13 @@ public class FosterRecordService {
 
         FosterRecord saved = fosterRecordRepository.save(fr);
         return toResponse(saved);
+    }
+
+    private void validateCapacity(Integer activePlacements, Integer maxCapacity) {
+        if (activePlacements != null && maxCapacity != null && activePlacements > maxCapacity) {
+            throw new com.petnexus.backend.exception.BadRequestException(
+                    "Active placements (" + activePlacements + ") cannot be more than the maximum capacity (" + maxCapacity + ").");
+        }
     }
 
     @Transactional

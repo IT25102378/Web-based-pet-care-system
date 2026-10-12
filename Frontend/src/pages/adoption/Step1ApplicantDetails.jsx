@@ -44,7 +44,9 @@ export const Step1ApplicantDetails = ({ formData, updateFormData, errors }) => {
             className="form-control"
             value={formData.applicantPhone || ''}
             onChange={(e) => updateFormData({ applicantPhone: e.target.value })}
-            placeholder="+94 77 123 4567"
+            placeholder="0771234567"
+            maxLength={10}
+            inputMode="numeric"
           />
           {errors?.applicantPhone && <span className="form-error">{errors.applicantPhone}</span>}
         </div>
@@ -109,9 +111,11 @@ export const Step1ApplicantDetails = ({ formData, updateFormData, errors }) => {
             type="number"
             min="0"
             className="form-control"
+            max="80"
             value={formData.petExperienceYears || 5}
             onChange={(e) => updateFormData({ petExperienceYears: Number(e.target.value) })}
           />
+          {errors?.petExperienceYears && <span className="form-error">{errors.petExperienceYears}</span>}
         </div>
 
         <div className="form-group">

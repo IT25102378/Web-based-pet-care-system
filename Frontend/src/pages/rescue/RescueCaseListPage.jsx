@@ -23,8 +23,11 @@ import {
   Check,
 } from 'lucide-react';
 
+import { validatePetName, validateText } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const RescueCaseListPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const [cases, setCases] = useState([]);
   const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' or 'PENDING_REPORTS'
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -100,8 +103,12 @@ export const RescueCaseListPage = () => {
 
   const handleSaveQuickEdit = async (e) => {
     e.preventDefault();
-    if (!editFormData.temporaryName.trim() || !editFormData.rescueLocation.trim()) {
-      showToast('Action Required', 'Temporary name and rescue location are required.', 'error');
+    const quickEditError = check(
+      ['editFormData.temporaryName', editFormData.temporaryName, validatePetName(editFormData.temporaryName, { label: 'Temporary name' })],
+      ['editFormData.rescueLocation', editFormData.rescueLocation, validateText(editFormData.rescueLocation, { label: 'Rescue location', required: true, min: 5, max: 500 })],
+    );
+    if (quickEditError) {
+      showToast('Please Check the Case Details', quickEditError, 'error');
       return;
     }
     try {
@@ -414,6 +421,7 @@ export const RescueCaseListPage = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, temporaryName: e.target.value })}
                 required
               />
+              {errorFor('editFormData.temporaryName', editFormData.temporaryName)}
             </div>
             <div className="grid-2">
               <div className="form-group">
@@ -447,6 +455,7 @@ export const RescueCaseListPage = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, rescueLocation: e.target.value })}
                 required
               />
+              {errorFor('editFormData.rescueLocation', editFormData.rescueLocation)}
             </div>
             <div className="form-group">
               <label className="form-label">Condition Severity</label>

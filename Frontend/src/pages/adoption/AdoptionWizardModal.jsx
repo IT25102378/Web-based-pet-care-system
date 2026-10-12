@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { ArrowLeft, ArrowRight, Check, Heart, Loader2 } from 'lucide-react';
 
+import { collectErrors, validatePersonName, validateEmail, validatePhone, validateText, validateNumber } from '../../utils/validators';
 export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
@@ -64,13 +65,15 @@ export const AdoptionWizardModal = ({ isOpen, onClose, pet }) => {
   const validateStep = (step) => {
     const errs = {};
     if (step === 1) {
-      if (!formData.applicantName?.trim()) errs.applicantName = 'Full name is required';
-      if (!formData.applicantEmail?.trim()) errs.applicantEmail = 'Email is required';
-      if (!formData.applicantPhone?.trim()) errs.applicantPhone = 'Phone number is required';
-      else if (!/^\d{10}$/.test(formData.applicantPhone.replace(/\D/g, ''))) errs.applicantPhone = 'Phone number must be exactly 10 digits';
-      if (!formData.applicantAddress?.trim()) errs.applicantAddress = 'Address is required';
-      if (!formData.occupation?.trim()) errs.occupation = 'Occupation is required';
-      if (!formData.reasonForAdoption?.trim()) errs.reasonForAdoption = 'Please tell us why you wish to adopt';
+      Object.assign(errs, collectErrors({
+        applicantName: validatePersonName(formData.applicantName),
+        applicantEmail: validateEmail(formData.applicantEmail),
+        applicantPhone: validatePhone(formData.applicantPhone, { required: true }),
+        applicantAddress: validateText(formData.applicantAddress, { label: 'Address', required: true, min: 5, max: 300 }),
+        occupation: validateText(formData.occupation, { label: 'Occupation', required: true, max: 100 }),
+        petExperienceYears: validateNumber(formData.petExperienceYears, { label: 'Pet experience', min: 0, max: 80, integer: true, unit: 'years' }),
+        reasonForAdoption: validateText(formData.reasonForAdoption, { label: 'Reason for adoption', required: true, min: 20, max: 2000 }),
+      }));
     }
     if (step === 2) {
       if (!documents.idDoc) errs.idDoc = 'Government ID proof is required';

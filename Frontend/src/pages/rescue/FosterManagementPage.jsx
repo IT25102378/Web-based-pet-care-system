@@ -6,8 +6,11 @@ import { DataTable } from '../../components/common/DataTable';
 import { useToast } from '../../context/ToastContext';
 import { Home, User, Phone, MapPin, Star, Plus, Edit2, Check, Trash2, AlertTriangle } from 'lucide-react';
 
+import { validatePersonName, validatePhone, validateEmail, validateText, validateNumber } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const FosterManagementPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const [fosters, setFosters] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,8 +80,20 @@ export const FosterManagementPage = () => {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.fullName.trim()) {
-      showToast('Validation Error', 'Full name is required.', 'error');
+    const fosterError = check(
+      ['formData.fullName', formData.fullName, validatePersonName(formData.fullName)],
+      ['formData.phone', formData.phone, validatePhone(formData.phone)],
+      ['formData.email', formData.email, validateEmail(formData.email, { required: false })],
+      ['formData.address', formData.address, validateText(formData.address, { label: 'Address', max: 300 })],
+      ['formData.activePlacements', formData.activePlacements, validateNumber(formData.activePlacements, { label: 'Active placements', min: 0, max: 20, integer: true })],
+      ['formData.maxCapacity', formData.maxCapacity, validateNumber(formData.maxCapacity, { label: 'Maximum capacity', required: true, min: 1, max: 20, integer: true, unit: 'animals' })],
+      Number(formData.activePlacements) > Number(formData.maxCapacity)
+        ? 'Active placements cannot be more than the maximum capacity'
+        : null,
+      ['formData.rating', formData.rating, validateNumber(formData.rating, { label: 'Rating', min: 0, max: 5 })],
+    );
+    if (fosterError) {
+      showToast('Please Check the Foster Details', fosterError, 'error');
       return;
     }
     try {
@@ -98,8 +113,20 @@ export const FosterManagementPage = () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.fullName.trim()) {
-      showToast('Validation Error', 'Full name is required.', 'error');
+    const fosterError = check(
+      ['formData.fullName', formData.fullName, validatePersonName(formData.fullName)],
+      ['formData.phone', formData.phone, validatePhone(formData.phone)],
+      ['formData.email', formData.email, validateEmail(formData.email, { required: false })],
+      ['formData.address', formData.address, validateText(formData.address, { label: 'Address', max: 300 })],
+      ['formData.activePlacements', formData.activePlacements, validateNumber(formData.activePlacements, { label: 'Active placements', min: 0, max: 20, integer: true })],
+      ['formData.maxCapacity', formData.maxCapacity, validateNumber(formData.maxCapacity, { label: 'Maximum capacity', required: true, min: 1, max: 20, integer: true, unit: 'animals' })],
+      Number(formData.activePlacements) > Number(formData.maxCapacity)
+        ? 'Active placements cannot be more than the maximum capacity'
+        : null,
+      ['formData.rating', formData.rating, validateNumber(formData.rating, { label: 'Rating', min: 0, max: 5 })],
+    );
+    if (fosterError) {
+      showToast('Please Check the Foster Details', fosterError, 'error');
       return;
     }
     try {
@@ -251,6 +278,7 @@ export const FosterManagementPage = () => {
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 placeholder="e.g. Sarah Jenkins"
               />
+              {errorFor('formData.fullName', formData.fullName)}
             </div>
 
             <div className="grid-2 gap-4">
@@ -261,8 +289,11 @@ export const FosterManagementPage = () => {
                   className="form-control"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+94 77 123 4567"
+                  placeholder="0771234567"
+                  maxLength={10}
+                  inputMode="numeric"
                 />
+                {errorFor('formData.phone', formData.phone)}
               </div>
               <div className="form-group">
                 <label className="form-label font-bold text-xs">Email Address</label>
@@ -273,6 +304,7 @@ export const FosterManagementPage = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="sarah.jenkins@example.com"
                 />
+                {errorFor('formData.email', formData.email)}
               </div>
             </div>
 
@@ -285,6 +317,7 @@ export const FosterManagementPage = () => {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="No. 142, Havelock Road, Colombo 05"
               />
+              {errorFor('formData.address', formData.address)}
             </div>
 
             <div className="form-group">
@@ -309,6 +342,7 @@ export const FosterManagementPage = () => {
                   value={formData.maxCapacity}
                   onChange={(e) => setFormData({ ...formData, maxCapacity: e.target.value })}
                 />
+                {errorFor('formData.maxCapacity', formData.maxCapacity)}
               </div>
               <div className="form-group">
                 <label className="form-label font-bold text-xs">Rating (0 - 5)</label>
@@ -321,6 +355,7 @@ export const FosterManagementPage = () => {
                   value={formData.rating}
                   onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                 />
+                {errorFor('formData.rating', formData.rating)}
               </div>
               <div className="form-group">
                 <label className="form-label font-bold text-xs">Status</label>
@@ -370,6 +405,7 @@ export const FosterManagementPage = () => {
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               />
+              {errorFor('formData.fullName', formData.fullName)}
             </div>
 
             <div className="grid-2 gap-4">
@@ -381,6 +417,7 @@ export const FosterManagementPage = () => {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
+                {errorFor('formData.phone', formData.phone)}
               </div>
               <div className="form-group">
                 <label className="form-label font-bold text-xs">Email Address</label>
@@ -390,6 +427,7 @@ export const FosterManagementPage = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
+                {errorFor('formData.email', formData.email)}
               </div>
             </div>
 
@@ -401,6 +439,7 @@ export const FosterManagementPage = () => {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
+              {errorFor('formData.address', formData.address)}
             </div>
 
             <div className="form-group">
@@ -424,6 +463,7 @@ export const FosterManagementPage = () => {
                   value={formData.maxCapacity}
                   onChange={(e) => setFormData({ ...formData, maxCapacity: e.target.value })}
                 />
+                {errorFor('formData.maxCapacity', formData.maxCapacity)}
               </div>
               <div className="form-group">
                 <label className="form-label font-bold text-xs">Rating (0 - 5)</label>
@@ -436,6 +476,7 @@ export const FosterManagementPage = () => {
                   value={formData.rating}
                   onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                 />
+                {errorFor('formData.rating', formData.rating)}
               </div>
               <div className="form-group">
                 <label className="form-label font-bold text-xs">Status</label>

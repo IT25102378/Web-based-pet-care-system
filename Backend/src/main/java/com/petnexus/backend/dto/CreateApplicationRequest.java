@@ -1,5 +1,17 @@
 package com.petnexus.backend.dto;
 
+
+
+
+
+
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
+import com.petnexus.backend.validation.ValidationRules;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,17 +28,25 @@ public class CreateApplicationRequest {
     private String applicantId;
     private String applicationType;
     private String petName;
+    @Size(max = 150, message = "Applicant name cannot be longer than 150 characters")
+    @Pattern(regexp = ValidationRules.OPTIONAL_PERSON_NAME, message = ValidationRules.PERSON_NAME_MESSAGE)
     private String applicantName;
+    @Pattern(regexp = ValidationRules.OPTIONAL_PHONE, message = ValidationRules.PHONE_MESSAGE)
     private String applicantPhone;
+    @Email(message = ValidationRules.EMAIL_MESSAGE)
     private String applicantEmail;
+    @Size(max = 300, message = "Address cannot be longer than 300 characters")
     private String applicantAddress;
     private String occupation;
     private String housingType;
     private Boolean hasFencedYard;
+    @Min(value = 0, message = "Pet experience cannot be negative")
+    @Max(value = 80, message = "Pet experience cannot be more than 80 years")
     private Integer petExperienceYears;
     private String dailyAloneHours;
     private Boolean hasOtherPets;
     private String otherPetsDetails;
+    @Size(max = 2000, message = "Reason for adoption cannot be longer than 2000 characters")
     private String reasonForAdoption;
     private Boolean termsAccepted;
     private String signatureDataUrl;

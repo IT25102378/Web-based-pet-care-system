@@ -7,8 +7,11 @@ import { RescueCaseStatus } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { PlusCircle, Check, ArrowRight, ShieldAlert } from 'lucide-react';
 
+import { validatePetName, validateText, validateNotFutureDate } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const RegisterRescuePage = () => {
   const { currentUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -33,8 +36,18 @@ export const RegisterRescuePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.temporaryName || !formData.rescueLocation || !formData.breed || !formData.species) {
-      showToast('Action Required', 'Pet name, species, breed, and rescue location are required.', 'error');
+    const rescueError = check(
+      ['formData.temporaryName', formData.temporaryName, validatePetName(formData.temporaryName, { label: 'Temporary name' })],
+      !formData.species ? 'Species is required' : null,
+      ['formData.breed', formData.breed, validateText(formData.breed, { label: 'Breed', required: true, max: 100 })],
+      ['formData.rescueLocation', formData.rescueLocation, validateText(formData.rescueLocation, { label: 'Rescue location', required: true, min: 5, max: 500 })],
+      ['formData.intakeDate', formData.intakeDate, validateNotFutureDate(formData.intakeDate, { label: 'Intake date' })],
+      ['formData.estimatedAge', formData.estimatedAge, validateText(formData.estimatedAge, { label: 'Estimated age', max: 50 })],
+      ['formData.microchipId', formData.microchipId, validateText(formData.microchipId, { label: 'Microchip ID', max: 50 })],
+      ['formData.description', formData.description, validateText(formData.description, { label: 'Description', max: 2000 })],
+    );
+    if (rescueError) {
+      showToast('Please Check the Rescue Details', rescueError, 'error');
       return;
     }
     if (!coverPhoto) {
@@ -83,6 +96,7 @@ export const RegisterRescuePage = () => {
                 placeholder="e.g. Luna / Zeus"
                 required
               />
+              {errorFor('formData.temporaryName', formData.temporaryName)}
             </div>
 
             <div className="form-group">
@@ -109,6 +123,7 @@ export const RegisterRescuePage = () => {
                 placeholder="e.g. Australian Shepherd Mix"
                 required
               />
+              {errorFor('formData.breed', formData.breed)}
             </div>
 
             <div className="form-group">
@@ -130,6 +145,7 @@ export const RegisterRescuePage = () => {
                   onChange={(e) => setFormData({ ...formData, estimatedAge: e.target.value })}
                   placeholder="e.g. 1.5 years"
                 />
+                {errorFor('formData.estimatedAge', formData.estimatedAge)}
               </div>
             </div>
           </div>
@@ -145,6 +161,7 @@ export const RegisterRescuePage = () => {
                 placeholder="e.g. Found near High Level Road, Nugegoda or Baseline Road, Colombo 09"
                 required
               />
+              {errorFor('formData.rescueLocation', formData.rescueLocation)}
             </div>
 
             <div className="form-group">
@@ -171,6 +188,7 @@ export const RegisterRescuePage = () => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe temperament upon approach, behavioral reactions, and surrounding circumstances..."
             />
+            {errorFor('formData.description', formData.description)}
           </div>
 
           <div className="mb-6">

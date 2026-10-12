@@ -30,10 +30,13 @@ import {
 import { PublishListingModal } from '../../components/common/PublishListingModal';
 import { userApi } from '../../api/userApi';
 
+import { validateText } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const RescueCaseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
 
   const [rescueCase, setRescueCase] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -238,8 +241,12 @@ export const RescueCaseDetailPage = () => {
 
   const handleSaveLog = async (e) => {
     e.preventDefault();
-    if (!logFormData.title || !logFormData.notes) {
-      showToast('Action Required', 'Title and notes are required.', 'error');
+    const logError = check(
+      ['logFormData.title', logFormData.title, validateText(logFormData.title, { label: 'Log title', required: true, min: 3, max: 200 })],
+      ['logFormData.notes', logFormData.notes, validateText(logFormData.notes, { label: 'Log notes', required: true, min: 5, max: 2000 })],
+    );
+    if (logError) {
+      showToast('Please Check the Progress Log', logError, 'error');
       return;
     }
     try {
@@ -802,6 +809,7 @@ export const RescueCaseDetailPage = () => {
                 placeholder="e.g. Completed second course of antibiotics"
                 required
               />
+              {errorFor('logFormData.title', logFormData.title)}
             </div>
 
             <div className="form-group">
@@ -814,6 +822,7 @@ export const RescueCaseDetailPage = () => {
                 placeholder="Record vital signs, wound healing status, temperament with other animals..."
                 required
               />
+              {errorFor('logFormData.notes', logFormData.notes)}
             </div>
 
             <div className="flex items-center justify-end gap-2 mt-4">
