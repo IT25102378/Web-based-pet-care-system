@@ -451,8 +451,9 @@ public class Phase8InventorySupplierIntegrationTest {
     void testListActiveSuppliers() {
         ResponseEntity<List<SupplierResponse>> response = supplierController.getSuppliers(true);
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
         assertFalse(response.getBody().isEmpty());
-        assertTrue(response.getBody().stream().allMatch(SupplierResponse::isActive));
+        assertTrue(response.getBody().stream().allMatch(s -> s != null && s.isActive()));
     }
 
     // -------------------------------------------------------------
