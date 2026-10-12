@@ -7,8 +7,11 @@ import { Card } from '../../components/common/Card';
 import { UserPlus, CheckCircle, Clock, AlertTriangle, ArrowRight, Stethoscope, Sparkles, PawPrint, Database } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 
+import { validatePersonName, validatePhone, validatePetName, validateText } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const WalkInRegistrationPage = () => {
   const { showToast } = useToast();
+  const { check, errorFor } = useFieldErrors();
   const navigate = useNavigate();
 
   const vets = [
@@ -89,8 +92,15 @@ export const WalkInRegistrationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.ownerName || !formData.petName || !formData.reason || !formData.species) {
-      showToast('Action Required', 'Client name, pet name, species, and visit reason are required.', 'error');
+    const walkInError = check(
+      ['formData.ownerName', formData.ownerName, validatePersonName(formData.ownerName, { label: 'Owner name' })],
+      ['formData.ownerPhone', formData.ownerPhone, validatePhone(formData.ownerPhone)],
+      ['formData.petName', formData.petName, validatePetName(formData.petName)],
+      !formData.species ? 'Species is required' : null,
+      ['formData.reason', formData.reason, validateText(formData.reason, { label: 'Reason for visit', required: true, min: 5, max: 1000 })],
+    );
+    if (walkInError) {
+      showToast('Please Check the Walk-In Details', walkInError, 'error');
       return;
     }
 
@@ -221,6 +231,7 @@ export const WalkInRegistrationPage = () => {
                   placeholder="e.g. John Miller"
                   required
                 />
+                {errorFor('formData.ownerName', formData.ownerName)}
               </div>
 
               <div className="form-group">
@@ -230,8 +241,11 @@ export const WalkInRegistrationPage = () => {
                   className="form-control"
                   value={formData.ownerPhone}
                   onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
-                  placeholder="e.g. +94 77 123 4567"
+                  placeholder="e.g. 0771234567"
+                  maxLength={10}
+                  inputMode="numeric"
                 />
+                {errorFor('formData.ownerPhone', formData.ownerPhone)}
               </div>
             </div>
 
@@ -318,6 +332,7 @@ export const WalkInRegistrationPage = () => {
                   </div>
                 )}
               </div>
+              {errorFor('formData.petName', formData.petName)}
 
               <div className="form-group">
                 <label className="form-label">Species <span className="required">*</span></label>
@@ -411,6 +426,7 @@ export const WalkInRegistrationPage = () => {
                   placeholder="e.g. Limping on right paw after playing in garden"
                   required
                 />
+                {errorFor('formData.reason', formData.reason)}
               </div>
             </div>
 

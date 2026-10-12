@@ -1,5 +1,7 @@
 package com.petnexus.backend.dto;
 
+
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -23,5 +25,6 @@ public class RescheduleRequest {
 
     private String vetName;
     private String vetId;
+    @Size(max = 500, message = "Reschedule reason cannot be longer than 500 characters")
     private String rescheduleReason;
 }

@@ -1,5 +1,7 @@
 package com.petnexus.backend.dto;
 
+
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -41,8 +43,11 @@ public class AppointmentRequest {
     private String timeSlot;
 
     @NotBlank(message = "reason is required")
+    @Size(min = 5, max = 1000, message = "Reason for visit must be between 5 and 1000 characters")
     private String reason;
 
+    @Size(max = 1000, message = "Symptoms cannot be longer than 1000 characters")
     private String symptoms;
+    @Size(max = 2000, message = "Notes cannot be longer than 2000 characters")
     private String notes;
 }

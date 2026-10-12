@@ -30,8 +30,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+import { validateText } from '../../utils/validators';
+import { useFieldErrors } from '../../utils/useFieldErrors';
 export const BookAppointmentPage = () => {
   const { currentUser } = useAuth();
+  const { check, errorFor } = useFieldErrors();
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
 
@@ -143,8 +146,12 @@ export const BookAppointmentPage = () => {
   // -------------------------------------------------------------
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPetId || !reason.trim()) {
-      showToast('Form Incomplete', 'Please select a pet and state the visit reason.', 'error');
+    const bookingError = check(
+      !selectedPetId ? 'Please select the pet this appointment is for' : null,
+      ['reason', reason, validateText(reason, { label: 'Reason for visit', required: true, min: 5, max: 1000 })],
+    );
+    if (bookingError) {
+      showToast('Form Incomplete', bookingError, 'error');
       return;
     }
     const today = new Date().toISOString().split('T')[0];
@@ -162,7 +169,7 @@ export const BookAppointmentPage = () => {
         petName: petObj ? petObj.name : 'Patient',
         ownerId: currentUser.userId,
         ownerName: currentUser.fullName,
-        ownerPhone: currentUser.phone || '+94 77 123 4567',
+        ownerPhone: currentUser.phone || '',
         vetId: 'USR-002',
         vetName,
         serviceType,
@@ -583,6 +590,7 @@ export const BookAppointmentPage = () => {
                 placeholder="e.g. Annual booster vaccines and ear itching check"
                 required
               />
+              {errorFor('reason', reason)}
             </div>
 
             <div className="form-group">
