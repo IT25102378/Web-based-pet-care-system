@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 @Table(
     name = "inventory_items",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_inventory_items_item_id", columnNames = "itemId"),
         @UniqueConstraint(name = "uk_inventory_items_sku", columnNames = "sku")
     },
     indexes = {
@@ -33,10 +32,7 @@ import java.time.LocalDateTime;
 public class InventoryItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, length = 20)
+    @Column(name = "item_id", nullable = false, length = 20)
     private String itemId; // e.g., INV-101
 
     @Column(nullable = false, length = 150)
@@ -73,7 +69,7 @@ public class InventoryItem {
     private LocalDate expiryDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supplier_fk_id", foreignKey = @ForeignKey(name = "fk_inventory_items_supplier"))
+    @JoinColumn(name = "supplier_id", referencedColumnName = "supplier_id", foreignKey = @ForeignKey(name = "fk_inventory_items_supplier"))
     private Supplier supplier;
 
     @Column(length = 150)
