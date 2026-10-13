@@ -6,6 +6,7 @@ import com.petnexus.backend.dto.*;
 import com.petnexus.backend.entity.Supplier;
 import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.ResourceNotFoundException;
+import com.petnexus.backend.repository.PurchaseOrderRepository;
 import com.petnexus.backend.repository.SupplierRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +38,9 @@ public class Phase8InventorySupplierIntegrationTest {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private PurchaseOrderRepository purchaseOrderRepository;
 
     private Supplier testSupplier;
 
@@ -475,11 +479,11 @@ public class Phase8InventorySupplierIntegrationTest {
     }
 
     // -------------------------------------------------------------
-    // 16. Delete Supplier (Soft Delete)
+    // 16. Delete Supplier (only when deactivated)
     // -------------------------------------------------------------
     @Test
-    @DisplayName("16. Delete Supplier - Soft Delete")
-    void testDeleteSupplier() {
+    @DisplayName("16. Delete Supplier - Rejected While Active")
+    void testDeleteActiveSupplierRejected() {
         Supplier temp = supplierRepository.save(Supplier.builder()
                 .supplierId("SUP-TEMP")
                 .companyName("Temporary Supplier Ltd")
@@ -487,11 +491,75 @@ public class Phase8InventorySupplierIntegrationTest {
                 .active(true)
                 .build());
 
+        assertThrows(BadRequestException.class, () -> supplierController.deleteSupplier(temp.getSupplierId()));
+        assertTrue(supplierRepository.findBySupplierId(temp.getSupplierId()).isPresent());
+    }
+
+    @Test
+    @DisplayName("16b. Delete Supplier - Deactivated Supplier Removed, Item Keeps Supplier Name")
+    void testDeleteDeactivatedSupplier() {
+        Supplier temp = supplierRepository.save(Supplier.builder()
+                .supplierId("SUP-TEMP")
+                .companyName("Temporary Supplier Ltd")
+                .email("temp@supplier.com")
+                .active(true)
+                .build());
+
+        InventoryItemRequest itemReq = InventoryItemRequest.builder()
+                .name("Item From Temporary Supplier")
+                .category("Pharmaceuticals")
+                .sku("TMP-SUP-001")
+                .unit("Bottles")
+                .unitPrice(new BigDecimal("500.00"))
+                .sellingPrice(new BigDecimal("800.00"))
+                .supplierId(temp.getSupplierId())
+                .build();
+        String itemId = inventoryController.addInventoryItem(itemReq).getBody().getItemId();
+
+        // Deactivate first, through the same update endpoint the Suppliers page uses
+        supplierController.updateSupplier(temp.getSupplierId(), SupplierRequest.builder()
+                .companyName(temp.getCompanyName())
+                .email(temp.getEmail())
+                .active(false)
+                .build());
+
         ResponseEntity<Void> response = supplierController.deleteSupplier(temp.getSupplierId());
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        assertFalse(supplierRepository.findBySupplierId(temp.getSupplierId()).isPresent());
 
-        Supplier refreshed = supplierRepository.findBySupplierId(temp.getSupplierId()).orElseThrow();
-        assertFalse(refreshed.isActive());
+        InventoryItemResponse item = inventoryController.getItemById(itemId).getBody();
+        assertNull(item.getSupplierId());
+        assertEquals("Temporary Supplier Ltd", item.getSupplierName());
+    }
+
+    @Test
+    @DisplayName("16c. Purchase Order - Rejected For Deactivated Supplier, Notes Stored")
+    void testPurchaseOrderSupplierActiveAndNotes() {
+        Supplier inactive = supplierRepository.save(Supplier.builder()
+                .supplierId("SUP-OFF-01")
+                .companyName("Inactive Vendor Ltd")
+                .email("off@supplier.com")
+                .active(false)
+                .build());
+
+        PurchaseOrderRequest toInactive = PurchaseOrderRequest.builder()
+                .supplierId(inactive.getSupplierId())
+                .supplierName(inactive.getCompanyName())
+                .itemsDescription("Rabies Vaccine (2 packs)")
+                .totalAmount(new BigDecimal("1000.00"))
+                .build();
+        assertThrows(BadRequestException.class, () -> supplierController.createPurchaseOrder(toInactive));
+
+        PurchaseOrderRequest withNotes = PurchaseOrderRequest.builder()
+                .supplierId(testSupplier.getSupplierId())
+                .supplierName(testSupplier.getCompanyName())
+                .itemsDescription("Rabies Vaccine (2 packs)")
+                .totalAmount(new BigDecimal("1000.00"))
+                .notes("  Deliver before 10 AM, keep vaccines refrigerated  ")
+                .build();
+        String orderId = supplierController.createPurchaseOrder(withNotes).getBody().getOrderId();
+        assertEquals("Deliver before 10 AM, keep vaccines refrigerated",
+                purchaseOrderRepository.findByOrderId(orderId).orElseThrow().getNotes());
     }
 
     // -------------------------------------------------------------
@@ -613,5 +681,23 @@ public class Phase8InventorySupplierIntegrationTest {
     void testInvalidIds() {
         assertThrows(ResourceNotFoundException.class, () -> inventoryController.getItemById("INV-99999"));
         assertThrows(ResourceNotFoundException.class, () -> supplierController.getSupplier("SUP-99999"));
+    }
+
+    @Test
+    @DisplayName("Rename Supplier - Rejected When Another Supplier Has That Name")
+    void testRenameSupplierToExistingNameRejected() {
+        Supplier other = supplierRepository.save(Supplier.builder()
+                .supplierId("SUP-REN-01")
+                .companyName("Rename Target Vendor Ltd")
+                .email("rename@supplier.com")
+                .active(true)
+                .build());
+
+        SupplierRequest rename = SupplierRequest.builder()
+                .companyName(testSupplier.getCompanyName())
+                .email(other.getEmail())
+                .build();
+
+        assertThrows(BadRequestException.class, () -> supplierController.updateSupplier(other.getSupplierId(), rename));
     }
 }

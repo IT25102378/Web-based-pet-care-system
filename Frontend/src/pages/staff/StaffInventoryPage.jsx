@@ -22,8 +22,9 @@ import {
   Layers,
 } from 'lucide-react';
 
-import { validateText, validateRequired, validateNumber, validateNotPastDate, todayISO } from '../../utils/validators';
+import { validateText, validateRequired, validateNumber, validateNotPastDate, todayISO, MAX_STOCK_QUANTITY } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
+import { stockPercentage } from '../../utils/stockLevel';
 import { RecordIds } from '../../components/common/RecordIds';
 export const StaffInventoryPage = () => {
   const { showToast } = useToast();
@@ -96,10 +97,10 @@ export const StaffInventoryPage = () => {
       ['newItemData.name', newItemData.name, validateText(newItemData.name, { label: 'Item name', required: true, min: 2, max: 150 })],
       ['newItemData.sku', newItemData.sku, validateText(newItemData.sku, { label: 'SKU', required: true, max: 50 })],
       ['newItemData.unit', newItemData.unit, validateRequired(newItemData.unit, 'Unit')],
-      ['newItemData.currentStock', newItemData.currentStock, validateNumber(newItemData.currentStock, { label: 'Current stock', required: true, min: 0, integer: true })],
-      ['newItemData.minStockThreshold', newItemData.minStockThreshold, validateNumber(newItemData.minStockThreshold, { label: 'Minimum stock threshold', required: true, min: 0, integer: true })],
-      ['newItemData.unitPrice', newItemData.unitPrice, validateNumber(newItemData.unitPrice, { label: 'Unit price', required: true, min: 0 })],
-      ['newItemData.sellingPrice', newItemData.sellingPrice, validateNumber(newItemData.sellingPrice, { label: 'Selling price', required: true, min: 0 })],
+      ['newItemData.currentStock', newItemData.currentStock, validateNumber(newItemData.currentStock, { label: 'Current stock', required: true, min: 0, max: MAX_STOCK_QUANTITY, integer: true })],
+      ['newItemData.minStockThreshold', newItemData.minStockThreshold, validateNumber(newItemData.minStockThreshold, { label: 'Minimum stock threshold', required: true, min: 0, max: MAX_STOCK_QUANTITY, integer: true })],
+      ['newItemData.unitPrice', newItemData.unitPrice, validateNumber(newItemData.unitPrice, { label: 'Unit price', required: true, min: 0, decimals: 2 })],
+      ['newItemData.sellingPrice', newItemData.sellingPrice, validateNumber(newItemData.sellingPrice, { label: 'Selling price', required: true, min: 0, decimals: 2 })],
       ['newItemData.sellingPrice', newItemData.sellingPrice, Number(newItemData.sellingPrice) < Number(newItemData.unitPrice) ? 'Selling price cannot be lower than the unit (cost) price' : null],
       ['newItemData.expiryDate', newItemData.expiryDate, validateNotPastDate(newItemData.expiryDate, { label: 'Expiry date' })],
     );
@@ -122,10 +123,10 @@ export const StaffInventoryPage = () => {
       await inventoryApi.addInventoryItem({
         ...newItemData,
         supplierName: suppName || 'Direct Clinic Vendor',
-        currentStock: Number(newItemData.currentStock) || 0,
-        minStockThreshold: Number(newItemData.minStockThreshold) || 5,
-        unitPrice: Number(newItemData.unitPrice) || 0,
-        sellingPrice: Number(newItemData.sellingPrice) || 0,
+        currentStock: Number(newItemData.currentStock),
+        minStockThreshold: Number(newItemData.minStockThreshold),
+        unitPrice: Number(newItemData.unitPrice),
+        sellingPrice: Number(newItemData.sellingPrice),
         expiryDate: newItemData.expiryDate || null,
       });
 
@@ -157,10 +158,10 @@ export const StaffInventoryPage = () => {
       ['editItem.name', editItem.name, validateText(editItem.name, { label: 'Item name', required: true, min: 2, max: 150 })],
       ['editItem.sku', editItem.sku, validateText(editItem.sku, { label: 'SKU', required: true, max: 50 })],
       ['editItem.unit', editItem.unit, validateRequired(editItem.unit, 'Unit')],
-      ['editItem.currentStock', editItem.currentStock, validateNumber(editItem.currentStock, { label: 'Current stock', required: true, min: 0, integer: true })],
-      ['editItem.minStockThreshold', editItem.minStockThreshold, validateNumber(editItem.minStockThreshold, { label: 'Minimum stock threshold', required: true, min: 0, integer: true })],
-      ['editItem.unitPrice', editItem.unitPrice, validateNumber(editItem.unitPrice, { label: 'Unit price', required: true, min: 0 })],
-      ['editItem.sellingPrice', editItem.sellingPrice, validateNumber(editItem.sellingPrice, { label: 'Selling price', required: true, min: 0 })],
+      ['editItem.currentStock', editItem.currentStock, validateNumber(editItem.currentStock, { label: 'Current stock', required: true, min: 0, max: MAX_STOCK_QUANTITY, integer: true })],
+      ['editItem.minStockThreshold', editItem.minStockThreshold, validateNumber(editItem.minStockThreshold, { label: 'Minimum stock threshold', required: true, min: 0, max: MAX_STOCK_QUANTITY, integer: true })],
+      ['editItem.unitPrice', editItem.unitPrice, validateNumber(editItem.unitPrice, { label: 'Unit price', required: true, min: 0, decimals: 2 })],
+      ['editItem.sellingPrice', editItem.sellingPrice, validateNumber(editItem.sellingPrice, { label: 'Selling price', required: true, min: 0, decimals: 2 })],
       ['editItem.sellingPrice', editItem.sellingPrice, Number(editItem.sellingPrice) < Number(editItem.unitPrice) ? 'Selling price cannot be lower than the unit (cost) price' : null],
     );
     if (editItemError) {
@@ -199,7 +200,14 @@ export const StaffInventoryPage = () => {
   };
 
   const handleRestockSubmit = async () => {
-    if (!restockItem || restockQty <= 0) return;
+    if (!restockItem) return;
+    const restockError = check(['restockQty', restockQty, validateNumber(restockQty, {
+      label: 'Quantity to add', required: true, min: 1, max: MAX_STOCK_QUANTITY - restockItem.currentStock, integer: true, unit: 'units',
+    })]);
+    if (restockError) {
+      showToast('Please Check the Quantity', restockError, 'error');
+      return;
+    }
     try {
       await inventoryApi.updateStock(
         restockItem.itemId,
@@ -296,6 +304,7 @@ export const StaffInventoryPage = () => {
       header: 'Stock Level',
       key: 'currentStock',
       sortable: true,
+      sortValue: stockPercentage,
       render: (row) => {
         const isCritical = row.currentStock === 0;
         const isLow = row.currentStock > 0 && row.currentStock <= row.minStockThreshold;
@@ -408,6 +417,9 @@ export const StaffInventoryPage = () => {
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 boxShadow: isDepleted || isLow ? '0 2px 6px rgba(0,0,0,0.15)' : 'none',
+                // Let the long low-stock label wrap so it cannot widen the Actions
+                // column and push the edit/delete icons of other rows out of view
+                whiteSpace: 'normal',
               }}
             >
               <RefreshCw size={12} className="mr-1" />
@@ -719,7 +731,7 @@ export const StaffInventoryPage = () => {
               <label className="form-label font-bold text-xs">Min Stock Threshold</label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 className="form-input"
                 value={newItemData.minStockThreshold}
                 onChange={(e) =>
@@ -902,7 +914,7 @@ export const StaffInventoryPage = () => {
                 <label className="form-label font-bold text-xs">Min Threshold</label>
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   className="form-input"
                   value={editItem.minStockThreshold}
                   onChange={(e) =>
@@ -1073,6 +1085,7 @@ export const StaffInventoryPage = () => {
                 value={restockQty}
                 onChange={(e) => setRestockQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
               />
+              {errorFor('restockQty', restockQty)}
               <span className="text-xs text-muted mt-1">
                 Updated stock will be{' '}
                 <strong>

@@ -14,6 +14,9 @@ export const PET_NAME_REGEX = /^[\p{L}\d][\p{L}\d .'()-]*$/u;
 export const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
 export const PHONE_MESSAGE = 'Phone number must be exactly 10 digits and start with 0 (e.g. 0771234567)';
+
+/** Upper limit for any stock quantity or stock threshold (same as ValidationRules.MAX_STOCK_QUANTITY). */
+export const MAX_STOCK_QUANTITY = 100000;
 export const PASSWORD_MESSAGE = 'Password must be at least 8 characters and include a letter and a number';
 
 const isBlank = (v) => v === null || v === undefined || String(v).trim() === '';
@@ -79,12 +82,18 @@ export function validatePasswordMatch(password, confirm) {
  * Numeric range check.
  * @param {object} opts label, required, min, max, integer, greaterThanZero, unit
  */
-export function validateNumber(value, { label, required = false, min, max, integer = false, greaterThanZero = false, unit = '' } = {}) {
+export function validateNumber(value, { label, required = false, min, max, integer = false, greaterThanZero = false, unit = '', decimals } = {}) {
   if (isBlank(value)) return required ? `${label} is required` : null;
   const n = Number(value);
   const suffix = unit ? ` ${unit}` : '';
   if (Number.isNaN(n) || !Number.isFinite(n)) return `${label} must be a valid number`;
   if (integer && !Number.isInteger(n)) return `${label} must be a whole number`;
+  // decimals: maximum digits after the decimal point (e.g. 2 for prices: 2500.50)
+  if (decimals !== undefined && Math.abs(Math.round(n * 10 ** decimals) - n * 10 ** decimals) > 1e-6) {
+    return decimals === 1
+      ? `${label} can have at most one decimal place (e.g. 4.5)`
+      : `${label} can have at most ${decimals} decimal places (e.g. 2500.50)`;
+  }
   if (greaterThanZero && n <= 0) return `${label} must be greater than 0${suffix}`;
   if (min !== undefined && max !== undefined && (n < min || n > max)) return `${label} must be between ${min} and ${max}${suffix}`;
   if (min !== undefined && n < min) return min === 0 ? `${label} cannot be negative` : `${label} must be at least ${min}${suffix}`;

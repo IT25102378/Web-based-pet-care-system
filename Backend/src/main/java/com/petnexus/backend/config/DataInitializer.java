@@ -37,6 +37,8 @@ import com.petnexus.backend.repository.CareServiceLogRepository;
 import com.petnexus.backend.repository.ServicePackageBookingRepository;
 import com.petnexus.backend.entity.Supplier;
 import com.petnexus.backend.entity.InventoryItem;
+import com.petnexus.backend.entity.PurchaseOrder;
+import com.petnexus.backend.repository.PurchaseOrderRepository;
 import com.petnexus.backend.enums.StockStatus;
 import com.petnexus.backend.repository.SupplierRepository;
 import com.petnexus.backend.repository.InventoryItemRepository;
@@ -83,6 +85,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ServicePackageBookingRepository servicePackageBookingRepository;
     private final SupplierRepository supplierRepository;
     private final InventoryItemRepository inventoryItemRepository;
+    private final PurchaseOrderRepository purchaseOrderRepository;
     private final FeedbackRepository feedbackRepository;
     private final NotificationRepository notificationRepository;
     private final PasswordEncoder passwordEncoder;
@@ -1270,156 +1273,9 @@ public class DataInitializer implements CommandLineRunner {
                 });
 
         // ------------------------------------------------------------------
-        // Phase 8: Suppliers & Inventory Items
+        // Phase 8: Suppliers, Inventory Items & Purchase Order History
         // ------------------------------------------------------------------
-        if (supplierRepository.count() == 0) {
-            log.info("Seeding initial Suppliers into PetNexus database...");
-            Supplier sup01 = supplierRepository.save(Supplier.builder()
-                    .supplierId("SUP-01")
-                    .companyName("Zoetis Animal Health Sri Lanka (Pvt) Ltd")
-                    .contactPerson("Ruwan Abeysekara")
-                    .email("orders@zoetis-sl.com")
-                    .phone("0112347700")
-                    .category("Pharmaceuticals & Vaccines")
-                    .leadTimeDays(2)
-                    .rating(new BigDecimal("4.9"))
-                    .address("117 Sir James Peiris Mawatha, Colombo 02")
-                    .active(true)
-                    .build());
-
-            Supplier sup02 = supplierRepository.save(Supplier.builder()
-                    .supplierId("SUP-02")
-                    .companyName("Sathosa Veterinary & Medical Supplies (Pvt) Ltd")
-                    .contactPerson("Pradeep Kumara")
-                    .email("supply@sathosamedicalsupplies.lk")
-                    .phone("0114568800")
-                    .category("Surgical & Clinical Equipment")
-                    .leadTimeDays(3)
-                    .rating(new BigDecimal("4.8"))
-                    .address("45 Vauxhall Street, Colombo 02")
-                    .active(true)
-                    .build());
-
-            Supplier sup03 = supplierRepository.save(Supplier.builder()
-                    .supplierId("SUP-03")
-                    .companyName("Royal Canin Sri Lanka & Hill's Science Nutrition")
-                    .contactPerson("Anoma Rajapaksha")
-                    .email("vetcare@royalcanin-sl.com")
-                    .phone("0117895500")
-                    .category("Prescription Diets & Nutrition")
-                    .leadTimeDays(4)
-                    .rating(new BigDecimal("4.7"))
-                    .address("23 R.A. De Mel Mawatha, Colombo 04")
-                    .active(true)
-                    .build());
-
-            log.info("Seeded 3 suppliers.");
-
-            if (inventoryItemRepository.count() == 0) {
-                log.info("Seeding initial Inventory Items into PetNexus database...");
-                inventoryItemRepository.save(InventoryItem.builder()
-                        .itemId("INV-101")
-                        .name("Apoquel 16mg (Oclacitinib) 100ct")
-                        .category("Pharmaceuticals")
-                        .sku("MED-APQ-016")
-                        .batchNumber("BT-88912")
-                        .currentStock(18)
-                        .minStockThreshold(10)
-                        .unit("Bottles")
-                        .unitPrice(new BigDecimal("38000.00"))
-                        .sellingPrice(new BigDecimal("52000.00"))
-                        .expiryDate(LocalDate.of(2027, 11, 30))
-                        .supplier(sup01)
-                        .supplierName(sup01.getCompanyName())
-                        .status(StockStatus.IN_STOCK)
-                        .build());
-
-                inventoryItemRepository.save(InventoryItem.builder()
-                        .itemId("INV-102")
-                        .name("Rabies 3-Year Canine/Feline Vaccine 50-Dose")
-                        .category("Vaccines")
-                        .sku("VAC-RAB-03Y")
-                        .batchNumber("BT-99411")
-                        .currentStock(4)
-                        .minStockThreshold(8)
-                        .unit("Vials (Pack)")
-                        .unitPrice(new BigDecimal("22500.00"))
-                        .sellingPrice(new BigDecimal("38500.00"))
-                        .expiryDate(LocalDate.of(2027, 4, 15))
-                        .supplier(sup01)
-                        .supplierName(sup01.getCompanyName())
-                        .status(StockStatus.LOW_STOCK)
-                        .build());
-
-                inventoryItemRepository.save(InventoryItem.builder()
-                        .itemId("INV-103")
-                        .name("Surgical Suture Vicryl 3-0 with Reverse Cutting Needle")
-                        .category("Surgical Supplies")
-                        .sku("SUR-SUT-VIC30")
-                        .batchNumber("BT-44102")
-                        .currentStock(32)
-                        .minStockThreshold(15)
-                        .unit("Boxes (12/pk)")
-                        .unitPrice(new BigDecimal("11000.00"))
-                        .sellingPrice(new BigDecimal("17500.00"))
-                        .expiryDate(LocalDate.of(2028, 9, 1))
-                        .supplier(sup02)
-                        .supplierName(sup02.getCompanyName())
-                        .status(StockStatus.IN_STOCK)
-                        .build());
-
-                inventoryItemRepository.save(InventoryItem.builder()
-                        .itemId("INV-104")
-                        .name("Royal Canin Veterinary Gastrointestinal Low Fat 12kg")
-                        .category("Prescription Diet")
-                        .sku("NUT-RC-GI-12K")
-                        .batchNumber("BT-10293")
-                        .currentStock(2)
-                        .minStockThreshold(6)
-                        .unit("Bags")
-                        .unitPrice(new BigDecimal("18000.00"))
-                        .sellingPrice(new BigDecimal("25000.00"))
-                        .expiryDate(LocalDate.of(2026, 12, 15))
-                        .supplier(sup03)
-                        .supplierName(sup03.getCompanyName())
-                        .status(StockStatus.LOW_STOCK)
-                        .build());
-
-                inventoryItemRepository.save(InventoryItem.builder()
-                        .itemId("INV-105")
-                        .name("Isoflurane Inhalation Anesthetic USP 250ml")
-                        .category("Anesthetics")
-                        .sku("MED-ISO-250ML")
-                        .batchNumber("BT-66129")
-                        .currentStock(12)
-                        .minStockThreshold(5)
-                        .unit("Bottles")
-                        .unitPrice(new BigDecimal("14500.00"))
-                        .sellingPrice(new BigDecimal("21500.00"))
-                        .expiryDate(LocalDate.of(2028, 1, 20))
-                        .supplier(sup02)
-                        .supplierName(sup02.getCompanyName())
-                        .status(StockStatus.IN_STOCK)
-                        .build());
-            }
-
-            // Seed prescription medications and care & grooming supplies if missing
-            seedInventoryItemIfMissing("INV-106", "Clavamox / Amoxicillin-Clavulanate 250mg 14ct", "Pharmaceuticals", "PHARM-CLAV-250", "BT-77182", 25, 5, "Boxes", new BigDecimal("3500.00"), new BigDecimal("4800.00"), LocalDate.of(2027, 10, 31), sup01);
-            seedInventoryItemIfMissing("INV-107", "Metacam / Meloxicam Oral Suspension 1.5mg/ml 32ml", "Pharmaceuticals", "PHARM-MELOX-32", "BT-66231", 20, 5, "Bottles", new BigDecimal("4200.00"), new BigDecimal("5600.00"), LocalDate.of(2028, 2, 28), sup01);
-            seedInventoryItemIfMissing("INV-108", "Prednisolone 5mg Anti-Inflammatory Tablets 100ct", "Pharmaceuticals", "PHARM-PREDN-100", "BT-55104", 30, 5, "Bottles", new BigDecimal("2200.00"), new BigDecimal("3100.00"), LocalDate.of(2027, 8, 15), sup01);
-            seedInventoryItemIfMissing("INV-109", "Otomax / Gentamicin-Betamethasone Ear Drops 15g", "Pharmaceuticals", "PHARM-OTOM-15", "BT-44129", 22, 5, "Tubes", new BigDecimal("2800.00"), new BigDecimal("3900.00"), LocalDate.of(2027, 12, 31), sup02);
-            seedInventoryItemIfMissing("INV-110", "Chlorhexidine 2% Antiseptic Wound Spray 250ml", "Pharmaceuticals", "PHARM-CHLOR-250", "BT-33291", 18, 5, "Bottles", new BigDecimal("1900.00"), new BigDecimal("2700.00"), LocalDate.of(2028, 5, 30), sup02);
-
-            seedInventoryItemIfMissing("INV-111", "Medicated Chlorhexidine & Ketoconazole Shampoo 500ml", "Care & Grooming Supplies", "GROOM-CHLOR-500", "BT-22190", 25, 5, "Bottles", new BigDecimal("2500.00"), new BigDecimal("3500.00"), LocalDate.of(2027, 9, 30), sup01);
-            seedInventoryItemIfMissing("INV-112", "Soothing Oatmeal & Aloe Vera Natural Pet Shampoo 1L", "Care & Grooming Supplies", "GROOM-OATM-1000", "BT-11204", 30, 6, "Bottles", new BigDecimal("3200.00"), new BigDecimal("4500.00"), LocalDate.of(2027, 11, 15), sup02);
-            seedInventoryItemIfMissing("INV-113", "De-Shedding & Undercoat Release Rinse Conditioner 1L", "Care & Grooming Supplies", "GROOM-DESHED-1000", "BT-99120", 20, 5, "Bottles", new BigDecimal("3600.00"), new BigDecimal("4900.00"), LocalDate.of(2027, 10, 20), sup02);
-            seedInventoryItemIfMissing("INV-114", "Antiseptic Cleansing Ear Flush & Care Solution 250ml", "Care & Grooming Supplies", "GROOM-EAR-250", "BT-88219", 28, 5, "Bottles", new BigDecimal("1800.00"), new BigDecimal("2500.00"), LocalDate.of(2028, 3, 31), sup01);
-            seedInventoryItemIfMissing("INV-115", "Organic Herbal Paw Pad & Nose Soothing Balm 100g", "Care & Grooming Supplies", "GROOM-PAW-100", "BT-77312", 35, 8, "Tins", new BigDecimal("1500.00"), new BigDecimal("2200.00"), LocalDate.of(2028, 6, 30), sup02);
-            seedInventoryItemIfMissing("INV-116", "Flea & Tick Botanical Medicated Dip Solution 500ml", "Care & Grooming Supplies", "GROOM-FLEA-500", "BT-66418", 24, 5, "Bottles", new BigDecimal("2800.00"), new BigDecimal("3900.00"), LocalDate.of(2027, 12, 15), sup01);
-            seedInventoryItemIfMissing("INV-117", "Hypoallergenic Coconut Coat Finishing Spray 250ml", "Care & Grooming Supplies", "GROOM-COCO-250", "BT-55320", 22, 5, "Bottles", new BigDecimal("1900.00"), new BigDecimal("2800.00"), LocalDate.of(2028, 1, 31), sup02);
-
-            log.info("Inventory items verified and seeded for prescriptions and care services.");
-        }
+        seedInventoryData();
 
         // ------------------------------------------------------------------
         // Phase 9: Feedback & Notifications
@@ -1926,29 +1782,165 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Comprehensive demonstration data verification complete.");
     }
 
+    /**
+     * Seeds the inventory module: 3 suppliers, the item catalogue (3 or more items in
+     * every category, in different stock states) and a purchase order history.
+     *
+     * This mirrors the inventory seed in Database/PetNexus_Database.sql. Every record
+     * is created only when it is missing, so the SQL script and the backend can run
+     * in either order and the demonstration data is always there after a restart.
+     * Existing rows are never deleted, and stock levels already in the database are
+     * never overwritten.
+     */
+    private void seedInventoryData() {
+        Supplier sup01 = seedSupplierIfMissing("SUP-01", "Zoetis Animal Health Sri Lanka (Pvt) Ltd", "Ruwan Abeysekara",
+                "orders@zoetis-sl.com", "0112347700", "Pharmaceuticals & Vaccines", 2, "4.9",
+                "117 Sir James Peiris Mawatha, Colombo 02");
+        Supplier sup02 = seedSupplierIfMissing("SUP-02", "Sathosa Veterinary & Medical Supplies (Pvt) Ltd", "Pradeep Kumara",
+                "supply@sathosamedicalsupplies.lk", "0114568800", "Surgical & Clinical Equipment", 3, "4.8",
+                "45 Vauxhall Street, Colombo 02");
+        Supplier sup03 = seedSupplierIfMissing("SUP-03", "Royal Canin Sri Lanka & Hill's Science Nutrition", "Anoma Rajapaksha",
+                "vetcare@royalcanin-sl.com", "0117895500", "Prescription Diets & Nutrition", 4, "4.7",
+                "23 R.A. De Mel Mawatha, Colombo 04");
+
+        // Pharmaceuticals (INV-106 and INV-111 are supplied by SUP-01)
+        seedInventoryItemIfMissing("INV-106", "Amoxicillin Clavulanate 250mg", "Pharmaceuticals", "MED-AMX-250", "BT-77201", 48, 10, "Bottles", "2800.00", "3950.00", LocalDate.of(2027, 8, 31), sup01, "PetPharma Lanka Ltd");
+        seedInventoryItemIfMissing("INV-107", "Metacam 1.5mg/ml Oral Suspension", "Pharmaceuticals", "MED-MTC-015", "BT-77202", 35, 8, "Bottles", "3400.00", "4850.00", LocalDate.of(2027, 11, 30), null, "PetPharma Lanka Ltd");
+        seedInventoryItemIfMissing("INV-108", "Apoquel 16mg (Oclacitinib)", "Pharmaceuticals", "MED-APQ-016", "BT-77203", 60, 15, "Boxes", "5200.00", "7500.00", LocalDate.of(2028, 3, 31), null, "PetPharma Lanka Ltd");
+        seedInventoryItemIfMissing("INV-109", "Prednisolone 5mg Tablets", "Pharmaceuticals", "MED-PRD-005", "BT-77204", 75, 20, "Bottles", "1200.00", "1950.00", LocalDate.of(2027, 9, 30), null, "PetPharma Lanka Ltd");
+        seedInventoryItemIfMissing("INV-110", "Cephalexin 500mg Capsules", "Pharmaceuticals", "MED-CPH-500", "BT-77205", 40, 10, "Bottles", "2600.00", "3800.00", LocalDate.of(2027, 12, 31), null, "PetPharma Lanka Ltd");
+        seedInventoryItemIfMissing("INV-111", "Surolan Otic Ear Drops 15ml", "Pharmaceuticals", "MED-SRL-015", "BT-77206", 5, 8, "Bottles", "2100.00", "3200.00", LocalDate.of(2027, 10, 31), sup01, "VetCare Supplies Colombo");
+        seedInventoryItemIfMissing("INV-112", "Vetericyn Plus Wound Spray 250ml", "Pharmaceuticals", "MED-VTC-250", "BT-77207", 25, 6, "Bottles", "3100.00", "4500.00", LocalDate.of(2028, 1, 31), null, "VetCare Supplies Colombo");
+
+        // Care & Grooming Supplies (INV-113 and INV-116 are supplied by SUP-02)
+        seedInventoryItemIfMissing("INV-113", "Chlorhexidine Medicated Antiseptic Shampoo 500ml", "Care & Grooming Supplies", "GRM-SHP-CHX", "BT-88301", 32, 8, "Bottles", "1850.00", "2750.00", LocalDate.of(2028, 6, 30), sup02, "CarePet Lanka Products");
+        seedInventoryItemIfMissing("INV-114", "Soothing Colloidal Oatmeal Pet Shampoo 500ml", "Care & Grooming Supplies", "GRM-SHP-OTM", "BT-88302", 45, 10, "Bottles", "1450.00", "2200.00", LocalDate.of(2028, 6, 30), null, "CarePet Lanka Products");
+        seedInventoryItemIfMissing("INV-115", "Silk Protein De-Shedding Conditioner 500ml", "Care & Grooming Supplies", "GRM-CND-DSH", "BT-88303", 28, 8, "Bottles", "1650.00", "2450.00", LocalDate.of(2028, 5, 31), null, "CarePet Lanka Products");
+        seedInventoryItemIfMissing("INV-116", "Gentle Aloe Vera Ear Cleansing Flush 200ml", "Care & Grooming Supplies", "GRM-EAR-ALV", "BT-88304", 0, 10, "Bottles", "1250.00", "1950.00", LocalDate.of(2028, 4, 30), sup02, "CarePet Lanka Products");
+        seedInventoryItemIfMissing("INV-117", "Organic Shea Butter Paw & Nose Healing Balm 60g", "Care & Grooming Supplies", "GRM-BLM-SHA", "BT-88305", 50, 12, "Tins", "950.00", "1550.00", LocalDate.of(2028, 7, 31), null, "CarePet Lanka Products");
+
+        // Vaccines
+        seedInventoryItemIfMissing("INV-201", "Rabies 3-Year Canine/Feline Vaccine 50-Dose", "Vaccines", "VAC-RAB-03Y", "BT-99411", 4, 8, "Vials (Pack)", "22500.00", "38500.00", LocalDate.of(2027, 4, 15), sup01, null);
+        seedInventoryItemIfMissing("INV-202", "Nobivac DHPPi Canine Core Vaccine 10-Dose", "Vaccines", "VAC-DHP-010", "BT-99412", 25, 8, "Vials (Pack)", "15800.00", "24500.00", LocalDate.of(2027, 6, 30), sup01, null);
+        seedInventoryItemIfMissing("INV-203", "Feline Tricat Trio (FVRCP) Vaccine 10-Dose", "Vaccines", "VAC-FVR-010", "BT-99413", 0, 5, "Vials (Pack)", "14200.00", "22000.00", LocalDate.of(2027, 5, 31), null, "Direct Clinic Vendor");
+
+        // Surgical Supplies
+        seedInventoryItemIfMissing("INV-204", "Surgical Suture Vicryl 3-0 with Reverse Cutting Needle", "Surgical Supplies", "SUR-SUT-VIC30", "BT-44102", 32, 15, "Boxes (12/pk)", "11000.00", "17500.00", LocalDate.of(2028, 9, 1), sup02, null);
+        seedInventoryItemIfMissing("INV-205", "Sterile Latex Surgical Gloves Size 7.5 (50 pairs)", "Surgical Supplies", "SUR-GLV-075", "BT-44103", 6, 10, "Boxes", "4800.00", "6900.00", LocalDate.of(2028, 12, 31), sup02, null);
+        seedInventoryItemIfMissing("INV-206", "Disposable Scalpel Blades No.10 (100 pcs)", "Surgical Supplies", "SUR-BLD-010", "BT-44104", 0, 5, "Boxes", "3600.00", "5200.00", LocalDate.of(2029, 3, 31), null, "Direct Clinic Vendor");
+
+        // Prescription Diet
+        seedInventoryItemIfMissing("INV-207", "Royal Canin Veterinary Gastrointestinal Low Fat 12kg", "Prescription Diet", "NUT-RC-GI-12K", "BT-10293", 2, 6, "Bags", "18000.00", "25000.00", LocalDate.of(2026, 12, 15), sup03, null);
+        seedInventoryItemIfMissing("INV-208", "Hill's Prescription Diet k/d Kidney Care 4kg", "Prescription Diet", "NUT-HL-KD-4K", "BT-10294", 20, 6, "Bags", "9500.00", "13800.00", LocalDate.of(2027, 8, 31), sup03, null);
+        seedInventoryItemIfMissing("INV-209", "Royal Canin Urinary S/O Feline 3.5kg", "Prescription Diet", "NUT-RC-SO-35", "BT-10295", 0, 5, "Bags", "8200.00", "11900.00", LocalDate.of(2027, 7, 31), null, "Direct Clinic Vendor");
+
+        // Anesthetics
+        seedInventoryItemIfMissing("INV-210", "Isoflurane Inhalation Anesthetic USP 250ml", "Anesthetics", "MED-ISO-250ML", "BT-66129", 12, 5, "Bottles", "14500.00", "21500.00", LocalDate.of(2028, 1, 20), sup02, null);
+        seedInventoryItemIfMissing("INV-211", "Propofol 1% Injectable Emulsion 20ml", "Anesthetics", "ANS-PRO-020", "BT-66130", 0, 6, "Vials", "2400.00", "3600.00", LocalDate.of(2027, 9, 30), sup02, null);
+        seedInventoryItemIfMissing("INV-212", "Lidocaine 2% Local Anaesthetic Injection 30ml", "Anesthetics", "ANS-LID-030", "BT-66131", 4, 8, "Vials", "1100.00", "1750.00", LocalDate.of(2027, 11, 30), null, "Direct Clinic Vendor");
+
+        // Purchase order history: one order in every status, oldest first
+        seedPurchaseOrderIfMissing("PO-260702", "SUP-01", "Zoetis Animal Health Sri Lanka (Pvt) Ltd",
+                "Rabies 3-Year Vaccine 50-Dose (6 packs), Nobivac DHPPi 10-Dose (10 packs)", "293000.00", "Delivered",
+                "Keep vaccines at 2-8 C during transport. Deliver before 10 AM.", LocalDateTime.of(2026, 7, 2, 9, 15));
+        seedPurchaseOrderIfMissing("PO-260718", "SUP-02", "Sathosa Veterinary & Medical Supplies (Pvt) Ltd",
+                "Vicryl 3-0 Sutures (6 boxes), Sterile Surgical Gloves 7.5 (10 boxes)", "114000.00", "Delivered",
+                "Partial delivery accepted. Send the invoice to the Clinic Manager.", LocalDateTime.of(2026, 7, 18, 14, 30));
+        seedPurchaseOrderIfMissing("PO-260812", "SUP-02", "Sathosa Veterinary & Medical Supplies (Pvt) Ltd",
+                "Disposable Scalpel Blades No.10 (20 boxes)", "72000.00", "Cancelled",
+                "Cancelled: the supplier could not deliver before the surgery schedule.", LocalDateTime.of(2026, 8, 12, 11, 0));
+        seedPurchaseOrderIfMissing("PO-260920", "SUP-03", "Royal Canin Sri Lanka & Hill's Science Nutrition",
+                "Royal Canin GI Low Fat 12kg (8 bags), Hill's k/d Kidney Care 4kg (10 bags)", "239000.00", "Shipped",
+                "Deliver to the rear storeroom entrance.", LocalDateTime.of(2026, 9, 20, 10, 45));
+        seedPurchaseOrderIfMissing("PO-261005", "SUP-01", "Zoetis Animal Health Sri Lanka (Pvt) Ltd",
+                "Amoxicillin Clavulanate 250mg (20 bottles), Metacam 1.5mg/ml (12 bottles)", "96800.00", "Dispatched",
+                null, LocalDateTime.of(2026, 10, 5, 16, 20));
+        seedPurchaseOrderIfMissing("PO-261009", "SUP-02", "Sathosa Veterinary & Medical Supplies (Pvt) Ltd",
+                "Isoflurane 250ml (6 bottles), Propofol 1% 20ml (10 vials)", "111000.00", "Approved",
+                "Anaesthetic agents: a signature is required on delivery.", LocalDateTime.of(2026, 10, 9, 9, 0));
+        seedPurchaseOrderIfMissing("PO-261011", "SUP-03", "Royal Canin Sri Lanka & Hill's Science Nutrition",
+                "Royal Canin Urinary S/O Feline 3.5kg (6 bags)", "49200.00", "Pending",
+                "Confirm the delivery date with the Clinic Manager first.", LocalDateTime.of(2026, 10, 11, 13, 10));
+
+        log.info("Inventory module verified: suppliers, items in every category and purchase order history.");
+    }
+
+    /** Returns the seed supplier, creating it only when neither its ID nor its company name is in use. */
+    private Supplier seedSupplierIfMissing(String supplierId, String companyName, String contactPerson, String email,
+                                           String phone, String category, int leadTimeDays, String rating, String address) {
+        Supplier existing = supplierRepository.findBySupplierId(supplierId).orElse(null);
+        if (existing != null) return existing;
+        // Another supplier already uses this name (e.g. it was deleted and added again): do not create a duplicate
+        if (supplierRepository.existsByCompanyNameIgnoreCase(companyName)) return null;
+        return supplierRepository.save(Supplier.builder()
+                .supplierId(supplierId)
+                .companyName(companyName)
+                .contactPerson(contactPerson)
+                .email(email)
+                .phone(phone)
+                .category(category)
+                .leadTimeDays(leadTimeDays)
+                .rating(new BigDecimal(rating))
+                .address(address)
+                .active(true)
+                .build());
+    }
+
+    /**
+     * Creates the seed item when neither its ID nor its SKU exists yet. When the item already
+     * exists without a supplier and a seed supplier is given, it is linked to that supplier;
+     * its stock is left exactly as it is. otherSupplierName is the free-text vendor shown for
+     * items that are not linked to a supplier record.
+     */
     private void seedInventoryItemIfMissing(String itemId, String name, String category, String sku,
                                            String batchNumber, int currentStock, int minThreshold,
-                                           String unit, BigDecimal unitPrice, BigDecimal sellingPrice,
-                                           LocalDate expiryDate, Supplier supplier) {
-        if (!inventoryItemRepository.existsBySku(sku) && inventoryItemRepository.findByItemId(itemId).isEmpty()) {
-            StockStatus status = currentStock <= 0 ? StockStatus.OUT_OF_STOCK :
-                    (currentStock <= minThreshold ? StockStatus.LOW_STOCK : StockStatus.IN_STOCK);
-            inventoryItemRepository.save(InventoryItem.builder()
-                    .itemId(itemId)
-                    .name(name)
-                    .category(category)
-                    .sku(sku)
-                    .batchNumber(batchNumber)
-                    .currentStock(currentStock)
-                    .minStockThreshold(minThreshold)
-                    .unit(unit)
-                    .unitPrice(unitPrice)
-                    .sellingPrice(sellingPrice)
-                    .expiryDate(expiryDate)
-                    .supplier(supplier)
-                    .supplierName(supplier != null ? supplier.getCompanyName() : null)
-                    .status(status)
-                    .build());
+                                           String unit, String unitPrice, String sellingPrice,
+                                           LocalDate expiryDate, Supplier supplier, String otherSupplierName) {
+        InventoryItem existing = inventoryItemRepository.findByItemId(itemId).orElse(null);
+        if (existing != null) {
+            if (existing.getSupplier() == null && supplier != null) {
+                existing.setSupplier(supplier);
+                existing.setSupplierName(supplier.getCompanyName());
+                inventoryItemRepository.save(existing);
+            }
+            return;
         }
+        if (inventoryItemRepository.existsBySku(sku)) return;
+
+        StockStatus status = currentStock <= 0 ? StockStatus.OUT_OF_STOCK :
+                (currentStock <= minThreshold ? StockStatus.LOW_STOCK : StockStatus.IN_STOCK);
+        inventoryItemRepository.save(InventoryItem.builder()
+                .itemId(itemId)
+                .name(name)
+                .category(category)
+                .sku(sku)
+                .batchNumber(batchNumber)
+                .currentStock(currentStock)
+                .minStockThreshold(minThreshold)
+                .unit(unit)
+                .unitPrice(new BigDecimal(unitPrice))
+                .sellingPrice(new BigDecimal(sellingPrice))
+                .expiryDate(expiryDate)
+                .supplier(supplier)
+                .supplierName(supplier != null ? supplier.getCompanyName() : otherSupplierName)
+                .status(status)
+                .build());
+    }
+
+    /** Creates a historical purchase order, with its original order date, when its order ID is not in use. */
+    private void seedPurchaseOrderIfMissing(String orderId, String supplierId, String supplierName, String items,
+                                            String totalAmount, String status, String notes, LocalDateTime orderedAt) {
+        if (purchaseOrderRepository.existsByOrderId(orderId)) return;
+        purchaseOrderRepository.save(PurchaseOrder.builder()
+                .orderId(orderId)
+                .supplierId(supplierId)
+                .supplierName(supplierName)
+                .itemsDescription(items)
+                .totalAmount(new BigDecimal(totalAmount))
+                .status(status)
+                .notes(notes)
+                .createdAt(orderedAt)
+                .updatedAt(orderedAt)
+                .build());
     }
 }

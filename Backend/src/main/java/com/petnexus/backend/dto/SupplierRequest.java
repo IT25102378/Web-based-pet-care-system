@@ -10,6 +10,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,10 +48,12 @@ public class SupplierRequest {
     private String category;
 
     @PositiveOrZero(message = "Lead time must be a positive number of days (0 or greater)")
+    @Max(value = 365, message = "Lead time must be between 0 and 365 days")
     private Integer leadTimeDays;
 
     @PositiveOrZero(message = "Rating must be between 0.0 and 5.0")
     @DecimalMax(value = "5.0", message = "Rating must be between 0.0 and 5.0")
+    @Digits(integer = 1, fraction = 1, message = "Rating can have at most one decimal place (e.g. 4.5)")
     private BigDecimal rating;
 
     @Size(max = 300, message = "Address cannot be longer than 300 characters")

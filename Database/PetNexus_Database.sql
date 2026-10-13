@@ -1665,6 +1665,9 @@ GO
 
 -- ==============================================================================
 -- Clinical Inventory: Prescription Medications & Pet Care Grooming Supplies
+-- The suppliers, the items of the other categories, the supplier links and the
+-- purchase order history are inserted in Section 3 (IT25102344 - Inventory
+-- Management, Part 3). The backend seeds the same data in DataInitializer.java.
 -- ==============================================================================
 IF NOT EXISTS (SELECT 1 FROM inventory_items WHERE item_id = 'INV-106')
 BEGIN
@@ -1677,12 +1680,12 @@ BEGIN
     ('INV-108', 'Apoquel 16mg (Oclacitinib)', 'Pharmaceuticals', 'MED-APQ-016', 'BT-77203', 60, 15, 'Boxes', 5200.00, 7500.00, 'IN_STOCK', '2028-03-31', 'PetPharma Lanka Ltd', SYSDATETIME()),
     ('INV-109', 'Prednisolone 5mg Tablets', 'Pharmaceuticals', 'MED-PRD-005', 'BT-77204', 75, 20, 'Bottles', 1200.00, 1950.00, 'IN_STOCK', '2027-09-30', 'PetPharma Lanka Ltd', SYSDATETIME()),
     ('INV-110', 'Cephalexin 500mg Capsules', 'Pharmaceuticals', 'MED-CPH-500', 'BT-77205', 40, 10, 'Bottles', 2600.00, 3800.00, 'IN_STOCK', '2027-12-31', 'PetPharma Lanka Ltd', SYSDATETIME()),
-    ('INV-111', 'Surolan Otic Ear Drops 15ml', 'Pharmaceuticals', 'MED-SRL-015', 'BT-77206', 30, 8, 'Bottles', 2100.00, 3200.00, 'IN_STOCK', '2027-10-31', 'VetCare Supplies Colombo', SYSDATETIME()),
+    ('INV-111', 'Surolan Otic Ear Drops 15ml', 'Pharmaceuticals', 'MED-SRL-015', 'BT-77206', 5, 8, 'Bottles', 2100.00, 3200.00, 'LOW_STOCK', '2027-10-31', 'VetCare Supplies Colombo', SYSDATETIME()),
     ('INV-112', 'Vetericyn Plus Wound Spray 250ml', 'Pharmaceuticals', 'MED-VTC-250', 'BT-77207', 25, 6, 'Bottles', 3100.00, 4500.00, 'IN_STOCK', '2028-01-31', 'VetCare Supplies Colombo', SYSDATETIME()),
     ('INV-113', 'Chlorhexidine Medicated Antiseptic Shampoo 500ml', 'Care & Grooming Supplies', 'GRM-SHP-CHX', 'BT-88301', 32, 8, 'Bottles', 1850.00, 2750.00, 'IN_STOCK', '2028-06-30', 'CarePet Lanka Products', SYSDATETIME()),
     ('INV-114', 'Soothing Colloidal Oatmeal Pet Shampoo 500ml', 'Care & Grooming Supplies', 'GRM-SHP-OTM', 'BT-88302', 45, 10, 'Bottles', 1450.00, 2200.00, 'IN_STOCK', '2028-06-30', 'CarePet Lanka Products', SYSDATETIME()),
     ('INV-115', 'Silk Protein De-Shedding Conditioner 500ml', 'Care & Grooming Supplies', 'GRM-CND-DSH', 'BT-88303', 28, 8, 'Bottles', 1650.00, 2450.00, 'IN_STOCK', '2028-05-31', 'CarePet Lanka Products', SYSDATETIME()),
-    ('INV-116', 'Gentle Aloe Vera Ear Cleansing Flush 200ml', 'Care & Grooming Supplies', 'GRM-EAR-ALV', 'BT-88304', 38, 10, 'Bottles', 1250.00, 1950.00, 'IN_STOCK', '2028-04-30', 'CarePet Lanka Products', SYSDATETIME()),
+    ('INV-116', 'Gentle Aloe Vera Ear Cleansing Flush 200ml', 'Care & Grooming Supplies', 'GRM-EAR-ALV', 'BT-88304', 0, 10, 'Bottles', 1250.00, 1950.00, 'OUT_OF_STOCK', '2028-04-30', 'CarePet Lanka Products', SYSDATETIME()),
     ('INV-117', 'Organic Shea Butter Paw & Nose Healing Balm 60g', 'Care & Grooming Supplies', 'GRM-BLM-SHA', 'BT-88305', 50, 12, 'Tins', 950.00, 1550.00, 'IN_STOCK', '2028-07-31', 'CarePet Lanka Products', SYSDATETIME());
 END;
 GO
@@ -2281,86 +2284,249 @@ GO
 
 -- Part 1: EER Diagram & Database Design
 -- ISA Mapping: USER -> CLINIC_MANAGER, CLINIC_STAFF
--- Primary Keys: supplier_id, item_id
--- Foreign Keys: supplier_id in INVENTORY_ITEM references SUPPLIER(supplier_id)
+-- Entities: suppliers, inventory_items, purchase_orders
+-- Primary Keys: suppliers(supplier_id), inventory_items(item_id), purchase_orders(id; order_id is unique)
+-- Foreign Keys: supplier_id in inventory_items references suppliers(supplier_id)
+-- purchase_orders keeps supplier_id and supplier_name as a historical record without a
+-- foreign key, so an order stays in the history after its supplier is deleted.
 
 -- Part 2: Table Creation (DDL)
--- Table [CLINIC_MANAGER] schema is defined in Section 1 (Core Schema)
+-- Tables suppliers, inventory_items and purchase_orders are defined in Section 1 (Core Schema).
+-- The CHECK constraints below are the database's last line of defence for the same rules
+-- the React forms and the Spring Boot backend enforce.
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'ck_inventory_items_stock')
+    ALTER TABLE inventory_items ADD CONSTRAINT ck_inventory_items_stock
+        CHECK (current_stock BETWEEN 0 AND 100000 AND min_stock_threshold BETWEEN 0 AND 100000);
 GO
 
--- Table [CLINIC_STAFF] schema is defined in Section 1 (Core Schema)
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'ck_inventory_items_prices')
+    ALTER TABLE inventory_items ADD CONSTRAINT ck_inventory_items_prices
+        CHECK (unit_price >= 0 AND selling_price >= unit_price);
 GO
 
--- Table [SUPPLIER] schema is defined in Section 1 (Core Schema)
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'ck_suppliers_lead_time_rating')
+    ALTER TABLE suppliers ADD CONSTRAINT ck_suppliers_lead_time_rating
+        CHECK (lead_time_days BETWEEN 0 AND 365 AND rating BETWEEN 0 AND 5);
 GO
 
--- Table [INVENTORY_ITEM] schema is defined in Section 1 (Core Schema)
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'ck_purchase_orders_amount')
+    ALTER TABLE purchase_orders ADD CONSTRAINT ck_purchase_orders_amount
+        CHECK (total_amount > 0);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'ck_purchase_orders_status')
+    ALTER TABLE purchase_orders ADD CONSTRAINT ck_purchase_orders_status
+        CHECK (status IN ('Pending', 'Approved', 'Dispatched', 'Shipped', 'Delivered', 'Cancelled'));
 GO
 
 -- Part 3: Sample Data
-INSERT INTO [USER] (id, user_id, full_name, email) VALUES (5, 'USR-005', 'Manager Mike', 'mike@clinic.com');
--- Only when account 5 really has this role, so no account ends up with a second role row
-INSERT INTO CLINIC_MANAGER (user_id, manager_code)
-SELECT id, 'MGR-001' FROM [USER]
-WHERE id = 5 AND role = 'ClinicManager' AND NOT EXISTS (SELECT 1 FROM CLINIC_MANAGER WHERE user_id = 5);
+-- The backend seeds exactly the same rows in DataInitializer.java. Every statement only
+-- inserts what is missing, so this script and the backend can run in any order and as
+-- often as needed. Existing rows are never deleted and stock levels are never overwritten.
+
+-- 3.1 Suppliers (the three vendor partners of the clinic)
+IF NOT EXISTS (SELECT 1 FROM suppliers WHERE supplier_id = 'SUP-01')
+   AND NOT EXISTS (SELECT 1 FROM suppliers WHERE company_name = 'Zoetis Animal Health Sri Lanka (Pvt) Ltd')
+    INSERT INTO suppliers (supplier_id, company_name, contact_person, email, phone, category, lead_time_days, rating, address, active, created_at)
+    VALUES ('SUP-01', 'Zoetis Animal Health Sri Lanka (Pvt) Ltd', 'Ruwan Abeysekara', 'orders@zoetis-sl.com', '0112347700',
+            'Pharmaceuticals & Vaccines', 2, 4.9, '117 Sir James Peiris Mawatha, Colombo 02', 1, SYSDATETIME());
+
+IF NOT EXISTS (SELECT 1 FROM suppliers WHERE supplier_id = 'SUP-02')
+   AND NOT EXISTS (SELECT 1 FROM suppliers WHERE company_name = 'Sathosa Veterinary & Medical Supplies (Pvt) Ltd')
+    INSERT INTO suppliers (supplier_id, company_name, contact_person, email, phone, category, lead_time_days, rating, address, active, created_at)
+    VALUES ('SUP-02', 'Sathosa Veterinary & Medical Supplies (Pvt) Ltd', 'Pradeep Kumara', 'supply@sathosamedicalsupplies.lk', '0114568800',
+            'Surgical & Clinical Equipment', 3, 4.8, '45 Vauxhall Street, Colombo 02', 1, SYSDATETIME());
+
+IF NOT EXISTS (SELECT 1 FROM suppliers WHERE supplier_id = 'SUP-03')
+   AND NOT EXISTS (SELECT 1 FROM suppliers WHERE company_name = 'Royal Canin Sri Lanka & Hill''s Science Nutrition')
+    INSERT INTO suppliers (supplier_id, company_name, contact_person, email, phone, category, lead_time_days, rating, address, active, created_at)
+    VALUES ('SUP-03', 'Royal Canin Sri Lanka & Hill''s Science Nutrition', 'Anoma Rajapaksha', 'vetcare@royalcanin-sl.com', '0117895500',
+            'Prescription Diets & Nutrition', 4, 4.7, '23 R.A. De Mel Mawatha, Colombo 04', 1, SYSDATETIME());
 GO
 
-INSERT INTO SUPPLIER (supplier_id, supplier_name, contact_email, manager_user_id) VALUES
-(901, 'Vet Supplies Co.', 'sales@vetsupplies.com', 5);
+-- 3.2 Three items for each category that had none (Vaccines, Surgical Supplies,
+-- Prescription Diet, Anesthetics). In every category two items come from a supplier
+-- record and one from a direct vendor, and the items are in different stock states.
+-- The status is worked out from the stock with the same rule as the backend.
+INSERT INTO inventory_items (item_id, name, category, sku, batch_number, current_stock, min_stock_threshold,
+                             unit, unit_price, selling_price, status, expiry_date, supplier_id, supplier_name, created_at)
+SELECT v.item_id, v.name, v.category, v.sku, v.batch_number, v.current_stock, v.min_stock_threshold,
+       v.unit, v.unit_price, v.selling_price,
+       CASE WHEN v.current_stock = 0 THEN 'OUT_OF_STOCK'
+            WHEN v.current_stock <= v.min_stock_threshold THEN 'LOW_STOCK'
+            ELSE 'IN_STOCK' END,
+       v.expiry_date, s.supplier_id, COALESCE(s.company_name, v.other_supplier_name), SYSDATETIME()
+FROM (VALUES
+    ('INV-201', 'Rabies 3-Year Canine/Feline Vaccine 50-Dose', 'Vaccines', 'VAC-RAB-03Y', 'BT-99411', 4, 8, 'Vials (Pack)', 22500.00, 38500.00, '2027-04-15', 'SUP-01', NULL),
+    ('INV-202', 'Nobivac DHPPi Canine Core Vaccine 10-Dose', 'Vaccines', 'VAC-DHP-010', 'BT-99412', 25, 8, 'Vials (Pack)', 15800.00, 24500.00, '2027-06-30', 'SUP-01', NULL),
+    ('INV-203', 'Feline Tricat Trio (FVRCP) Vaccine 10-Dose', 'Vaccines', 'VAC-FVR-010', 'BT-99413', 0, 5, 'Vials (Pack)', 14200.00, 22000.00, '2027-05-31', NULL, 'Direct Clinic Vendor'),
+    ('INV-204', 'Surgical Suture Vicryl 3-0 with Reverse Cutting Needle', 'Surgical Supplies', 'SUR-SUT-VIC30', 'BT-44102', 32, 15, 'Boxes (12/pk)', 11000.00, 17500.00, '2028-09-01', 'SUP-02', NULL),
+    ('INV-205', 'Sterile Latex Surgical Gloves Size 7.5 (50 pairs)', 'Surgical Supplies', 'SUR-GLV-075', 'BT-44103', 6, 10, 'Boxes', 4800.00, 6900.00, '2028-12-31', 'SUP-02', NULL),
+    ('INV-206', 'Disposable Scalpel Blades No.10 (100 pcs)', 'Surgical Supplies', 'SUR-BLD-010', 'BT-44104', 0, 5, 'Boxes', 3600.00, 5200.00, '2029-03-31', NULL, 'Direct Clinic Vendor'),
+    ('INV-207', 'Royal Canin Veterinary Gastrointestinal Low Fat 12kg', 'Prescription Diet', 'NUT-RC-GI-12K', 'BT-10293', 2, 6, 'Bags', 18000.00, 25000.00, '2026-12-15', 'SUP-03', NULL),
+    ('INV-208', 'Hill''s Prescription Diet k/d Kidney Care 4kg', 'Prescription Diet', 'NUT-HL-KD-4K', 'BT-10294', 20, 6, 'Bags', 9500.00, 13800.00, '2027-08-31', 'SUP-03', NULL),
+    ('INV-209', 'Royal Canin Urinary S/O Feline 3.5kg', 'Prescription Diet', 'NUT-RC-SO-35', 'BT-10295', 0, 5, 'Bags', 8200.00, 11900.00, '2027-07-31', NULL, 'Direct Clinic Vendor'),
+    ('INV-210', 'Isoflurane Inhalation Anesthetic USP 250ml', 'Anesthetics', 'MED-ISO-250ML', 'BT-66129', 12, 5, 'Bottles', 14500.00, 21500.00, '2028-01-20', 'SUP-02', NULL),
+    ('INV-211', 'Propofol 1% Injectable Emulsion 20ml', 'Anesthetics', 'ANS-PRO-020', 'BT-66130', 0, 6, 'Vials', 2400.00, 3600.00, '2027-09-30', 'SUP-02', NULL),
+    ('INV-212', 'Lidocaine 2% Local Anaesthetic Injection 30ml', 'Anesthetics', 'ANS-LID-030', 'BT-66131', 4, 8, 'Vials', 1100.00, 1750.00, '2027-11-30', NULL, 'Direct Clinic Vendor')
+) AS v (item_id, name, category, sku, batch_number, current_stock, min_stock_threshold,
+        unit, unit_price, selling_price, expiry_date, supplier_id, other_supplier_name)
+LEFT JOIN suppliers s ON s.supplier_id = v.supplier_id
+WHERE NOT EXISTS (SELECT 1 FROM inventory_items i WHERE i.item_id = v.item_id OR i.sku = v.sku);
 GO
 
-INSERT INTO INVENTORY_ITEM (item_id, item_name, stock_qty, min_stock, unit_price, supplier_id) VALUES
-(1001, 'Dog Food 5kg', 50, 10, 25.00, 901),
-(1002, 'Cat Litter 10kg', 5, 20, 15.00, 901);
+-- 3.3 Link items to their supplier record. Two existing items in each of the original
+-- categories (Pharmaceuticals, Care & Grooming Supplies) are linked to a vendor, and the
+-- new items above are re-linked if their link is missing. Only items that have no
+-- supplier yet are changed, and their stock is not touched.
+UPDATE i
+SET i.supplier_id = s.supplier_id,
+    i.supplier_name = s.company_name,
+    i.updated_at = SYSDATETIME()
+FROM inventory_items i
+JOIN (VALUES
+    ('INV-106', 'SUP-01'), ('INV-111', 'SUP-01'),
+    ('INV-113', 'SUP-02'), ('INV-116', 'SUP-02'),
+    ('INV-201', 'SUP-01'), ('INV-202', 'SUP-01'),
+    ('INV-204', 'SUP-02'), ('INV-205', 'SUP-02'),
+    ('INV-207', 'SUP-03'), ('INV-208', 'SUP-03'),
+    ('INV-210', 'SUP-02'), ('INV-211', 'SUP-02')
+) AS link (item_id, supplier_id) ON link.item_id = i.item_id
+JOIN suppliers s ON s.supplier_id = link.supplier_id
+WHERE i.supplier_id IS NULL;
+GO
+
+-- 3.4 Purchase order history: one order in every status, with the original order dates.
+INSERT INTO purchase_orders (order_id, supplier_id, supplier_name, items_description, total_amount, status, notes, created_at, updated_at)
+SELECT v.order_id, v.supplier_id, v.supplier_name, v.items_description, v.total_amount, v.status, v.notes, v.ordered_at, v.ordered_at
+FROM (VALUES
+    ('PO-260702', 'SUP-01', 'Zoetis Animal Health Sri Lanka (Pvt) Ltd',
+     'Rabies 3-Year Vaccine 50-Dose (6 packs), Nobivac DHPPi 10-Dose (10 packs)', 293000.00, 'Delivered',
+     'Keep vaccines at 2-8 C during transport. Deliver before 10 AM.', CAST('2026-07-02T09:15:00' AS DATETIME2(7))),
+    ('PO-260718', 'SUP-02', 'Sathosa Veterinary & Medical Supplies (Pvt) Ltd',
+     'Vicryl 3-0 Sutures (6 boxes), Sterile Surgical Gloves 7.5 (10 boxes)', 114000.00, 'Delivered',
+     'Partial delivery accepted. Send the invoice to the Clinic Manager.', CAST('2026-07-18T14:30:00' AS DATETIME2(7))),
+    ('PO-260812', 'SUP-02', 'Sathosa Veterinary & Medical Supplies (Pvt) Ltd',
+     'Disposable Scalpel Blades No.10 (20 boxes)', 72000.00, 'Cancelled',
+     'Cancelled: the supplier could not deliver before the surgery schedule.', CAST('2026-08-12T11:00:00' AS DATETIME2(7))),
+    ('PO-260920', 'SUP-03', 'Royal Canin Sri Lanka & Hill''s Science Nutrition',
+     'Royal Canin GI Low Fat 12kg (8 bags), Hill''s k/d Kidney Care 4kg (10 bags)', 239000.00, 'Shipped',
+     'Deliver to the rear storeroom entrance.', CAST('2026-09-20T10:45:00' AS DATETIME2(7))),
+    ('PO-261005', 'SUP-01', 'Zoetis Animal Health Sri Lanka (Pvt) Ltd',
+     'Amoxicillin Clavulanate 250mg (20 bottles), Metacam 1.5mg/ml (12 bottles)', 96800.00, 'Dispatched',
+     NULL, CAST('2026-10-05T16:20:00' AS DATETIME2(7))),
+    ('PO-261009', 'SUP-02', 'Sathosa Veterinary & Medical Supplies (Pvt) Ltd',
+     'Isoflurane 250ml (6 bottles), Propofol 1% 20ml (10 vials)', 111000.00, 'Approved',
+     'Anaesthetic agents: a signature is required on delivery.', CAST('2026-10-09T09:00:00' AS DATETIME2(7))),
+    ('PO-261011', 'SUP-03', 'Royal Canin Sri Lanka & Hill''s Science Nutrition',
+     'Royal Canin Urinary S/O Feline 3.5kg (6 bags)', 49200.00, 'Pending',
+     'Confirm the delivery date with the Clinic Manager first.', CAST('2026-10-11T13:10:00' AS DATETIME2(7)))
+) AS v (order_id, supplier_id, supplier_name, items_description, total_amount, status, notes, ordered_at)
+WHERE NOT EXISTS (SELECT 1 FROM purchase_orders p WHERE p.order_id = v.order_id);
 GO
 
 -- Part 4: SQL Queries
--- 1. SELECT Query
-SELECT item_name, stock_qty FROM INVENTORY_ITEM WHERE stock_qty < min_stock;
+-- 1. SELECT Query: items at or below their minimum stock, closest to running out first
+--    (stock as a percentage of the minimum threshold, as the Stock Level column sorts it)
+SELECT item_id, name, category, current_stock, min_stock_threshold,
+       CAST(current_stock * 100.0 / NULLIF(min_stock_threshold, 0) AS DECIMAL(7, 1)) AS stock_percentage,
+       status
+FROM inventory_items
+WHERE current_stock <= min_stock_threshold
+ORDER BY stock_percentage;
 
--- 2. JOIN Query
-SELECT i.item_name, s.supplier_name, i.unit_price
-FROM INVENTORY_ITEM i
-JOIN SUPPLIER s ON i.supplier_id = s.supplier_id;
+-- 2. JOIN Query: every item with its supplier (items without a supplier record show their direct vendor)
+SELECT i.item_id, i.name, i.category, COALESCE(s.company_name, i.supplier_name) AS supplier,
+       CASE WHEN s.supplier_id IS NULL THEN 'Direct vendor' WHEN s.active = 1 THEN 'Active' ELSE 'Inactive' END AS supplier_state,
+       i.unit_price, i.selling_price
+FROM inventory_items i
+LEFT JOIN suppliers s ON i.supplier_id = s.supplier_id
+ORDER BY i.category, i.item_id;
 
--- 3. Aggregation Query
-SELECT SUM(stock_qty * unit_price) AS TotalInventoryValue, AVG(unit_price) AS AvgPrice 
-FROM INVENTORY_ITEM;
+-- 3. Aggregation Query: total value of the stock on hand and the average unit price
+SELECT SUM(current_stock * unit_price) AS total_inventory_value,
+       AVG(unit_price) AS average_unit_price
+FROM inventory_items;
 
--- 4. GROUP BY / HAVING Query
-SELECT supplier_id, COUNT(*) AS ItemCount
-FROM INVENTORY_ITEM
-GROUP BY supplier_id
-HAVING COUNT(*) > 0;
+-- 4. GROUP BY / HAVING Query: categories that have at least one item needing a restock
+SELECT category,
+       COUNT(*) AS item_count,
+       SUM(CASE WHEN status IN ('LOW_STOCK', 'OUT_OF_STOCK') THEN 1 ELSE 0 END) AS items_to_restock
+FROM inventory_items
+GROUP BY category
+HAVING SUM(CASE WHEN status IN ('LOW_STOCK', 'OUT_OF_STOCK') THEN 1 ELSE 0 END) > 0;
 
--- 5. Subquery
-SELECT item_name FROM INVENTORY_ITEM 
-WHERE supplier_id = (SELECT TOP 1 supplier_id FROM SUPPLIER WHERE supplier_name = 'Vet Supplies Co.');
+-- 5. Subquery: items supplied by the highest-rated active supplier
+SELECT item_id, name, current_stock, status
+FROM inventory_items
+WHERE supplier_id = (SELECT TOP 1 supplier_id FROM suppliers WHERE active = 1 ORDER BY rating DESC);
+
+-- 6. Purchase order history, newest first, with the supplier's current state
+SELECT p.order_id, p.created_at AS order_date, p.supplier_name, p.items_description,
+       p.total_amount, p.status, p.notes,
+       CASE WHEN s.supplier_id IS NULL THEN 'Deleted' WHEN s.active = 1 THEN 'Active' ELSE 'Inactive' END AS supplier_state
+FROM purchase_orders p
+LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id
+ORDER BY p.created_at DESC;
+
+-- 7. Purchase order spend per supplier (cancelled orders are not counted)
+SELECT supplier_name, COUNT(*) AS order_count, SUM(total_amount) AS total_spend
+FROM purchase_orders
+WHERE status <> 'Cancelled'
+GROUP BY supplier_name
+ORDER BY total_spend DESC;
 GO
 
 -- Part 5: Stored Procedure
+-- Adds (or with a negative quantity removes) stock, like the Restock button.
+-- ck_inventory_items_stock rejects a result below 0 or above 100000, and
+-- trg_SyncInventoryStatus recalculates the stock status afterwards.
 CREATE OR ALTER PROCEDURE UpdateStock
-    @item_id INT,
+    @item_id VARCHAR(20),
     @qty_added INT
 AS
 BEGIN
-    UPDATE INVENTORY_ITEM 
-    SET stock_qty = stock_qty + @qty_added
+    SET NOCOUNT ON;
+    IF @qty_added IS NULL OR @qty_added = 0
+    BEGIN
+        RAISERROR('Quantity to add must be a non-zero whole number.', 16, 1);
+        RETURN;
+    END
+    IF NOT EXISTS (SELECT 1 FROM inventory_items WHERE item_id = @item_id)
+    BEGIN
+        RAISERROR('Inventory item not found: %s', 16, 1, @item_id);
+        RETURN;
+    END
+
+    UPDATE inventory_items
+    SET current_stock = current_stock + @qty_added,
+        updated_at = SYSDATETIME()
     WHERE item_id = @item_id;
 END;
 GO
 
 -- Part 6: Trigger
-CREATE OR ALTER TRIGGER trg_CheckNegativeInventory
-ON INVENTORY_ITEM
-AFTER UPDATE
+-- Keeps the stock status in line with the stock level when stock is changed directly in
+-- SQL (for example by UpdateStock). Same stock rule as the backend: 0 = OUT_OF_STOCK,
+-- at or below the minimum = LOW_STOCK, otherwise IN_STOCK. EXPIRED items (set by the backend
+-- when the expiry date has passed) are left as they are.
+-- Rows the backend saves already carry the right status, so the trigger changes nothing for them.
+CREATE OR ALTER TRIGGER trg_SyncInventoryStatus
+ON inventory_items
+AFTER INSERT, UPDATE
 AS
 BEGIN
-    IF EXISTS (SELECT 1 FROM inserted WHERE stock_qty < 0)
-    BEGIN
-        RAISERROR('Stock quantity cannot be less than zero.', 16, 1);
-        ROLLBACK TRANSACTION;
-    END
+    SET NOCOUNT ON;
+    UPDATE i
+    SET i.status = CASE WHEN i.current_stock = 0 THEN 'OUT_OF_STOCK'
+                        WHEN i.current_stock <= i.min_stock_threshold THEN 'LOW_STOCK'
+                        ELSE 'IN_STOCK' END
+    FROM inventory_items i
+    JOIN inserted ins ON ins.item_id = i.item_id
+    WHERE i.status <> 'EXPIRED'
+      AND i.status <> CASE WHEN i.current_stock = 0 THEN 'OUT_OF_STOCK'
+                           WHEN i.current_stock <= i.min_stock_threshold THEN 'LOW_STOCK'
+                           ELSE 'IN_STOCK' END;
 END;
 GO
 

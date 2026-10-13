@@ -171,7 +171,7 @@ class BB5_InventorySupplierTest extends BlackBoxSupport {
     }
 
     @Test
-    @DisplayName("SU-01 [FR-09] manager adds, updates and deactivates a supplier")
+    @DisplayName("SU-01 [FR-09] manager adds, updates, deactivates and then deletes a supplier")
     void supplierLifecycle() throws Exception {
         String manager = login(MANAGER);
         MvcResult created = post("/suppliers", manager, supplier("BB Pharma " + System.nanoTime()));
@@ -186,8 +186,16 @@ class BB5_InventorySupplierTest extends BlackBoxSupport {
         assertEquals(200, status(updated));
         assertEquals("new@example.com", body(updated).get("email").asText());
 
+        // An active supplier cannot be deleted
+        assertEquals(400, status(delete("/suppliers/" + id, manager)));
+
+        upd.put("active", false);
+        MvcResult deactivated = put("/suppliers/" + id, manager, upd);
+        assertEquals(200, status(deactivated));
+        assertFalse(body(deactivated).get("active").asBoolean());
+
         assertEquals(204, status(delete("/suppliers/" + id, manager)));
-        assertFalse(body(get("/suppliers/" + id, manager)).get("active").asBoolean());
+        assertEquals(404, status(get("/suppliers/" + id, manager)));
     }
 
     @Test
@@ -240,6 +248,7 @@ class BB5_InventorySupplierTest extends BlackBoxSupport {
         String manager = login(MANAGER);
         Map<String, Object> po = new LinkedHashMap<>();
         po.put("supplierName", "Zoetis Lanka");
+        po.put("itemsDescription", "Vaccines x 10");
         po.put("totalAmount", 100000);
         MvcResult created = post("/purchase-orders", manager, po);
         assertEquals(201, status(created));
@@ -257,6 +266,7 @@ class BB5_InventorySupplierTest extends BlackBoxSupport {
         String manager = login(MANAGER);
         Map<String, Object> po = new LinkedHashMap<>();
         po.put("supplierName", "Zoetis Lanka");
+        po.put("itemsDescription", "Vaccines x 2");
         po.put("totalAmount", 5000);
         String first = body(post("/suppliers/purchase-orders", manager, po)).get("orderId").asText();
         String second = body(post("/suppliers/purchase-orders", manager, po)).get("orderId").asText();
@@ -270,6 +280,7 @@ class BB5_InventorySupplierTest extends BlackBoxSupport {
         String manager = login(MANAGER);
         Map<String, Object> po = new LinkedHashMap<>();
         po.put("supplierName", "Zoetis Lanka");
+        po.put("itemsDescription", "Vaccines x 10");
         po.put("totalAmount", 100000);
         String id = body(post("/purchase-orders", manager, po)).get("orderId").asText();
         assertEquals(400, status(put("/purchase-orders/" + id, manager, Map.of("status", "Delivered"))));

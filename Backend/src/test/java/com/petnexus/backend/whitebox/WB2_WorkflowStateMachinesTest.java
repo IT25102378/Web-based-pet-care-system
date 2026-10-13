@@ -382,12 +382,19 @@ class WB2_WorkflowStateMachinesTest {
         assertThrows(BadRequestException.class, () -> poService.createPurchaseOrder(
                 PurchaseOrderRequest.builder().supplierName("Z").totalAmount(null).build()));
 
-        when(suppliers.existsBySupplierId("SUP-X")).thenReturn(false);
+        when(suppliers.findBySupplierId("SUP-X")).thenReturn(Optional.empty());
         assertThrows(BadRequestException.class, () -> poService.createPurchaseOrder(
                 PurchaseOrderRequest.builder().supplierName("Z").supplierId("SUP-X").totalAmount(BigDecimal.TEN).build()));
 
-        when(suppliers.existsBySupplierId("SUP-1")).thenReturn(true);
-        assertNotNull(poService.createPurchaseOrder(
-                PurchaseOrderRequest.builder().supplierName("Z").supplierId("SUP-1").totalAmount(BigDecimal.TEN).build()));
+        when(suppliers.findBySupplierId("SUP-OFF")).thenReturn(Optional.of(
+                Supplier.builder().supplierId("SUP-OFF").companyName("Inactive Vendor").email("off@vendor.lk").active(false).build()));
+        assertThrows(BadRequestException.class, () -> poService.createPurchaseOrder(
+                PurchaseOrderRequest.builder().supplierName("Z").supplierId("SUP-OFF").totalAmount(BigDecimal.TEN).build()));
+
+        when(suppliers.findBySupplierId("SUP-1")).thenReturn(Optional.of(
+                Supplier.builder().supplierId("SUP-1").companyName("Zoetis Lanka").email("z@vendor.lk").active(true).build()));
+        PurchaseOrderDetailResponse created = poService.createPurchaseOrder(
+                PurchaseOrderRequest.builder().supplierName("Z").supplierId("SUP-1").totalAmount(BigDecimal.TEN).build());
+        assertEquals("Zoetis Lanka", created.getSupplierName(), "the stored name comes from the supplier record");
     }
 }

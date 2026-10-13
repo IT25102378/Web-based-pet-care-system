@@ -13,6 +13,7 @@ import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.InventoryItemRepository;
 import com.petnexus.backend.repository.SupplierRepository;
 import com.petnexus.backend.repository.UserRepository;
+import com.petnexus.backend.validation.ValidationRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -198,6 +199,11 @@ public class InventoryService {
             throw new BadRequestException(String.format(
                     "Insufficient stock for item %s. Current: %d, Requested change: %d",
                     itemId, item.getCurrentStock(), quantityToAdd));
+        }
+        if (newStock > ValidationRules.MAX_STOCK_QUANTITY) {
+            throw new BadRequestException(String.format(
+                    "Stock after restocking %s %s (current %d + %d)",
+                    itemId, ValidationRules.MAX_STOCK_MESSAGE, item.getCurrentStock(), quantityToAdd));
         }
 
         item.setCurrentStock(newStock);

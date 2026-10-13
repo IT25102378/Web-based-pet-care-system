@@ -4,6 +4,7 @@ import com.petnexus.backend.dto.PurchaseOrderDetailResponse;
 import com.petnexus.backend.dto.PurchaseOrderRequest;
 import com.petnexus.backend.dto.PurchaseOrderUpdateRequest;
 import com.petnexus.backend.entity.PurchaseOrder;
+import com.petnexus.backend.entity.Supplier;
 import com.petnexus.backend.enums.NotificationType;
 import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.ResourceNotFoundException;
@@ -22,10 +23,10 @@ import java.util.stream.Collectors;
 /**
  * Service layer for Purchase Order lifecycle management.
  *
- * The existing SupplierService.createPurchaseOrder() handles the frontend
- * contract (POST /suppliers/purchase-orders). This service provides the
- * additional CRUD operations needed for full purchase order management:
- * list, get-by-id, update, status transitions, and validation.
+ * This service holds every purchase order rule. SupplierService.createPurchaseOrder()
+ * (POST /suppliers/purchase-orders, used by the Suppliers page) delegates here, and
+ * this service also provides list, get-by-id, update and status transitions
+ * (used by the Purchase Order History screen).
  */
 @Service
 @RequiredArgsConstructor
@@ -105,11 +106,18 @@ public class PurchaseOrderService {
             throw new BadRequestException("Purchase order total amount must be greater than zero");
         }
 
-        // Validate supplier exists if supplierId is provided
+        // Validate supplier exists and is active if supplierId is provided.
+        // The stored supplier name comes from the supplier record, never from the browser.
+        String supplierId = null;
+        String supplierName = request.getSupplierName().trim();
         if (request.getSupplierId() != null && !request.getSupplierId().trim().isEmpty()) {
-            if (!supplierRepository.existsBySupplierId(request.getSupplierId().trim())) {
-                throw new BadRequestException("Supplier not found with ID: " + request.getSupplierId());
+            Supplier supplier = supplierRepository.findBySupplierId(request.getSupplierId().trim())
+                    .orElseThrow(() -> new BadRequestException("Supplier not found with ID: " + request.getSupplierId()));
+            if (!supplier.isActive()) {
+                throw new BadRequestException("Cannot place a purchase order with a deactivated supplier: " + request.getSupplierId());
             }
+            supplierId = supplier.getSupplierId();
+            supplierName = supplier.getCompanyName();
         }
 
         // Generate unique order ID
@@ -117,11 +125,12 @@ public class PurchaseOrderService {
 
         PurchaseOrder po = PurchaseOrder.builder()
                 .orderId(orderId)
-                .supplierId(request.getSupplierId() != null ? request.getSupplierId().trim() : null)
-                .supplierName(request.getSupplierName().trim())
-                .itemsDescription(request.getItemsDescription())
+                .supplierId(supplierId)
+                .supplierName(supplierName)
+                .itemsDescription(request.getItemsDescription() != null ? request.getItemsDescription().trim() : null)
                 .totalAmount(request.getTotalAmount())
                 .status("Dispatched")
+                .notes(cleanNotes(request.getNotes()))
                 .build();
 
         purchaseOrderRepository.save(po);
@@ -165,7 +174,7 @@ public class PurchaseOrderService {
             po.setTotalAmount(request.getTotalAmount());
         }
         if (request.getNotes() != null) {
-            po.setNotes(request.getNotes());
+            po.setNotes(cleanNotes(request.getNotes()));
         }
         if (request.getStatus() != null) {
             validateStatusTransition(po.getStatus(), request.getStatus());
@@ -234,6 +243,12 @@ public class PurchaseOrderService {
     // =========================================================================
     // Private Helpers
     // =========================================================================
+
+    /** Order notes are optional: blank or whitespace-only notes are stored as no notes. */
+    private String cleanNotes(String notes) {
+        if (notes == null || notes.trim().isEmpty()) return null;
+        return notes.trim();
+    }
 
     private String generateOrderId() {
         long count = purchaseOrderRepository.count() + 1;

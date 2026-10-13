@@ -1,17 +1,15 @@
 package com.petnexus.backend.service;
 
+import com.petnexus.backend.dto.PurchaseOrderDetailResponse;
 import com.petnexus.backend.dto.PurchaseOrderRequest;
 import com.petnexus.backend.dto.PurchaseOrderResponse;
 import com.petnexus.backend.dto.SupplierRequest;
 import com.petnexus.backend.dto.SupplierResponse;
 import com.petnexus.backend.entity.InventoryItem;
-import com.petnexus.backend.entity.PurchaseOrder;
 import com.petnexus.backend.entity.Supplier;
-import com.petnexus.backend.enums.NotificationType;
 import com.petnexus.backend.exception.BadRequestException;
 import com.petnexus.backend.exception.ResourceNotFoundException;
 import com.petnexus.backend.repository.InventoryItemRepository;
-import com.petnexus.backend.repository.PurchaseOrderRepository;
 import com.petnexus.backend.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +30,7 @@ public class SupplierService {
 
     private final SupplierRepository supplierRepository;
     private final InventoryItemRepository inventoryItemRepository;
-    private final PurchaseOrderRepository purchaseOrderRepository;
-    private final NotificationService notificationService;
+    private final PurchaseOrderService purchaseOrderService;
 
     @Transactional(readOnly = true)
     public List<SupplierResponse> listSuppliers() {
@@ -108,6 +105,10 @@ public class SupplierService {
         if (request.getCompanyName() != null && !request.getCompanyName().trim().isEmpty()) {
             String oldName = supplier.getCompanyName();
             String newName = request.getCompanyName().trim();
+            // Same rule as createSupplier: two suppliers may not share a company name
+            if (!newName.equalsIgnoreCase(oldName) && supplierRepository.existsByCompanyNameIgnoreCase(newName)) {
+                throw new BadRequestException("Supplier with company name already exists: " + newName);
+            }
             supplier.setCompanyName(newName);
 
             // Keep supplierName in associated inventory items aligned if changed
@@ -147,49 +148,34 @@ public class SupplierService {
     public void deleteSupplier(String supplierId) {
         Supplier supplier = supplierRepository.findBySupplierId(supplierId)
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with ID: " + supplierId));
-        // Soft delete by deactivating
-        supplier.setActive(false);
-        supplierRepository.save(supplier);
-        log.info("Deactivated supplier {}", supplierId);
+        // Only a deactivated supplier may be deleted, so an active vendor is never removed by one click
+        if (supplier.isActive()) {
+            throw new BadRequestException("Deactivate the supplier before deleting it: " + supplierId);
+        }
+
+        // Unlink the supplier from its inventory items but keep the supplier name on each item,
+        // so the item still shows who supplied it after the supplier record is gone
+        List<InventoryItem> items = inventoryItemRepository.findBySupplier(supplier);
+        for (InventoryItem item : items) {
+            item.setSupplierName(supplier.getCompanyName());
+            item.setSupplier(null);
+            inventoryItemRepository.save(item);
+        }
+
+        supplierRepository.delete(supplier);
+        log.info("Deleted supplier {} and unlinked {} inventory item(s)", supplierId, items.size());
     }
 
+    /**
+     * Places a purchase order from the Suppliers page. All purchase order rules
+     * (validation, active supplier, unique order ID, notes, manager notification)
+     * live in PurchaseOrderService, so both order endpoints behave the same.
+     */
     @Transactional
     public PurchaseOrderResponse createPurchaseOrder(PurchaseOrderRequest request) {
-        if (request.getSupplierName() == null || request.getSupplierName().trim().isEmpty()) {
-            throw new BadRequestException("Supplier name is required for purchase order");
-        }
-        if (request.getTotalAmount() == null || request.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BadRequestException("Purchase order total amount must be greater than zero");
-        }
-
-        // Sequential id that skips taken numbers (a time-based id could collide and break the unique key)
-        long next = purchaseOrderRepository.count() + 1;
-        String orderId;
-        do {
-            orderId = String.format("PO-%06d", next++);
-        } while (purchaseOrderRepository.existsByOrderId(orderId));
-
-        PurchaseOrder po = PurchaseOrder.builder()
-                .orderId(orderId)
-                .supplierId(request.getSupplierId())
-                .supplierName(request.getSupplierName().trim())
-                .itemsDescription(request.getItemsDescription())
-                .totalAmount(request.getTotalAmount())
-                .status("Dispatched")
-                .build();
-
-        purchaseOrderRepository.save(po);
-        log.info("Dispatched purchase order {} for {} amount {}", orderId, po.getSupplierName(), po.getTotalAmount());
-
-        // Dispatch notification to every clinic manager
-        notificationService.notifyClinicManagers(
-                NotificationType.Inventory,
-                "Purchase Order Dispatched",
-                String.format("PO #%s placed with %s for Rs. %s.", orderId.replace("PO-", ""), po.getSupplierName(), po.getTotalAmount()),
-                "/manager/inventory");
-
+        PurchaseOrderDetailResponse created = purchaseOrderService.createPurchaseOrder(request);
         return PurchaseOrderResponse.builder()
-                .orderId(orderId)
+                .orderId(created.getOrderId())
                 .success(true)
                 .message("Purchase order placed successfully!")
                 .build();

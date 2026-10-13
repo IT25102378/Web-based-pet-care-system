@@ -1,6 +1,7 @@
 package com.petnexus.backend.repository;
 
 import com.petnexus.backend.entity.InventoryItem;
+import com.petnexus.backend.entity.Supplier;
 import com.petnexus.backend.enums.StockStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,7 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, St
     boolean existsBySku(String sku);
 
     List<InventoryItem> findByCategory(String category);
+    List<InventoryItem> findBySupplier(Supplier supplier);
     List<InventoryItem> findByStatus(StockStatus status);
     List<InventoryItem> findByCategoryAndStatus(String category, StockStatus status);
 

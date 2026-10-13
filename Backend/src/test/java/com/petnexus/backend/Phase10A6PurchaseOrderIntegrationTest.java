@@ -446,4 +446,41 @@ public class Phase10A6PurchaseOrderIntegrationTest {
                         created.getOrderId(),
                         PurchaseOrderUpdateRequest.builder().notes("Should fail").build()));
     }
+
+    // =========================================================================
+    // 13. Supplier name comes from the supplier record, order IDs never repeat
+    // =========================================================================
+
+    @Test
+    @DisplayName("13. Supplier name is taken from the supplier record, not the request")
+    void testSupplierNameFromRecord() {
+        PurchaseOrderDetailResponse created = purchaseOrderService.createPurchaseOrder(
+                PurchaseOrderRequest.builder()
+                        .supplierId(testSupplier.getSupplierId())
+                        .supplierName("Wrong Name From Browser")
+                        .itemsDescription("Rabies Vaccine (2 packs)")
+                        .totalAmount(new BigDecimal("1000.00"))
+                        .build());
+
+        assertEquals(testSupplier.getCompanyName(), created.getSupplierName());
+    }
+
+    @Test
+    @DisplayName("13b. Order IDs are unique even when orders are placed back to back")
+    void testOrderIdsUnique() {
+        String first = supplierController.createPurchaseOrder(PurchaseOrderRequest.builder()
+                .supplierId(testSupplier.getSupplierId())
+                .supplierName(testSupplier.getCompanyName())
+                .itemsDescription("Order one")
+                .totalAmount(new BigDecimal("100.00"))
+                .build()).getBody().getOrderId();
+        String second = supplierController.createPurchaseOrder(PurchaseOrderRequest.builder()
+                .supplierId(testSupplier.getSupplierId())
+                .supplierName(testSupplier.getCompanyName())
+                .itemsDescription("Order two")
+                .totalAmount(new BigDecimal("200.00"))
+                .build()).getBody().getOrderId();
+
+        assertNotEquals(first, second);
+    }
 }

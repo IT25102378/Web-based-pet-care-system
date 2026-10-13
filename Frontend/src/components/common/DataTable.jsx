@@ -50,9 +50,13 @@ export const DataTable = ({
 
     // Sort
     if (sortConfig.key) {
+      // A column can supply sortValue(row) when the raw field is not what it should sort by
+      const sortColumn = columns.find((col) => col.key === sortConfig.key);
+      const getSortValue = (row) =>
+        sortColumn && sortColumn.sortValue ? sortColumn.sortValue(row) : row[sortConfig.key];
       result.sort((a, b) => {
-        const valA = a[sortConfig.key];
-        const valB = b[sortConfig.key];
+        const valA = getSortValue(a);
+        const valB = getSortValue(b);
 
         if (valA === valB) return 0;
         if (valA === null || valA === undefined) return 1;
@@ -68,7 +72,7 @@ export const DataTable = ({
     }
 
     return result;
-  }, [data, searchTerm, searchKeys, sortConfig]);
+  }, [data, columns, searchTerm, searchKeys, sortConfig]);
 
   // Pagination
   const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
@@ -158,7 +162,7 @@ export const DataTable = ({
           <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((row, idx) => (
-                <tr key={row.id || row.userId || row.petId || row.caseId || row.appointmentId || row.itemId || row.supplierId || idx}>
+                <tr key={row.id || row.userId || row.petId || row.caseId || row.appointmentId || row.itemId || row.orderId || row.supplierId || idx}>
                   {columns.map((col) => (
                     <td key={col.key || col.header}>
                       {col.render ? col.render(row) : row[col.key]}

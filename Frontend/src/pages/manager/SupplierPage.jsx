@@ -1,10 +1,11 @@
-import { CURRENCY_LABEL } from '../../utils/currency';
+import { CURRENCY_LABEL, formatCurrency } from '../../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { supplierApi } from '../../api/supplierApi';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
+import { StatusBadge } from '../../components/common/StatusBadge';
 import { useToast } from '../../context/ToastContext';
-import { Truck, Plus, Send, Phone, Mail, MapPin, Star, Check, Edit2, Trash2 } from 'lucide-react';
+import { Truck, Plus, Send, Phone, Mail, MapPin, Star, Check, Edit2, Trash2, Power } from 'lucide-react';
 
 import { validateText, validatePersonName, validateEmail, validatePhone, validateNumber } from '../../utils/validators';
 import { useFieldErrors } from '../../utils/useFieldErrors';
@@ -19,9 +20,12 @@ export const SupplierPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [supplierToDelete, setSupplierToDelete] = useState(null);
+  const [supplierToDeactivate, setSupplierToDeactivate] = useState(null);
   const [poSupplier, setPoSupplier] = useState(null);
   const [poItems, setPoItems] = useState('Rabies Vaccine (10 packs), Apoquel 16mg (5 bottles)');
-  const [poAmount, setPoAmount] = useState(385000.00);
+  const [poAmount, setPoAmount] = useState('385000.00');
+  // Optional instructions sent with the order (delivery time, cold-chain handling, contact person...)
+  const [poNotes, setPoNotes] = useState('');
 
   const [newSupplier, setNewSupplier] = useState({
     companyName: '',
@@ -35,12 +39,14 @@ export const SupplierPage = () => {
   });
 
   const [editSupplierData, setEditSupplierData] = useState(null);
+  // Purchase order history (newest first, as returned by the backend)
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
 
   const loadSuppliers = async () => {
     try {
-      const list = await supplierApi.getSuppliers(true);
-      const activeList = Array.isArray(list) ? list.filter((s) => s.active !== false && s.active !== 0) : [];
-      setSuppliers(activeList);
+      // Load active and deactivated suppliers so the manager can change their state or delete them
+      const list = await supplierApi.getSuppliers();
+      setSuppliers(Array.isArray(list) ? list : []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -48,19 +54,30 @@ export const SupplierPage = () => {
     }
   };
 
+  const loadPurchaseOrders = async () => {
+    try {
+      const list = await supplierApi.getPurchaseOrders();
+      setPurchaseOrders(Array.isArray(list) ? list : []);
+    } catch (e) {
+      console.error(e);
+      showToast('Error', 'Failed to load the purchase order history', 'error');
+    }
+  };
+
   useEffect(() => {
     loadSuppliers();
+    loadPurchaseOrders();
   }, []);
 
   const validateSupplier = (data, form) => {
     const supplierError = check(
-      [`${form}.`, data.companyName, validateText(data.companyName, { label: 'Company name', required: true, min: 2, max: 150 })],
-      [`${form}.`, data.contactPerson, validatePersonName(data.contactPerson, { label: 'Contact person', required: false, max: 100 })],
-      [`${form}.`, data.email, validateEmail(data.email)],
-      [`${form}.`, data.phone, validatePhone(data.phone)],
-      [`${form}.`, data.leadTimeDays, validateNumber(data.leadTimeDays, { label: 'Lead time', min: 0, max: 365, integer: true, unit: 'days' })],
-      [`${form}.`, data.rating, validateNumber(data.rating, { label: 'Rating', min: 0, max: 5 })],
-      [`${form}.`, data.address, validateText(data.address, { label: 'Address', max: 300 })],
+      [`${form}.companyName`, data.companyName, validateText(data.companyName, { label: 'Company name', required: true, min: 2, max: 150 })],
+      [`${form}.contactPerson`, data.contactPerson, validatePersonName(data.contactPerson, { label: 'Contact person', required: false, max: 100 })],
+      [`${form}.email`, data.email, validateEmail(data.email)],
+      [`${form}.phone`, data.phone, validatePhone(data.phone)],
+      [`${form}.leadTimeDays`, data.leadTimeDays, validateNumber(data.leadTimeDays, { label: 'Lead time', min: 0, max: 365, integer: true, unit: 'days' })],
+      [`${form}.rating`, data.rating, validateNumber(data.rating, { label: 'Rating', min: 0, max: 5, decimals: 1 })],
+      [`${form}.address`, data.address, validateText(data.address, { label: 'Address', max: 300 })],
     );
     if (supplierError) {
       showToast('Please Check the Supplier Details', supplierError, 'error');
@@ -72,7 +89,11 @@ export const SupplierPage = () => {
   const handleCreatePo = async (e) => {
     e.preventDefault();
     if (!poSupplier) return;
-    const poError = validateNumber(poAmount, { label: 'Purchase order total', required: true, greaterThanZero: true });
+    const poError = check(
+      ['poItems', poItems, validateText(poItems, { label: 'Order line items', required: true, max: 1000 })],
+      ['poAmount', poAmount, validateNumber(poAmount, { label: 'Purchase order total', required: true, greaterThanZero: true, decimals: 2 })],
+      ['poNotes', poNotes, validateText(poNotes, { label: 'Order notes', max: 500 })],
+    );
     if (poError) {
       showToast('Please Check the Purchase Order', poError, 'error');
       return;
@@ -81,11 +102,14 @@ export const SupplierPage = () => {
       const res = await supplierApi.createPurchaseOrder({
         supplierId: poSupplier.supplierId,
         supplierName: poSupplier.companyName,
-        itemsDescription: poItems,
-        totalAmount: poAmount,
+        itemsDescription: poItems.trim(),
+        totalAmount: Number(poAmount),
+        notes: poNotes.trim(),
       });
       showToast('Order Dispatched', `Purchase Order #${res.orderId} sent to ${poSupplier.companyName}`, 'success');
       setPoSupplier(null);
+      setPoNotes('');
+      loadPurchaseOrders();
     } catch (err) {
       showToast('Error', err.message, 'error');
     }
@@ -156,11 +180,40 @@ export const SupplierPage = () => {
     }
   };
 
+  // Activates or deactivates a supplier. The full record is sent because the update
+  // endpoint validates the same required fields as the edit form.
+  const setSupplierActive = async (supplier, active) => {
+    try {
+      await supplierApi.updateSupplier(supplier.supplierId, {
+        companyName: supplier.companyName,
+        contactPerson: supplier.contactPerson || '',
+        email: supplier.email,
+        phone: supplier.phone || '',
+        category: supplier.category,
+        leadTimeDays: supplier.leadTimeDays,
+        rating: supplier.rating,
+        address: supplier.address || '',
+        active,
+      });
+      showToast(
+        active ? 'Supplier Activated' : 'Supplier Deactivated',
+        active
+          ? `${supplier.companyName} is active again and can receive purchase orders.`
+          : `${supplier.companyName} is deactivated. It can now be deleted if no longer needed.`,
+        active ? 'success' : 'info'
+      );
+      setSupplierToDeactivate(null);
+      loadSuppliers();
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    }
+  };
+
   const handleDeleteSupplier = async () => {
     if (!supplierToDelete) return;
     try {
       await supplierApi.deleteSupplier(supplierToDelete.supplierId);
-      showToast('Supplier Removed', `${supplierToDelete.companyName} removed from active vendors.`, 'info');
+      showToast('Supplier Deleted', `${supplierToDelete.companyName} was deleted from the supplier directory.`, 'info');
       setSupplierToDelete(null);
       loadSuppliers();
     } catch (err) {
@@ -218,6 +271,12 @@ export const SupplierPage = () => {
       ),
     },
     {
+      header: 'Status',
+      key: 'active',
+      sortable: true,
+      render: (row) => <StatusBadge status={row.active ? 'Active' : 'Inactive'} />,
+    },
+    {
       header: 'Actions',
       key: 'actions',
       render: (row) => (
@@ -233,22 +292,93 @@ export const SupplierPage = () => {
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            onClick={() => setPoSupplier(row)}
-            title="Create Purchase Order"
+            onClick={() => {
+              setPoNotes('');
+              setPoSupplier(row);
+            }}
+            disabled={!row.active}
+            title={row.active ? 'Create Purchase Order' : 'Activate this vendor before placing a purchase order'}
           >
             <Send size={13} /> Order PO
           </button>
           <button
             type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => (row.active ? setSupplierToDeactivate(row) : setSupplierActive(row, true))}
+            title={row.active ? 'Deactivate Vendor' : 'Activate Vendor'}
+          >
+            <Power size={13} /> {row.active ? 'Deactivate' : 'Activate'}
+          </button>
+          <button
+            type="button"
             className="btn btn-ghost btn-sm text-danger"
             onClick={() => setSupplierToDelete(row)}
-            title="Deactivate / Delete Vendor"
+            disabled={row.active}
+            title={row.active ? 'Deactivate this vendor before deleting it' : 'Delete Vendor'}
             style={{ color: '#EF4444' }}
           >
             <Trash2 size={13} />
           </button>
         </div>
       ),
+    },
+  ];
+
+  // Supplier IDs still in the directory, to mark orders whose supplier was deleted
+  const supplierIds = suppliers.map((s) => s.supplierId);
+
+  const purchaseOrderColumns = [
+    {
+      header: 'Order ID',
+      key: 'orderId',
+      sortable: true,
+      render: (row) => <span className="font-mono text-xs font-bold text-primary">{row.orderId}</span>,
+    },
+    {
+      header: 'Order Date',
+      key: 'createdAt',
+      sortable: true,
+      render: (row) => (
+        <span className="text-xs font-mono">{row.createdAt ? String(row.createdAt).slice(0, 10) : 'N/A'}</span>
+      ),
+    },
+    {
+      header: 'Vendor',
+      key: 'supplierName',
+      sortable: true,
+      render: (row) => (
+        <div>
+          <div className="font-bold text-sm text-main">{row.supplierName}</div>
+          <div className="text-xs text-muted">
+            {row.supplierId || 'Direct vendor'}
+            {row.supplierId && !supplierIds.includes(row.supplierId) ? ' (deleted from directory)' : ''}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Line Items',
+      key: 'itemsDescription',
+      render: (row) => <span className="text-xs">{row.itemsDescription || 'N/A'}</span>,
+    },
+    {
+      header: 'Order Value',
+      key: 'totalAmount',
+      sortable: true,
+      render: (row) => (
+        <span className="text-xs font-semibold">{formatCurrency(row.totalAmount)}</span>
+      ),
+    },
+    {
+      header: 'Status',
+      key: 'status',
+      sortable: true,
+      render: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      header: 'Notes',
+      key: 'notes',
+      render: (row) => <span className="text-xs text-muted">{row.notes || 'No notes'}</span>,
     },
   ];
 
@@ -275,6 +405,24 @@ export const SupplierPage = () => {
         emptyMessage="No suppliers found."
       />
 
+      {/* Purchase Order History */}
+      <div className="flex items-center justify-between mb-6 mt-8 flex-wrap gap-4">
+        <div>
+          <span className="badge badge-primary mb-1">PURCHASE ORDER HISTORY</span>
+          <h2>Purchase Order History</h2>
+          <p className="text-sm text-muted">
+            Every purchase order sent to a vendor partner, newest first, with its status and delivery notes.
+          </p>
+        </div>
+      </div>
+
+      <DataTable
+        columns={purchaseOrderColumns}
+        data={purchaseOrders}
+        searchPlaceholder="Search orders by order ID, vendor, line items, status, notes..."
+        emptyMessage="No purchase orders have been placed yet."
+      />
+
       {/* Place Purchase Order Modal */}
       {poSupplier && (
         <Modal
@@ -293,8 +441,10 @@ export const SupplierPage = () => {
                 rows={3}
                 value={poItems}
                 onChange={(e) => setPoItems(e.target.value)}
+                maxLength={1000}
                 required
               />
+              {errorFor('poItems', poItems)}
             </div>
 
             <div className="form-group">
@@ -305,9 +455,23 @@ export const SupplierPage = () => {
                 min="0.01"
                 className="form-control"
                 value={poAmount}
-                onChange={(e) => setPoAmount(Number(e.target.value))}
+                onChange={(e) => setPoAmount(e.target.value)}
                 required
               />
+              {errorFor('poAmount', poAmount)}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Order Notes / Delivery Instructions</label>
+              <textarea
+                className="form-textarea"
+                rows={2}
+                maxLength={500}
+                value={poNotes}
+                onChange={(e) => setPoNotes(e.target.value)}
+                placeholder="Optional, up to 500 characters, e.g. Deliver before 10 AM, keep vaccines refrigerated"
+              />
+              {errorFor('poNotes', poNotes)}
             </div>
 
             <div className="flex items-center justify-end gap-2 mt-4">
@@ -591,12 +755,42 @@ export const SupplierPage = () => {
       )}
 
       {/* Deactivate Supplier Modal */}
+      {supplierToDeactivate && (
+        <Modal
+          isOpen={!!supplierToDeactivate}
+          onClose={() => setSupplierToDeactivate(null)}
+          title="Deactivate Vendor Partner"
+          subtitle={`Are you sure you want to deactivate "${supplierToDeactivate.companyName}" (${supplierToDeactivate.supplierId})?`}
+          size="sm"
+          footer={
+            <div className="flex items-center justify-end gap-2" style={{ width: '100%' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setSupplierToDeactivate(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
+                onClick={() => setSupplierActive(supplierToDeactivate, false)}
+              >
+                <Power size={16} /> Confirm Deactivate
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm text-muted">
+            A deactivated vendor cannot receive purchase orders or be chosen for new inventory items. You can activate it again at any time. Historical purchase orders remain intact for audit logs.
+          </p>
+        </Modal>
+      )}
+
+      {/* Delete Supplier Modal (only reachable for deactivated suppliers) */}
       {supplierToDelete && (
         <Modal
           isOpen={!!supplierToDelete}
           onClose={() => setSupplierToDelete(null)}
-          title="Deactivate Vendor Partner"
-          subtitle={`Are you sure you want to deactivate "${supplierToDelete.companyName}" (${supplierToDelete.supplierId})?`}
+          title="Delete Vendor Partner"
+          subtitle={`Are you sure you want to permanently delete "${supplierToDelete.companyName}" (${supplierToDelete.supplierId})?`}
           size="sm"
           footer={
             <div className="flex items-center justify-end gap-2" style={{ width: '100%' }}>
@@ -609,13 +803,13 @@ export const SupplierPage = () => {
                 style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
                 onClick={handleDeleteSupplier}
               >
-                <Trash2 size={16} /> Confirm Deactivate
+                <Trash2 size={16} /> Confirm Delete
               </button>
             </div>
           }
         >
           <p className="text-sm text-muted">
-            Deactivating this vendor will archive their catalog association. Historical purchase orders and invoice references remain intact for audit logs.
+            The supplier record is removed from the directory. Inventory items supplied by this vendor keep the supplier name, and historical purchase orders remain intact for audit logs.
           </p>
         </Modal>
       )}

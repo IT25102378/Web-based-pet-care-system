@@ -37,6 +37,11 @@ const STATUS_CONFIG = {
   InProgress: { label: 'In Progress', class: 'badge-info' },
   ReadyForPickup: { label: 'Ready for Pickup', class: 'badge-warning' },
 
+  // Purchase Order Statuses (Pending, Approved and Cancelled are shared above)
+  Dispatched: { label: 'Dispatched', class: 'badge-info' },
+  Shipped: { label: 'Shipped', class: 'badge-primary' },
+  Delivered: { label: 'Delivered', class: 'badge-success' },
+
   // Stock Statuses
   InStock: { label: 'In Stock', class: 'badge-success' },
   LowStock: { label: 'Low Stock Alert', class: 'badge-warning' },

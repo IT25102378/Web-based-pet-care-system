@@ -7,6 +7,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { StatCard } from '../../components/common/StatCard';
 import { Modal } from '../../components/common/Modal';
 import { useToast } from '../../context/ToastContext';
+import { stockPercentage } from '../../utils/stockLevel';
 import {
   Package,
   RefreshCw,
@@ -167,6 +168,7 @@ export const InventoryPage = () => {
       header: 'Live Stock vs. Threshold',
       key: 'currentStock',
       sortable: true,
+      sortValue: stockPercentage,
       render: (row) => {
         const isDepleted = row.currentStock === 0;
         const isLow = row.currentStock > 0 && row.currentStock <= row.minStockThreshold;

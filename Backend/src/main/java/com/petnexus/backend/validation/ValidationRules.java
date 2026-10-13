@@ -38,4 +38,11 @@ public final class ValidationRules {
             "Emergency contact must include a 10-digit phone number starting with 0 (e.g. Nimal Perera - 0771234567)";
 
     public static final String EMAIL_MESSAGE = "Please enter a valid email address (e.g. name@example.com)";
+
+    /** Upper limit for any stock quantity or stock threshold (whole units). */
+    public static final int MAX_STOCK_QUANTITY = 100000;
+    public static final String MAX_STOCK_MESSAGE = "cannot be more than 100000 units";
+
+    /** Prices and amounts: never negative, at most two decimal places. */
+    public static final String MONEY_DECIMALS_MESSAGE = "can have at most two decimal places (e.g. 2500.50)";
 }

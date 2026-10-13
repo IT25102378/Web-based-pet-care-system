@@ -78,6 +78,19 @@ export const supplierApi = {
       });
     }
     await simulateDelay(200);
+    const supplier = mockStore.getItem('suppliers', 'supplierId', supplierId);
+    if (supplier && supplier.active !== false && supplier.active !== 0) {
+      throw new Error(`Deactivate the supplier before deleting it: ${supplierId}`);
+    }
+    // Unlink inventory items but keep the supplier name on them
+    const invItems = mockStore.getTable('inventoryItems');
+    invItems.forEach((item) => {
+      if (item.supplierId === supplierId) {
+        item.supplierName = (supplier && supplier.companyName) || item.supplierName;
+        item.supplierId = null;
+      }
+    });
+    mockStore.setTable('inventoryItems', invItems);
     return mockStore.deleteItem('suppliers', 'supplierId', supplierId);
   },
 

@@ -4,6 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import com.petnexus.backend.validation.ValidationRules;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,10 +41,12 @@ public class InventoryItemRequest {
 
     @NotNull(message = "Current stock is required")
     @PositiveOrZero(message = "Current stock cannot be negative")
+    @Max(value = ValidationRules.MAX_STOCK_QUANTITY, message = "Current stock " + ValidationRules.MAX_STOCK_MESSAGE)
     private Integer currentStock;
 
     @NotNull(message = "Minimum stock threshold is required")
     @PositiveOrZero(message = "Minimum stock threshold cannot be negative")
+    @Max(value = ValidationRules.MAX_STOCK_QUANTITY, message = "Minimum stock threshold " + ValidationRules.MAX_STOCK_MESSAGE)
     private Integer minStockThreshold;
 
     @NotBlank(message = "Unit is required")
@@ -50,10 +55,12 @@ public class InventoryItemRequest {
 
     @NotNull(message = "Unit price is required")
     @PositiveOrZero(message = "Unit price cannot be negative")
+    @Digits(integer = 8, fraction = 2, message = "Unit price " + ValidationRules.MONEY_DECIMALS_MESSAGE)
     private BigDecimal unitPrice;
 
     @NotNull(message = "Selling price is required")
     @PositiveOrZero(message = "Selling price cannot be negative")
+    @Digits(integer = 8, fraction = 2, message = "Selling price " + ValidationRules.MONEY_DECIMALS_MESSAGE)
     private BigDecimal sellingPrice;
 
     private LocalDate expiryDate;
