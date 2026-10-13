@@ -131,7 +131,7 @@ public class RescueCaseController {
     @PostMapping("/{caseId}/foster")
     public ResponseEntity<RescueCaseResponse> assignFoster(
             @PathVariable String caseId,
-            @RequestBody FosterAssignRequest request) {
+            @Valid @RequestBody FosterAssignRequest request) {
 
         return ResponseEntity.ok(rescueCaseService.assignFoster(caseId, request));
     }

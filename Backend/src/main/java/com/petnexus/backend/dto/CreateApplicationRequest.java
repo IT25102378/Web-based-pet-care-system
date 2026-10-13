@@ -26,6 +26,7 @@ import java.util.Map;
 public class CreateApplicationRequest {
     private String caseId;
     private String applicantId;
+    @Pattern(regexp = "(?i)^$|^(adoption|foster)$", message = "Application type must be Adoption or Foster")
     private String applicationType;
     private String petName;
     @Size(max = 150, message = "Applicant name cannot be longer than 150 characters")

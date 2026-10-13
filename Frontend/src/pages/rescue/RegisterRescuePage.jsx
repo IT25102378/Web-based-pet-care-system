@@ -20,7 +20,6 @@ export const RegisterRescuePage = () => {
     temporaryName: '',
     species: '',
     breed: '',
-    estimatedAge: '1 year',
     gender: 'Female',
     rescueLocation: '',
     intakeDate: new Date().toISOString().split('T')[0],
@@ -43,7 +42,6 @@ export const RegisterRescuePage = () => {
       ['formData.breed', formData.breed, validateText(formData.breed, { label: 'Breed', required: true, max: 100 })],
       ['formData.rescueLocation', formData.rescueLocation, validateText(formData.rescueLocation, { label: 'Rescue location', required: true, min: 5, max: 500 })],
       ['formData.intakeDate', formData.intakeDate, validateNotFutureDate(formData.intakeDate, { label: 'Intake date' })],
-      ['formData.estimatedAge', formData.estimatedAge, validateText(formData.estimatedAge, { label: 'Estimated age', max: 50 })],
       ['formData.microchipId', formData.microchipId, validateText(formData.microchipId, { label: 'Microchip ID', max: 50 })],
       ['formData.description', formData.description, validateText(formData.description, { label: 'Description', max: 2000 })],
     );
@@ -129,26 +127,16 @@ export const RegisterRescuePage = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Gender & Estimated Age</label>
-              <div className="flex items-center gap-2">
-                <select
-                  className="form-select"
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                >
-                  <option value="Female">Female</option>
-                  <option value="Male">Male</option>
-                  <option value="Unknown">Unknown</option>
-                </select>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.estimatedAge}
-                  onChange={(e) => setFormData({ ...formData, estimatedAge: e.target.value })}
-                  placeholder="e.g. 1.5 years"
-                />
-                {errorFor('formData.estimatedAge', formData.estimatedAge)}
-              </div>
+              <label className="form-label">Gender</label>
+              <select
+                className="form-select"
+                value={formData.gender}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+              >
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Unknown">Unknown</option>
+              </select>
             </div>
           </div>
 

@@ -33,12 +33,18 @@ public class RescueCaseRequest {
     private String breed;
     @Size(max = 50, message = "Estimated age cannot be longer than 50 characters")
     private String estimatedAge;
+    @Pattern(regexp = "(?i)^$|^(male|female|unknown|male & female|male pair|female pair)$",
+             message = "Gender must be Male, Female or Unknown")
     private String gender;
     @Size(max = 500, message = "Rescue location cannot be longer than 500 characters")
     private String rescueLocation;
     @PastOrPresent(message = "Intake date cannot be in the future")
     private LocalDate intakeDate;
+    @Pattern(regexp = "(?i)^$|^\\s*(low|moderate|high|critical).{0,40}$",
+             message = "Condition severity must be Low, Moderate, High or Critical")
     private String conditionSeverity;
+    @Pattern(regexp = "^$|^(Reported|Intake|InTreatment|ReadyForFoster|InFoster|ReadyForAdoption|Adopted|Closed)$",
+             message = "Invalid rescue case status")
     private String status;
     private Boolean isPublishedForAdoption;
     @Size(max = 50, message = "Microchip ID cannot be longer than 50 characters")

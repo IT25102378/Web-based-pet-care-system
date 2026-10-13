@@ -104,6 +104,15 @@ public class AdoptionApplicationService {
         User applicant = userRepository.findByUserId(applicantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Applicant user not found: " + applicantId));
 
+        // One open application per applicant per case
+        if (applicationRepository.existsByRescueCase_CaseIdAndApplicant_UserIdAndStatusIn(
+                rescueCase.getCaseId(), applicant.getUserId(),
+                List.of(AdoptionApplicationStatus.SUBMITTED, AdoptionApplicationStatus.UNDER_REVIEW))) {
+            throw new BadRequestException("You already have an open application for this animal.");
+        }
+
+        validateApplicationDetails(request);
+
         long count = applicationRepository.count() + 1;
         String applicationId = String.format("APP-%04d", count);
         while (applicationRepository.existsById(applicationId)) {
@@ -209,6 +218,75 @@ public class AdoptionApplicationService {
         AdoptionApplication saved = applicationRepository.save(app);
         notificationService.notifyAdoptionStatus(saved, saved.getStatus().getValue());
         return toDto(saved);
+    }
+
+    private static final long MAX_DOCUMENT_BYTES = 10L * 1024 * 1024;
+    private static final java.util.regex.Pattern DOCUMENT_FILE_NAME =
+            java.util.regex.Pattern.compile("(?i).+\\.(jpe?g|png|webp|pdf)$");
+    private static final java.util.regex.Pattern DOCUMENT_SIZE =
+            java.util.regex.Pattern.compile("(?i)^\\s*(\\d+(?:\\.\\d+)?)\\s*(B|KB|MB|GB)?\\s*$");
+
+    /** Mirrors the adoption wizard rules so the API cannot be used to skip them. */
+    private void validateApplicationDetails(CreateApplicationRequest request) {
+        List<String> missing = new java.util.ArrayList<>();
+        if (isBlank(request.getApplicantEmail()))   missing.add("applicantEmail");
+        if (isBlank(request.getApplicantAddress())) missing.add("applicantAddress");
+        if (!missing.isEmpty()) {
+            throw new BadRequestException("Required fields missing: " + String.join(", ", missing));
+        }
+
+        String reason = request.getReasonForAdoption() == null ? "" : request.getReasonForAdoption().trim();
+        if (reason.length() < 20) {
+            throw new BadRequestException("Reason for adoption must be at least 20 characters.");
+        }
+        if (request.getApplicantAddress().trim().length() < 5) {
+            throw new BadRequestException("Address must be at least 5 characters.");
+        }
+        if (!Boolean.TRUE.equals(request.getTermsAccepted())) {
+            throw new BadRequestException("The adoption terms must be accepted.");
+        }
+
+        boolean hasId = false;
+        boolean hasResidence = false;
+        List<java.util.Map<String, Object>> docs = request.getDocuments();
+        if (docs != null) {
+            for (java.util.Map<String, Object> doc : docs) {
+                String fileName = doc.get("fileName") == null ? null : String.valueOf(doc.get("fileName")).trim();
+                String fileUrl  = doc.get("fileUrl")  == null ? null : String.valueOf(doc.get("fileUrl")).trim();
+                if (isBlank(fileName) || isBlank(fileUrl)) {
+                    throw new BadRequestException("Each document needs a file name and file URL.");
+                }
+                if (!DOCUMENT_FILE_NAME.matcher(fileName).matches()) {
+                    throw new BadRequestException("Document '" + fileName + "' must be a JPG, PNG, WEBP or PDF file.");
+                }
+                if (doc.get("fileSize") != null && documentBytes(String.valueOf(doc.get("fileSize"))) > MAX_DOCUMENT_BYTES) {
+                    throw new BadRequestException("Document '" + fileName + "' exceeds the 10MB limit.");
+                }
+                String type = doc.get("documentType") == null ? "" : String.valueOf(doc.get("documentType")).toLowerCase();
+                if (type.contains("photo id") || type.contains("government")) hasId = true;
+                if (type.contains("residence") || type.contains("lease")) hasResidence = true;
+            }
+        }
+        if (!hasId)        throw new BadRequestException("Government ID proof is required.");
+        if (!hasResidence) throw new BadRequestException("Proof of residence or lease document is required.");
+    }
+
+    /** Parses "1.8 MB", "512 KB" or a plain byte count; unparseable values are treated as 0. */
+    private long documentBytes(String raw) {
+        java.util.regex.Matcher m = DOCUMENT_SIZE.matcher(raw);
+        if (!m.matches()) return 0;
+        double value = Double.parseDouble(m.group(1));
+        String unit = m.group(2) == null ? "B" : m.group(2).toUpperCase();
+        switch (unit) {
+            case "KB": return (long) (value * 1024);
+            case "MB": return (long) (value * 1024 * 1024);
+            case "GB": return (long) (value * 1024 * 1024 * 1024);
+            default:   return (long) value;
+        }
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 
     private AdoptionApplicationDto toDto(AdoptionApplication app) {

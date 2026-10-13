@@ -810,6 +810,15 @@ public class Phase10FinalSecurityIntegrationTest {
                 ownerA.getFullName(),
                 "0771112222"
         );
+        req.setApplicantEmail("owner.a@example.com");
+        req.setApplicantAddress("12 Palm Grove, Colombo");
+        req.setReasonForAdoption("I have a quiet home and time for a rescue companion.");
+        req.setTermsAccepted(true);
+        req.setDocuments(java.util.List.of(
+                java.util.Map.<String, Object>of("documentType", "Government Issued Photo ID",
+                        "fileName", "id.jpg", "fileUrl", "/uploads/id.jpg", "fileSize", "1.1 MB"),
+                java.util.Map.<String, Object>of("documentType", "Proof of Residence / Lease Approval",
+                        "fileName", "lease.pdf", "fileUrl", "/uploads/lease.pdf", "fileSize", "1.8 MB")));
 
         mockMvc.perform(post("/api/adoptions/applications").servletPath("/api")
                         .contentType(MediaType.APPLICATION_JSON)

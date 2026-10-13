@@ -25,6 +25,24 @@ class BB3_RescueAdoptionTest extends BlackBoxSupport {
         return m;
     }
 
+    /** A complete application payload, as the adoption wizard sends it. */
+    private Map<String, Object> fullApplication(String caseId) {
+        Map<String, Object> app = new LinkedHashMap<>();
+        app.put("caseId", caseId);
+        app.put("applicationType", "Adoption");
+        app.put("applicantPhone", "0771234567");
+        app.put("applicantEmail", "owner@example.com");
+        app.put("applicantAddress", "12 Palm Grove, Colombo");
+        app.put("reasonForAdoption", "I have a quiet home and time for a rescue companion.");
+        app.put("termsAccepted", true);
+        app.put("documents", java.util.List.of(
+                Map.of("documentType", "Government Issued Photo ID", "fileName", "id.jpg",
+                        "fileUrl", "/uploads/id.jpg", "fileSize", "1.1 MB"),
+                Map.of("documentType", "Proof of Residence / Lease Approval", "fileName", "lease.pdf",
+                        "fileUrl", "/uploads/lease.pdf", "fileSize", "1.8 MB")));
+        return app;
+    }
+
     private String createCase(String officer, String name) throws Exception {
         MvcResult res = post("/rescue/cases", officer, caseBody(name));
         assertEquals(201, status(res), res.getResponse().getContentAsString());
@@ -221,10 +239,7 @@ class BB3_RescueAdoptionTest extends BlackBoxSupport {
         String owner = login(OWNER);
         String id = readyAndPublished(officer, "Lucky");
 
-        Map<String, Object> app = new LinkedHashMap<>();
-        app.put("caseId", id);
-        app.put("applicationType", "Adoption");
-        app.put("applicantPhone", "0771234567");
+        Map<String, Object> app = fullApplication(id);
         MvcResult submitted = post("/adoptions/applications", owner, app);
         assertEquals(201, status(submitted));
         assertEquals("Submitted", body(submitted).get("status").asText());
@@ -248,7 +263,7 @@ class BB3_RescueAdoptionTest extends BlackBoxSupport {
         String owner = login(OWNER);
         String other = login(OTHER_OWNER);
         String id = readyAndPublished(officer, "Contested");
-        MvcResult submitted = post("/adoptions/applications", owner, Map.of("caseId", id, "applicationType", "Adoption"));
+        MvcResult submitted = post("/adoptions/applications", owner, fullApplication(id));
         assertEquals(201, status(submitted));
         String appId = body(submitted).get("applicationId").asText();
 
@@ -262,7 +277,7 @@ class BB3_RescueAdoptionTest extends BlackBoxSupport {
         String officer = login(RESCUE);
         String owner = login(OWNER);
         String id = readyAndPublished(officer, "Reviewed");
-        String appId = body(post("/adoptions/applications", owner, Map.of("caseId", id))).get("applicationId").asText();
+        String appId = body(post("/adoptions/applications", owner, fullApplication(id))).get("applicationId").asText();
         assertEquals(400, status(post("/adoptions/applications/" + appId + "/review", officer, Map.of("status", "Banana"))));
         assertEquals(404, status(post("/adoptions/applications", owner, Map.of("caseId", "RSC-0000-000"))));
     }
@@ -273,10 +288,37 @@ class BB3_RescueAdoptionTest extends BlackBoxSupport {
         String officer = login(RESCUE);
         String owner = login(OWNER);
         String id = readyAndPublished(officer, "StillWaiting");
-        String appId = body(post("/adoptions/applications", owner, Map.of("caseId", id))).get("applicationId").asText();
+        String appId = body(post("/adoptions/applications", owner, fullApplication(id))).get("applicationId").asText();
         MvcResult rej = post("/adoptions/applications/" + appId + "/review", officer, Map.of("status", "Rejected", "reviewNotes", "Unsuitable home"));
         assertEquals(200, status(rej));
         assertEquals("ReadyForAdoption", body(get("/rescue/cases/" + id, officer)).get("status").asText());
+    }
+
+    @Test
+    @DisplayName("AD-08 [rule] incomplete applications are rejected; a second open application for the same case is rejected")
+    void applicationDetailRules() throws Exception {
+        String officer = login(RESCUE);
+        String owner = login(OWNER);
+        String id = readyAndPublished(officer, "Picky");
+
+        assertEquals(400, status(post("/adoptions/applications", owner, Map.of("caseId", id))));
+
+        Map<String, Object> noTerms = fullApplication(id);
+        noTerms.put("termsAccepted", false);
+        assertEquals(400, status(post("/adoptions/applications", owner, noTerms)));
+
+        Map<String, Object> badFile = fullApplication(id);
+        badFile.put("documents", java.util.List.of(
+                Map.of("documentType", "Government Issued Photo ID", "fileName", "id.exe", "fileUrl", "/u/id.exe"),
+                Map.of("documentType", "Proof of Residence / Lease Approval", "fileName", "l.pdf", "fileUrl", "/u/l.pdf")));
+        assertEquals(400, status(post("/adoptions/applications", owner, badFile)));
+
+        Map<String, Object> badType = fullApplication(id);
+        badType.put("applicationType", "Purchase");
+        assertEquals(400, status(post("/adoptions/applications", owner, badType)));
+
+        assertEquals(201, status(post("/adoptions/applications", owner, fullApplication(id))));
+        assertEquals(400, status(post("/adoptions/applications", owner, fullApplication(id))));
     }
 
     @Test
